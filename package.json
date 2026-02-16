@@ -13,9 +13,21 @@
     "dev:backend": "cd backend && npm run start:dev",
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend && npm run build"
+    "build:backend": "cd backend && npm run build",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:fast": "npm run test:fast:backend && npm run test:fast:frontend",
+    "test:smoke": "npm run test:smoke:backend && npm run test:smoke:frontend",
+    "test:backend": "cd backend && npm run test",
+    "test:frontend": "cd frontend && npm run test",
+    "test:fast:backend": "cd backend && npm run test:fast",
+    "test:fast:frontend": "cd frontend && npm run test:fast",
+    "test:smoke:backend": "cd backend && npm run test:smoke",
+    "test:smoke:frontend": "cd frontend && npm run test:smoke"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "mongodb": "^7.0.0"
   }
 }

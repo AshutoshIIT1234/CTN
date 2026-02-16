@@ -32,6 +32,9 @@ export class Post {
   @Prop({ required: true })
   content: string;
 
+  @Prop({ type: [String], default: [] })
+  imageUrls: string[];
+
   @Prop({ default: 0 })
   likes: number;
 

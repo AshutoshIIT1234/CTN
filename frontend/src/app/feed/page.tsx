@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Sparkles, Plus } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/lib/api'
 import { MainLayout } from '@/components/layout/MainLayout'
@@ -15,12 +15,28 @@ export default function FeedPage() {
   const { user } = useAuthStore()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [page, setPage] = useState(1)
+  const [activeTab, setActiveTab] = useState('for-you')
 
+  // Fetch all posts (both national and college) for unified feed
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['national-feed', page],
+    queryKey: ['unified-feed', page, activeTab],
     queryFn: async () => {
-      const response = await api.get(`/posts/national?page=${page}&limit=20`)
-      return response.data
+      // Fetch both national and college posts for a unified experience
+      const [nationalResponse, collegeResponse] = await Promise.all([
+        api.get(`/posts/national?page=${page}&limit=10`).catch(() => ({ data: { posts: [] } })),
+        user ? api.get(`/posts/college?page=${page}&limit=10`).catch(() => ({ data: { posts: [] } })) : Promise.resolve({ data: { posts: [] } })
+      ])
+      
+      // Combine and sort posts by creation date
+      const allPosts = [
+        ...(nationalResponse.data.posts || []),
+        ...(collegeResponse.data.posts || [])
+      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+      return {
+        posts: allPosts,
+        pagination: nationalResponse.data.pagination || { totalPages: 1, currentPage: 1 }
+      }
     },
   })
 
@@ -31,94 +47,181 @@ export default function FeedPage() {
 
   return (
     <MainLayout>
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-white/80 dark:bg-dark-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-dark-800">
-          <div className="px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-6 h-6 text-primary-600" />
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  National Feed
-                </h1>
-              </div>
-              
-              {user && (
+      {/* Header - Critical Thinking Panel */}
+      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-gray-800">
+        <div className="px-4 py-0">
+          <div className="flex items-center justify-between h-14">
+            <h1 className="text-xl font-bold">Critical Thinking</h1>
+            <button className="p-2 rounded-full hover:bg-gray-900 transition-colors">
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Tabs */}
+          <div className="flex border-b border-gray-800">
+            <button
+              onClick={() => setActiveTab('for-you')}
+              className={`flex-1 py-4 text-center font-medium transition-colors relative ${
+                activeTab === 'for-you' 
+                  ? 'text-white' 
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              National Discourse
+              {activeTab === 'for-you' && (
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 bg-primary-600 rounded-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('following')}
+              className={`flex-1 py-4 text-center font-medium transition-colors relative ${
+                activeTab === 'following' 
+                  ? 'text-white' 
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              Trending Topics
+              {activeTab === 'following' && (
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 bg-primary-600 rounded-full" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Compose Tweet Area */}
+      {user && (
+        <div className="border-b border-gray-800 p-4">
+          <div className="flex gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-lg font-semibold">
+                {user.username[0].toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1">
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="w-full text-left text-xl text-gray-500 py-3 hover:text-gray-300 transition-colors"
+              >
+                Share your thoughts on current affairs...
+              </button>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-800">
+                <div className="flex items-center gap-4">
+                  {/* Tweet options would go here */}
+                </div>
                 <button
                   onClick={() => setIsCreateModalOpen(true)}
-                  className="btn-primary flex items-center gap-2"
+                  className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-6 rounded-full transition-colors disabled:opacity-50"
                 >
-                  <Plus className="w-5 h-5" />
-                  <span className="hidden sm:inline">Post</span>
+                  Post
                 </button>
-              )}
+              </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Feed */}
-        <div className="divide-y divide-gray-200 dark:divide-dark-800">
-          {isLoading ? (
-            <>
-              <PostSkeleton />
-              <PostSkeleton />
-              <PostSkeleton />
-            </>
-          ) : data?.posts?.length > 0 ? (
-            data.posts.map((post: any, index: number) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+      {/* Guest User Banner */}
+      {!user && (
+        <div className="border-b border-gray-800 bg-gradient-to-r from-primary-900/20 to-purple-900/20 p-6">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Join the Intellectual Discourse
+            </h2>
+            <p className="text-gray-300 mb-4">
+              Sign in to participate in discussions, share your perspectives, and engage with the community
+            </p>
+            <div className="flex gap-4 justify-center">
+              <a
+                href="/auth/login"
+                className="bg-transparent border-2 border-primary-500 hover:bg-primary-900/30 text-primary-400 font-bold py-2 px-6 rounded-full transition-colors"
               >
-                <PostCard post={post} onUpdate={refetch} />
-              </motion.div>
-            ))
-          ) : (
-            <div className="py-16 text-center">
-              <Sparkles className="w-16 h-16 text-gray-300 dark:text-dark-700 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No posts yet
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Be the first to start a discussion!
-              </p>
-              {user && (
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="btn-primary"
-                >
-                  Create Post
-                </button>
-              )}
+                Sign in
+              </a>
+              <a
+                href="/auth/register"
+                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-6 rounded-full transition-colors"
+              >
+                Sign up
+              </a>
             </div>
-          )}
+          </div>
         </div>
+      )}
 
-        {/* Pagination */}
-        {data?.pagination && data.pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 py-8">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="btn-secondary disabled:opacity-50"
+      {/* Unified Feed - All Posts */}
+      <div>
+        {isLoading ? (
+          <>
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
+          </>
+        ) : (data?.posts && data.posts.length > 0) ? (
+          data.posts.map((post: any, index: number) => (
+            <motion.div
+              key={post.id || post._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
             >
-              Previous
-            </button>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Page {page} of {data.pagination.totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page >= data.pagination.totalPages}
-              className="btn-secondary disabled:opacity-50"
-            >
-              Next
-            </button>
+              <PostCard post={post} onUpdate={refetch} />
+            </motion.div>
+          ))
+        ) : (
+          <div className="py-16 text-center px-8">
+            <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">🧠</span>
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">
+              Welcome to Critical Thinking
+            </h3>
+            <p className="text-gray-500 mb-6 text-lg">
+              Engage in national-level intellectual discourse. Share your perspectives on current affairs, politics, and societal issues.
+            </p>
+            {user ? (
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-8 rounded-full transition-colors"
+              >
+                Start a discussion
+              </button>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-gray-400">Join the conversation</p>
+                <div className="flex gap-4 justify-center">
+                  <a
+                    href="/auth/login"
+                    className="bg-transparent border border-gray-600 hover:bg-gray-900 text-primary-400 font-bold py-3 px-6 rounded-full transition-colors"
+                  >
+                    Sign in
+                  </a>
+                  <a
+                    href="/auth/register"
+                    className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-6 rounded-full transition-colors"
+                  >
+                    Sign up
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Load More */}
+      {(data?.posts && data.posts.length > 0) && (
+        <div className="p-4 border-t border-gray-800">
+          <button
+            onClick={() => setPage(p => p + 1)}
+            className="w-full py-3 text-primary-400 hover:text-primary-300 font-medium transition-colors"
+          >
+            Show more posts
+          </button>
+        </div>
+      )}
 
       {/* Create Post Modal */}
       {isCreateModalOpen && (

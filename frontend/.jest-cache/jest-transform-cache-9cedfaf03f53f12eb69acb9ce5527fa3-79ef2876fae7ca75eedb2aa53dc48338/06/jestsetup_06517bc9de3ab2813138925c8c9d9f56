@@ -1,0 +1,46 @@
+d90ad9966da1b851e89ac44f5004e152
+"use strict";
+// Mock Next.js router
+jest.mock("next/navigation", ()=>({
+        useRouter: jest.fn(),
+        usePathname: jest.fn(),
+        useSearchParams: jest.fn()
+    }));
+// Mock framer-motion
+jest.mock("framer-motion", ()=>({
+        motion: {
+            div: ({ children, ...props })=>/*#__PURE__*/ (0, _jsxruntime.jsx)("div", {
+                    ...props,
+                    children: children
+                }),
+            button: ({ children, ...props })=>/*#__PURE__*/ (0, _jsxruntime.jsx)("button", {
+                    ...props,
+                    children: children
+                }),
+            span: ({ children, ...props })=>/*#__PURE__*/ (0, _jsxruntime.jsx)("span", {
+                    ...props,
+                    children: children
+                })
+        },
+        AnimatePresence: ({ children })=>children
+    }));
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+const _jsxruntime = require("react/jsx-runtime");
+require("@testing-library/jest-dom");
+// Suppress console warnings during tests
+const originalConsoleWarn = console.warn;
+beforeAll(()=>{
+    console.warn = (...args)=>{
+        if (typeof args[0] === "string" && args[0].includes("Warning: ReactDOM.render is no longer supported")) {
+            return;
+        }
+        originalConsoleWarn.call(console, ...args);
+    };
+});
+afterAll(()=>{
+    console.warn = originalConsoleWarn;
+});
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcSFBcXERlc2t0b3BcXENUTlxcZnJvbnRlbmRcXGplc3Quc2V0dXAuanMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0ICdAdGVzdGluZy1saWJyYXJ5L2plc3QtZG9tJ1xyXG5cclxuLy8gTW9jayBOZXh0LmpzIHJvdXRlclxyXG5qZXN0Lm1vY2soJ25leHQvbmF2aWdhdGlvbicsICgpID0+ICh7XHJcbiAgdXNlUm91dGVyOiBqZXN0LmZuKCksXHJcbiAgdXNlUGF0aG5hbWU6IGplc3QuZm4oKSxcclxuICB1c2VTZWFyY2hQYXJhbXM6IGplc3QuZm4oKSxcclxufSkpXHJcblxyXG4vLyBNb2NrIGZyYW1lci1tb3Rpb25cclxuamVzdC5tb2NrKCdmcmFtZXItbW90aW9uJywgKCkgPT4gKHtcclxuICBtb3Rpb246IHtcclxuICAgIGRpdjogKHsgY2hpbGRyZW4sIC4uLnByb3BzIH0pID0+IDxkaXYgey4uLnByb3BzfT57Y2hpbGRyZW59PC9kaXY+LFxyXG4gICAgYnV0dG9uOiAoeyBjaGlsZHJlbiwgLi4ucHJvcHMgfSkgPT4gPGJ1dHRvbiB7Li4ucHJvcHN9PntjaGlsZHJlbn08L2J1dHRvbj4sXHJcbiAgICBzcGFuOiAoeyBjaGlsZHJlbiwgLi4ucHJvcHMgfSkgPT4gPHNwYW4gey4uLnByb3BzfT57Y2hpbGRyZW59PC9zcGFuPixcclxuICB9LFxyXG4gIEFuaW1hdGVQcmVzZW5jZTogKHsgY2hpbGRyZW4gfSkgPT4gY2hpbGRyZW4sXHJcbn0pKVxyXG5cclxuLy8gU3VwcHJlc3MgY29uc29sZSB3YXJuaW5ncyBkdXJpbmcgdGVzdHNcclxuY29uc3Qgb3JpZ2luYWxDb25zb2xlV2FybiA9IGNvbnNvbGUud2FyblxyXG5iZWZvcmVBbGwoKCkgPT4ge1xyXG4gIGNvbnNvbGUud2FybiA9ICguLi5hcmdzKSA9PiB7XHJcbiAgICBpZiAoXHJcbiAgICAgIHR5cGVvZiBhcmdzWzBdID09PSAnc3RyaW5nJyAmJlxyXG4gICAgICBhcmdzWzBdLmluY2x1ZGVzKCdXYXJuaW5nOiBSZWFjdERPTS5yZW5kZXIgaXMgbm8gbG9uZ2VyIHN1cHBvcnRlZCcpXHJcbiAgICApIHtcclxuICAgICAgcmV0dXJuXHJcbiAgICB9XHJcbiAgICBvcmlnaW5hbENvbnNvbGVXYXJuLmNhbGwoY29uc29sZSwgLi4uYXJncylcclxuICB9XHJcbn0pXHJcblxyXG5hZnRlckFsbCgoKSA9PiB7XHJcbiAgY29uc29sZS53YXJuID0gb3JpZ2luYWxDb25zb2xlV2FyblxyXG59KSJdLCJuYW1lcyI6WyJqZXN0IiwibW9jayIsInVzZVJvdXRlciIsImZuIiwidXNlUGF0aG5hbWUiLCJ1c2VTZWFyY2hQYXJhbXMiLCJtb3Rpb24iLCJkaXYiLCJjaGlsZHJlbiIsInByb3BzIiwiYnV0dG9uIiwic3BhbiIsIkFuaW1hdGVQcmVzZW5jZSIsIm9yaWdpbmFsQ29uc29sZVdhcm4iLCJjb25zb2xlIiwid2FybiIsImJlZm9yZUFsbCIsImFyZ3MiLCJpbmNsdWRlcyIsImNhbGwiLCJhZnRlckFsbCJdLCJtYXBwaW5ncyI6IjtBQUVBLHNCQUFzQjtBQUN0QkEsS0FBS0MsSUFBSSxDQUFDLG1CQUFtQixJQUFPLENBQUE7UUFDbENDLFdBQVdGLEtBQUtHLEVBQUU7UUFDbEJDLGFBQWFKLEtBQUtHLEVBQUU7UUFDcEJFLGlCQUFpQkwsS0FBS0csRUFBRTtJQUMxQixDQUFBO0FBRUEscUJBQXFCO0FBQ3JCSCxLQUFLQyxJQUFJLENBQUMsaUJBQWlCLElBQU8sQ0FBQTtRQUNoQ0ssUUFBUTtZQUNOQyxLQUFLLENBQUMsRUFBRUMsUUFBUSxFQUFFLEdBQUdDLE9BQU8saUJBQUsscUJBQUNGO29CQUFLLEdBQUdFLEtBQUs7OEJBQUdEOztZQUNsREUsUUFBUSxDQUFDLEVBQUVGLFFBQVEsRUFBRSxHQUFHQyxPQUFPLGlCQUFLLHFCQUFDQztvQkFBUSxHQUFHRCxLQUFLOzhCQUFHRDs7WUFDeERHLE1BQU0sQ0FBQyxFQUFFSCxRQUFRLEVBQUUsR0FBR0MsT0FBTyxpQkFBSyxxQkFBQ0U7b0JBQU0sR0FBR0YsS0FBSzs4QkFBR0Q7O1FBQ3REO1FBQ0FJLGlCQUFpQixDQUFDLEVBQUVKLFFBQVEsRUFBRSxHQUFLQTtJQUNyQyxDQUFBOzs7OztRQWpCTztBQW1CUCx5Q0FBeUM7QUFDekMsTUFBTUssc0JBQXNCQyxRQUFRQyxJQUFJO0FBQ3hDQyxVQUFVO0lBQ1JGLFFBQVFDLElBQUksR0FBRyxDQUFDLEdBQUdFO1FBQ2pCLElBQ0UsT0FBT0EsSUFBSSxDQUFDLEVBQUUsS0FBSyxZQUNuQkEsSUFBSSxDQUFDLEVBQUUsQ0FBQ0MsUUFBUSxDQUFDLG9EQUNqQjtZQUNBO1FBQ0Y7UUFDQUwsb0JBQW9CTSxJQUFJLENBQUNMLFlBQVlHO0lBQ3ZDO0FBQ0Y7QUFFQUcsU0FBUztJQUNQTixRQUFRQyxJQUFJLEdBQUdGO0FBQ2pCIn0=

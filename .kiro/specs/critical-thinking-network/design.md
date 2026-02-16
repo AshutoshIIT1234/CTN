@@ -229,6 +229,63 @@ enum UserRole {
 }
 ```
 
+**Navigation Panel**
+```typescript
+interface NavigationPanelProps {
+  userRole: UserRole
+  college?: College | null
+}
+
+interface NavigationItem {
+  name: string
+  label: string
+  href: string
+  icon: React.ComponentType
+  enabled: boolean
+  visible: boolean
+  description?: string
+}
+
+interface NavigationConfig {
+  criticalThinking: NavigationItem
+  academicResources: NavigationItem
+  collegeDiscussion: NavigationItem
+  profile: NavigationItem
+  home: NavigationItem
+  explore: NavigationItem
+}
+
+interface NavigationActions {
+  getNavigationConfig: (userRole: UserRole, college?: College) => NavigationConfig
+  isNavigationEnabled: (item: string, userRole: UserRole) => boolean
+  getNavigationOrder: () => string[]
+}
+
+// Navigation item configurations by role
+const NAVIGATION_RULES = {
+  GUEST: {
+    visible: ['criticalThinking', 'home', 'explore'],
+    enabled: ['criticalThinking', 'home', 'explore']
+  },
+  GENERAL_USER: {
+    visible: ['criticalThinking', 'academicResources', 'collegeDiscussion', 'profile', 'home', 'explore'],
+    enabled: ['criticalThinking', 'profile', 'home', 'explore']
+  },
+  COLLEGE_USER: {
+    visible: ['criticalThinking', 'academicResources', 'collegeDiscussion', 'profile', 'home', 'explore'],
+    enabled: ['criticalThinking', 'academicResources', 'collegeDiscussion', 'profile', 'home', 'explore']
+  },
+  MODERATOR: {
+    visible: ['criticalThinking', 'academicResources', 'collegeDiscussion', 'profile', 'home', 'explore'],
+    enabled: ['criticalThinking', 'academicResources', 'collegeDiscussion', 'profile', 'home', 'explore']
+  },
+  ADMIN: {
+    visible: ['criticalThinking', 'academicResources', 'collegeDiscussion', 'profile', 'home', 'explore'],
+    enabled: ['criticalThinking', 'academicResources', 'collegeDiscussion', 'profile', 'home', 'explore']
+  }
+}
+```
+
 **National Discussion Panel**
 ```typescript
 interface NationalPanelProps {
@@ -781,63 +838,75 @@ Each level is represented in the database and enforced through application logic
 
 ### Navigation and Profile Properties
 
-**Property 43: Role-based navigation**
-*For any* user, the available navigation options should match their authorization level (GUEST sees National only, GENERAL_USER sees National + Profile, COLLEGE_USER sees National + College + Resources).
+**Property 43: Role-based navigation panel**
+*For any* user, the navigation panel should display sections appropriate to their role: GUEST sees Critical Thinking, Home, and Explore; GENERAL_USER sees all sections with Academic Resources and College Discussion disabled; COLLEGE_USER sees all sections enabled.
+**Validates: Requirements 9.1, 9.2, 9.3**
+
+**Property 44: Navigation section labeling**
+*For any* navigation panel, the sections should be clearly labeled as "Critical Thinking" for National_Panel, "Academic Resources" for Resource_System, and "College Discussion" for College_Panel.
 **Validates: Requirements 9.4**
 
-**Property 44: Profile information completeness**
-*For any* user viewing their profile, the response should include their role and, if applicable, their associated college information.
+**Property 45: Navigation section ordering**
+*For any* navigation panel, the sections should appear in this specific order: Critical Thinking, Academic Resources, College Discussion, Profile, Home, Explore.
 **Validates: Requirements 9.5**
+
+**Property 46: Navigation visual indicators**
+*For any* disabled navigation section, the UI should provide clear visual indicators (grayed out, disabled state) to show unauthorized access.
+**Validates: Requirements 9.8**
+
+**Property 47: Profile information completeness**
+*For any* user viewing their profile, the response should include their role and, if applicable, their associated college information.
+**Validates: Requirements 9.6**
 
 ### Username and Profile Properties
 
-**Property 45: Username uniqueness validation**
+**Property 48: Username uniqueness validation**
 *For any* two users in the system, their usernames must be different; the system should reject registration attempts with duplicate usernames.
 **Validates: Requirements 11.2, 11.3**
 
-**Property 46: Username character validation**
+**Property 49: Username character validation**
 *For any* username, it should only be accepted if it contains alphanumeric characters, underscores, or hyphens; usernames with other characters should be rejected.
 **Validates: Requirements 11.4**
 
-**Property 47: Username length validation**
+**Property 50: Username length validation**
 *For any* username, it should only be accepted if its length is between 3 and 30 characters (inclusive); usernames outside this range should be rejected.
 **Validates: Requirements 11.5**
 
-**Property 48: Own profile data completeness**
+**Property 51: Own profile data completeness**
 *For any* user viewing their own profile, the response should include username, email, role, college (if applicable), join date, and activity statistics (post count, comment count, likes received).
 **Validates: Requirements 11.6**
 
-**Property 49: Public profile data visibility**
+**Property 52: Public profile data visibility**
 *For any* user viewing another user's profile, the response should include only public information (username, display name, role, college, join date, post count) and should not include private information (email).
 **Validates: Requirements 11.7**
 
-**Property 50: Profile update persistence**
+**Property 53: Profile update persistence**
 *For any* user updating their profile (bio, profile picture, display name), the changes should be persisted and reflected in subsequent profile retrievals.
 **Validates: Requirements 11.8**
 
-**Property 51: Username display in content**
+**Property 54: Username display in content**
 *For any* post or comment, the response should include the author's username alongside the content.
 **Validates: Requirements 11.9**
 
 ### User Search Properties
 
-**Property 52: Search access control**
+**Property 55: Search access control**
 *For any* logged-in user (GENERAL_USER, COLLEGE_USER, MODERATOR, ADMIN), the user search endpoint should be accessible; for guest users, it should return authorization errors.
 **Validates: Requirements 12.1, 12.7**
 
-**Property 53: Multi-field search**
+**Property 56: Multi-field search**
 *For any* search query, the results should include users whose username, display name, or college name contains the query string (case-insensitive).
 **Validates: Requirements 12.2**
 
-**Property 54: Search result data completeness**
+**Property 57: Search result data completeness**
 *For any* user in the search results, the response should include username, display name, profile picture URL, role, and college information (if applicable).
 **Validates: Requirements 12.3**
 
-**Property 55: Search result relevance ordering**
+**Property 58: Search result relevance ordering**
 *For any* search query, results should be ordered with exact matches appearing before partial matches.
 **Validates: Requirements 12.4**
 
-**Property 56: Search result limit**
+**Property 59: Search result limit**
 *For any* search query, the number of returned results should not exceed 50 users.
 **Validates: Requirements 12.6**
 
@@ -896,9 +965,17 @@ Both testing approaches are complementary and necessary. Unit tests catch concre
 **Framework**: We will use **fast-check** for TypeScript/JavaScript property-based testing.
 
 **Configuration**:
-- Minimum 100 iterations per property test
+- **Fast execution**: 5 iterations per property test (reduced from 100 for speed)
+- **Development mode**: 3 iterations for rapid feedback during development
+- **CI/Production**: Can be increased to 20-50 iterations for thorough validation
 - Each property test must reference its design document property
 - Tag format: `// Feature: critical-thinking-network, Property {number}: {property_text}`
+
+**Performance Optimizations**:
+- Parallel test execution using 50% of available CPU cores
+- Test caching enabled for faster subsequent runs
+- Reduced test timeouts (5s backend, 3s frontend)
+- Coverage collection disabled during development
 
 **Example Property Test Structure**:
 ```typescript
@@ -917,11 +994,16 @@ describe('Authentication Properties', () => {
           expect(user.email).toBe(email);
         }
       ),
-      { numRuns: 100 }
+      { numRuns: 5 } // Fast execution for development
     );
   });
 });
 ```
+
+**Test Execution Modes**:
+- `npm run test:fast` - Ultra-fast execution with minimal iterations (3-5 runs)
+- `npm run test` - Standard execution with moderate iterations (5-10 runs)  
+- `npm run test:cov` - Full execution with coverage and higher iterations (20+ runs)
 
 ### Test Organization
 

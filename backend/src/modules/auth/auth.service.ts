@@ -7,12 +7,14 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { User, UserRole } from '@/entities/user.entity';
 import { UserProfile } from '@/entities/user-profile.entity';
 import { College } from '@/entities/college.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +26,7 @@ export class AuthService {
     @InjectRepository(College)
     private collegeRepository: Repository<College>,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -54,14 +57,22 @@ export class AuthService {
     // Determine role based on email type
     const role = college ? UserRole.COLLEGE_USER : UserRole.GENERAL_USER;
 
-    // Create user
+    // Generate OTP
+    const otp = this.emailService.generateOTP();
+    const otpExpires = new Date();
+    otpExpires.setMinutes(otpExpires.getMinutes() + 10); // OTP valid for 10 minutes
+
+    // Create user (not verified yet)
     const user = this.userRepository.create({
       email,
       username,
       passwordHash,
       role,
       collegeId: college?.id,
-      displayName: username, // Default display name to username
+      displayName: username,
+      isEmailVerified: false,
+      emailVerificationToken: otp,
+      emailVerificationExpires: otpExpires,
     });
 
     const savedUser = await this.userRepository.save(user);
@@ -75,12 +86,18 @@ export class AuthService {
     });
     await this.userProfileRepository.save(profile);
 
-    // Generate JWT token
-    const token = this.generateToken(savedUser);
+    // Send verification email
+    try {
+      await this.emailService.sendVerificationEmail(email, otp);
+    } catch (error) {
+      // If email fails, still return success but log the error
+      console.error('Failed to send verification email:', error);
+    }
 
     return {
       user: this.sanitizeUser(savedUser),
-      token,
+      message: 'Registration successful. Please check your email for verification code.',
+      requiresVerification: true,
       college,
     };
   }
@@ -98,6 +115,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      throw new UnauthorizedException('Please verify your email before logging in');
+    }
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
@@ -112,6 +134,86 @@ export class AuthService {
       token,
       college: user.college,
     };
+  }
+
+  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
+    const { email, otp } = verifyEmailDto;
+
+    const user = await this.userRepository.findOne({
+      where: { email },
+      relations: ['college'],
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.isEmailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    if (!user.emailVerificationToken || !user.emailVerificationExpires) {
+      throw new BadRequestException('No verification token found. Please request a new one.');
+    }
+
+    // Check if OTP is expired
+    if (new Date() > user.emailVerificationExpires) {
+      throw new BadRequestException('Verification code has expired. Please request a new one.');
+    }
+
+    // Verify OTP
+    if (user.emailVerificationToken !== otp) {
+      throw new BadRequestException('Invalid verification code');
+    }
+
+    // Mark email as verified
+    user.isEmailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    await this.userRepository.save(user);
+
+    // Generate JWT token
+    const token = this.generateToken(user);
+
+    return {
+      user: this.sanitizeUser(user),
+      token,
+      college: user.college,
+      message: 'Email verified successfully',
+    };
+  }
+
+  async resendVerificationEmail(email: string) {
+    const user = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.isEmailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    // Generate new OTP
+    const otp = this.emailService.generateOTP();
+    const otpExpires = new Date();
+    otpExpires.setMinutes(otpExpires.getMinutes() + 10);
+
+    user.emailVerificationToken = otp;
+    user.emailVerificationExpires = otpExpires;
+    await this.userRepository.save(user);
+
+    // Send verification email
+    try {
+      await this.emailService.sendVerificationEmail(email, otp);
+      return {
+        message: 'Verification code sent successfully',
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to send verification email');
+    }
   }
 
   async verifyCollegeEmail(email: string): Promise<College | null> {

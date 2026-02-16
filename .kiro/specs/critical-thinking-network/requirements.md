@@ -137,18 +137,20 @@ Critical Thinking Network (CTN) is a role-based social media platform designed f
 7. THE Admin Dashboard SHALL display payment and unlock records for cross-college resource access
 8. THE Admin Dashboard SHALL enable platform-wide content moderation across all modules
 
-### Requirement 9: User Dashboard and Navigation
+### Requirement 9: User Dashboard and Navigation Panel
 
-**User Story:** As a platform user, I want a unified dashboard, so that I can access all features appropriate to my role.
+**User Story:** As a platform user, I want a unified navigation panel with clearly labeled sections, so that I can easily access all features appropriate to my role.
 
 #### Acceptance Criteria
 
-1. WHEN a Guest visits the platform, THE CTN SHALL display the National_Panel and login/signup options
-2. WHEN a General_User logs in, THE CTN SHALL display the National_Panel and profile creation options
-3. WHEN a College_User logs in, THE CTN SHALL display the National_Panel, College_Panel, and Resource_System
-4. THE CTN SHALL provide navigation between National_Panel, College_Panel (if authorized), and Resource_System (if authorized)
-5. WHEN a user views their profile, THE CTN SHALL display their role and associated college (if applicable)
-6. THE CTN SHALL cache frequently accessed data using Redis for improved performance
+1. WHEN a Guest visits the platform, THE CTN SHALL display the navigation panel with "Critical Thinking", "Home", and "Explore" sections visible, and login/signup options
+2. WHEN a General_User logs in, THE CTN SHALL display the navigation panel with "Critical Thinking", "Academic Resources" (disabled), "College Discussion" (disabled), "Profile", "Home", and "Explore" sections
+3. WHEN a College_User logs in, THE CTN SHALL display the navigation panel with "Critical Thinking", "Academic Resources", "College Discussion", "Profile", "Home", and "Explore" sections all enabled
+4. THE CTN SHALL provide clear navigation labels: "Critical Thinking" for National_Panel, "Academic Resources" for Resource_System, "College Discussion" for College_Panel
+5. THE CTN SHALL organize navigation sections in this order: Critical Thinking, Academic Resources, College Discussion, Profile, Home, Explore
+6. WHEN a user views their profile, THE CTN SHALL display their role and associated college (if applicable)
+7. THE CTN SHALL cache frequently accessed data using Redis for improved performance
+8. THE CTN SHALL provide visual indicators for disabled navigation sections for unauthorized users
 
 ### Requirement 10: Data Storage and Architecture
 

@@ -7,6 +7,17 @@ import { CollegeModule } from './modules/college/college.module';
 import { PostModule } from './modules/post/post.module';
 import { ResourceModule } from './modules/resource/resource.module';
 import { ModeratorModule } from './modules/moderator/moderator.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { UserModule } from './modules/user/user.module';
+
+// Import all entities explicitly
+import { User } from './entities/user.entity';
+import { UserProfile } from './entities/user-profile.entity';
+import { College } from './entities/college.entity';
+import { Moderator } from './entities/moderator.entity';
+import { Resource } from './entities/resource.entity';
+import { ResourceAccess } from './entities/resource-access.entity';
+import { PaymentSession } from './entities/payment-session.entity';
 
 @Module({
   imports: [
@@ -22,7 +33,15 @@ import { ModeratorModule } from './modules/moderator/moderator.module';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.get('DATABASE_URL'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        entities: [
+          User,
+          UserProfile,
+          College,
+          Moderator,
+          Resource,
+          ResourceAccess,
+          PaymentSession,
+        ],
         synchronize: process.env.NODE_ENV === 'development', // Only in development
         logging: process.env.NODE_ENV === 'development',
         ssl: {
@@ -47,6 +66,8 @@ import { ModeratorModule } from './modules/moderator/moderator.module';
     PostModule,
     ResourceModule,
     ModeratorModule,
+    AdminModule,
+    UserModule,
   ],
   controllers: [],
   providers: [],

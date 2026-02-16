@@ -18,6 +18,7 @@ import { College } from '@/entities/college.entity';
 import { Moderator } from '@/entities/moderator.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { RedisService } from '../../services/redis.service';
 
 @Injectable()
 export class PostService {
@@ -30,6 +31,7 @@ export class PostService {
     @InjectRepository(UserProfile) private userProfileRepository: Repository<UserProfile>,
     @InjectRepository(College) private collegeRepository: Repository<College>,
     @InjectRepository(Moderator) private moderatorRepository: Repository<Moderator>,
+    private redisService: RedisService,
   ) {}
 
   // National Panel Posts
@@ -49,8 +51,9 @@ export class PostService {
       authorUsername: user.username,
       authorRole: user.role,
       panelType: 'NATIONAL',
-      title: createPostDto.title,
+      title: createPostDto.title || '',
       content: createPostDto.content,
+      imageUrls: createPostDto.imageUrls || [],
       likes: 0,
       commentCount: 0,
       reportCount: 0,
@@ -64,6 +67,9 @@ export class PostService {
       'postCount',
       1,
     );
+
+    // Invalidate national feed cache
+    await this.redisService.invalidatePostFeeds('national');
 
     return this.formatPost(savedPost, userId);
   }
@@ -91,8 +97,9 @@ export class PostService {
       authorRole: user.role,
       collegeId: user.college.id,
       panelType: 'COLLEGE',
-      title: createPostDto.title,
+      title: createPostDto.title || '',
       content: createPostDto.content,
+      imageUrls: createPostDto.imageUrls || [],
       likes: 0,
       commentCount: 0,
       reportCount: 0,
@@ -107,10 +114,26 @@ export class PostService {
       1,
     );
 
+    // Invalidate college feed cache
+    await this.redisService.invalidatePostFeeds('college', user.college.id);
+
     return this.formatPost(savedPost, userId);
   }
 
   async getCollegeFeed(collegeId: string, page: number = 1, limit: number = 20, userId?: string) {
+    // Try to get from cache first
+    const cachedFeed = await this.redisService.getPostFeed('college', collegeId, page);
+    if (cachedFeed && userId) {
+      // Re-format posts with current user's like status
+      const formattedPosts = await Promise.all(
+        cachedFeed.posts.map(async (post) => {
+          const postDoc = await this.postModel.findById(post.id).exec();
+          return postDoc ? this.formatPost(postDoc, userId) : post;
+        })
+      );
+      return { ...cachedFeed, posts: formattedPosts };
+    }
+
     // Verify user has access to this college panel
     let user: any = null;
     if (userId) {
@@ -176,7 +199,7 @@ export class PostService {
       posts.map((post) => this.formatPost(post, userId)),
     );
 
-    return {
+    const result = {
       college: {
         id: college.id,
         name: college.name,
@@ -190,9 +213,54 @@ export class PostService {
         totalPages: Math.ceil(total / limit),
       },
     };
+
+    // Cache the result for 5 minutes
+    await this.redisService.setPostFeed('college', collegeId, page, result, 300);
+
+    return result;
+  }
+
+  async getUserCollegeFeed(page: number = 1, limit: number = 20, userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['college'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // If user doesn't have a college, return empty feed
+    if (!user.college) {
+      return {
+        posts: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
+      };
+    }
+
+    // Use the existing college feed method
+    return this.getCollegeFeed(user.college.id, page, limit, userId);
   }
 
   async getNationalFeed(page: number = 1, limit: number = 20, userId?: string) {
+    // Try to get from cache first
+    const cachedFeed = await this.redisService.getPostFeed('national', null, page);
+    if (cachedFeed && userId) {
+      // Re-format posts with current user's like status
+      const formattedPosts = await Promise.all(
+        cachedFeed.posts.map(async (post) => {
+          const postDoc = await this.postModel.findById(post.id).exec();
+          return postDoc ? this.formatPost(postDoc, userId) : post;
+        })
+      );
+      return { ...cachedFeed, posts: formattedPosts };
+    }
+
     const skip = (page - 1) * limit;
 
     const posts = await this.postModel
@@ -211,7 +279,7 @@ export class PostService {
       posts.map((post) => this.formatPost(post, userId)),
     );
 
-    return {
+    const result = {
       posts: formattedPosts,
       pagination: {
         page,
@@ -220,6 +288,11 @@ export class PostService {
         totalPages: Math.ceil(total / limit),
       },
     };
+
+    // Cache the result for 5 minutes
+    await this.redisService.setPostFeed('national', null, page, result, 300);
+
+    return result;
   }
 
   async getPostById(postId: string, userId?: string) {
@@ -304,6 +377,7 @@ export class PostService {
   }
 
   // Likes
+  // Like/Unlike invalidation
   async likePost(userId: string, postId: string) {
     if (!Types.ObjectId.isValid(postId)) {
       throw new BadRequestException('Invalid post ID');
@@ -327,6 +401,13 @@ export class PostService {
         $inc: { likes: -1 },
         $pull: { likedBy: userId },
       });
+
+      // Invalidate feed caches
+      await this.redisService.invalidatePostFeeds('national');
+      if (post.collegeId) {
+        await this.redisService.invalidatePostFeeds('college', post.collegeId);
+      }
+
       return { liked: false };
     } else {
       // Like
@@ -340,6 +421,13 @@ export class PostService {
         $inc: { likes: 1 },
         $push: { likedBy: userId },
       });
+
+      // Invalidate feed caches
+      await this.redisService.invalidatePostFeeds('national');
+      if (post.collegeId) {
+        await this.redisService.invalidatePostFeeds('college', post.collegeId);
+      }
+
       return { liked: true };
     }
   }
@@ -570,6 +658,252 @@ export class PostService {
     return { message: 'Post unhidden successfully' };
   }
 
+  // Admin Post Management Methods
+
+  /**
+   * Admin: Create post in any panel (national or college)
+   */
+  async adminCreatePost(
+    adminUserId: string,
+    createPostDto: CreatePostDto & { panelType: 'NATIONAL' | 'COLLEGE'; collegeId?: string }
+  ) {
+    const admin = await this.userRepository.findOne({
+      where: { id: adminUserId },
+      relations: ['college'],
+    });
+
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    // Validate college for college posts
+    let college = null;
+    if (createPostDto.panelType === 'COLLEGE') {
+      if (!createPostDto.collegeId) {
+        throw new BadRequestException('College ID required for college posts');
+      }
+
+      college = await this.collegeRepository.findOne({
+        where: { id: createPostDto.collegeId }
+      });
+
+      if (!college) {
+        throw new NotFoundException('College not found');
+      }
+    }
+
+    const post = new this.postModel({
+      authorId: admin.id,
+      authorName: admin.displayName || admin.username,
+      authorUsername: admin.username,
+      authorRole: admin.role,
+      collegeId: createPostDto.panelType === 'COLLEGE' ? createPostDto.collegeId : undefined,
+      panelType: createPostDto.panelType,
+      title: createPostDto.title || '',
+      content: createPostDto.content,
+      imageUrls: createPostDto.imageUrls || [],
+      likes: 0,
+      commentCount: 0,
+      reportCount: 0,
+    });
+
+    const savedPost = await post.save();
+
+    // Update admin profile post count
+    await this.userProfileRepository.increment(
+      { userId: admin.id },
+      'postCount',
+      1,
+    );
+
+    return this.formatPost(savedPost, adminUserId);
+  }
+
+  /**
+   * Admin: Delete post from any panel
+   */
+  async adminDeletePost(adminUserId: string, postId: string) {
+    const admin = await this.userRepository.findOne({
+      where: { id: adminUserId }
+    });
+
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    const post = await this.postModel.findById(postId).exec();
+    if (!post || post.isDeleted) {
+      throw new NotFoundException('Post not found');
+    }
+
+    // Soft delete the post
+    await this.postModel.findByIdAndUpdate(postId, {
+      isDeleted: true,
+      deletedBy: adminUserId,
+      deletedAt: new Date(),
+    });
+
+    // Decrement author's post count
+    await this.userProfileRepository.decrement(
+      { userId: post.authorId },
+      'postCount',
+      1,
+    );
+
+    // Invalidate feed caches
+    await this.redisService.invalidatePostFeeds('national');
+    if (post.collegeId) {
+      await this.redisService.invalidatePostFeeds('college', post.collegeId);
+    }
+
+    return { message: 'Post deleted successfully' };
+  }
+
+  /**
+   * Admin: Get all posts across panels with filtering
+   */
+  async adminGetAllPosts(
+    adminUserId: string,
+    options: {
+      page?: number;
+      limit?: number;
+      panelType?: 'NATIONAL' | 'COLLEGE';
+      collegeId?: string;
+      includeDeleted?: boolean;
+      includeHidden?: boolean;
+      search?: string;
+    } = {}
+  ) {
+    const admin = await this.userRepository.findOne({
+      where: { id: adminUserId }
+    });
+
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    const {
+      page = 1,
+      limit = 20,
+      panelType,
+      collegeId,
+      includeDeleted = false,
+      includeHidden = true,
+      search
+    } = options;
+
+    const skip = (page - 1) * limit;
+
+    // Build query
+    const query: any = {};
+
+    if (!includeDeleted) {
+      query.isDeleted = false;
+    }
+
+    if (panelType) {
+      query.panelType = panelType;
+    }
+
+    if (collegeId) {
+      query.collegeId = collegeId;
+    }
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+        { authorUsername: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const posts = await this.postModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const total = await this.postModel.countDocuments(query);
+
+    const formattedPosts = await Promise.all(
+      posts.map(post => this.formatPost(post, adminUserId))
+    );
+
+    return {
+      posts: formattedPosts,
+      total,
+      page,
+      limit,
+      hasMore: skip + posts.length < total,
+    };
+  }
+
+  /**
+   * Admin: Flag/unflag post from any panel
+   */
+  async adminFlagPost(adminUserId: string, postId: string, reason?: string) {
+    const admin = await this.userRepository.findOne({
+      where: { id: adminUserId }
+    });
+
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    const post = await this.postModel.findById(postId).exec();
+    if (!post || post.isDeleted) {
+      throw new NotFoundException('Post not found');
+    }
+
+    // Toggle flag status
+    const isFlagged = !post.isFlagged;
+
+    await this.postModel.findByIdAndUpdate(postId, {
+      isFlagged,
+      flaggedBy: isFlagged ? adminUserId : null,
+      flaggedAt: isFlagged ? new Date() : null,
+      flagReason: isFlagged ? reason : null,
+    });
+
+    return { 
+      message: isFlagged ? 'Post flagged successfully' : 'Post unflagged successfully',
+      isFlagged 
+    };
+  }
+
+  /**
+   * Admin: Hide/unhide post from any panel
+   */
+  async adminHidePost(adminUserId: string, postId: string) {
+    const admin = await this.userRepository.findOne({
+      where: { id: adminUserId }
+    });
+
+    if (!admin || admin.role !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    const post = await this.postModel.findById(postId).exec();
+    if (!post || post.isDeleted) {
+      throw new NotFoundException('Post not found');
+    }
+
+    // Toggle hidden status
+    const isHidden = !post.isHidden;
+
+    await this.postModel.findByIdAndUpdate(postId, {
+      isHidden,
+      hiddenBy: isHidden ? adminUserId : null,
+      hiddenAt: isHidden ? new Date() : null,
+    });
+
+    return { 
+      message: isHidden ? 'Post hidden successfully' : 'Post unhidden successfully',
+      isHidden 
+    };
+  }
+
   // Helper methods
   private async formatPost(post: PostDocument, userId?: string) {
     const isLiked = userId
@@ -586,6 +920,7 @@ export class PostService {
       panelType: post.panelType,
       title: post.title,
       content: post.content,
+      imageUrls: post.imageUrls || [],
       likes: post.likes,
       commentCount: post.commentCount,
       reportCount: post.reportCount,

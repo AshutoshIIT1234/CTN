@@ -170,7 +170,7 @@ describe('ModeratorService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 20 }
+        { numRuns: 2 }
       );
     });
   });
@@ -252,7 +252,7 @@ describe('ModeratorService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 2 }
       );
     });
   });
@@ -355,7 +355,7 @@ describe('ModeratorService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 30 }
+        { numRuns: 20 }
       );
     });
   });

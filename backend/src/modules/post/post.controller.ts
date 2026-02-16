@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -19,6 +20,19 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class PostController {
   constructor(private postService: PostService) {}
 
+  // Unified Post Creation Endpoint
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  async createPost(@Request() req, @Body() createPostDto: CreatePostDto) {
+    const panelType = createPostDto.panelType || 'NATIONAL';
+    
+    if (panelType === 'COLLEGE') {
+      return await this.postService.createCollegePost(req.user.sub, createPostDto);
+    } else {
+      return await this.postService.createNationalPost(req.user.sub, createPostDto);
+    }
+  }
+
   // National Panel Endpoints
   @Post('national')
   @UseGuards(JwtAuthGuard)
@@ -32,6 +46,7 @@ export class PostController {
     @Query('limit') limit: string = '20',
     @Request() req,
   ) {
+    // Allow unauthenticated access - userId will be undefined for guests
     const userId = req.user?.sub;
     return await this.postService.getNationalFeed(
       parseInt(page),
@@ -57,6 +72,20 @@ export class PostController {
   ) {
     return await this.postService.getCollegeFeed(
       collegeId,
+      parseInt(page),
+      parseInt(limit),
+      req.user.sub,
+    );
+  }
+
+  @Get('college')
+  @UseGuards(JwtAuthGuard)
+  async getUserCollegeFeed(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '20',
+    @Request() req,
+  ) {
+    return await this.postService.getUserCollegeFeed(
       parseInt(page),
       parseInt(limit),
       req.user.sub,
@@ -149,5 +178,63 @@ export class PostController {
   @HttpCode(HttpStatus.OK)
   async unhideCollegePost(@Request() req, @Param('id') postId: string) {
     return await this.postService.unhideCollegePost(req.user.sub, postId);
+  }
+
+  // Admin Post Management Endpoints
+  @Post('admin/create')
+  @UseGuards(JwtAuthGuard)
+  async adminCreatePost(
+    @Request() req,
+    @Body() createPostDto: CreatePostDto & { panelType: 'NATIONAL' | 'COLLEGE'; collegeId?: string }
+  ) {
+    return await this.postService.adminCreatePost(req.user.sub, createPostDto);
+  }
+
+  @Delete('admin/:id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async adminDeletePost(@Request() req, @Param('id') postId: string) {
+    return await this.postService.adminDeletePost(req.user.sub, postId);
+  }
+
+  @Get('admin/all')
+  @UseGuards(JwtAuthGuard)
+  async adminGetAllPosts(
+    @Request() req,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '20',
+    @Query('panelType') panelType?: 'NATIONAL' | 'COLLEGE',
+    @Query('collegeId') collegeId?: string,
+    @Query('includeDeleted') includeDeleted: string = 'false',
+    @Query('includeHidden') includeHidden: string = 'true',
+    @Query('search') search?: string,
+  ) {
+    return await this.postService.adminGetAllPosts(req.user.sub, {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      panelType,
+      collegeId,
+      includeDeleted: includeDeleted === 'true',
+      includeHidden: includeHidden === 'true',
+      search,
+    });
+  }
+
+  @Post('admin/:id/flag')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async adminFlagPost(
+    @Request() req,
+    @Param('id') postId: string,
+    @Body() body: { reason?: string }
+  ) {
+    return await this.postService.adminFlagPost(req.user.sub, postId, body.reason);
+  }
+
+  @Post('admin/:id/hide')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async adminHidePost(@Request() req, @Param('id') postId: string) {
+    return await this.postService.adminHidePost(req.user.sub, postId);
   }
 }

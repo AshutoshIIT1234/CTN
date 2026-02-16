@@ -6,6 +6,7 @@ import { ResourceAccess, AccessType } from '../../entities/resource-access.entit
 import { User, UserRole } from '../../entities/user.entity';
 import { College } from '../../entities/college.entity';
 import { PaymentSession, PaymentStatus } from '../../entities/payment-session.entity';
+import { RedisService } from '../../services/redis.service';
 
 export interface ResourceHierarchy {
   college: College;
@@ -77,6 +78,7 @@ export class ResourceService {
     private collegeRepository: Repository<College>,
     @InjectRepository(PaymentSession)
     private paymentSessionRepository: Repository<PaymentSession>,
+    private redisService: RedisService,
   ) {}
 
   /**
@@ -84,6 +86,13 @@ export class ResourceService {
    * Implements five-level hierarchy traversal (College → Type → Dept → Batch → Files)
    */
   async getResourceHierarchy(collegeId: string, userId: string): Promise<ResourceHierarchy> {
+    // Try to get from cache first
+    const cacheKey = `hierarchy:${collegeId}:${userId}`;
+    const cachedHierarchy = await this.redisService.get(cacheKey);
+    if (cachedHierarchy) {
+      return cachedHierarchy;
+    }
+
     // Verify college exists
     const college = await this.collegeRepository.findOne({ where: { id: collegeId } });
     if (!college) {
@@ -111,20 +120,32 @@ export class ResourceService {
     // Get user's unlocked resources if browsing another college
     let unlockedResourceIds: string[] = [];
     if (user.collegeId !== collegeId) {
-      const unlocks = await this.resourceAccessRepository.find({
-        where: { userId, accessType: AccessType.PAID },
-        select: ['resourceId']
-      });
-      unlockedResourceIds = unlocks.map(unlock => unlock.resourceId);
+      const cachedUnlocks = await this.redisService.getUserUnlockRecords(userId);
+      if (cachedUnlocks) {
+        unlockedResourceIds = cachedUnlocks.map((unlock: any) => unlock.resourceId);
+      } else {
+        const unlocks = await this.resourceAccessRepository.find({
+          where: { userId, accessType: AccessType.PAID },
+          select: ['resourceId']
+        });
+        unlockedResourceIds = unlocks.map(unlock => unlock.resourceId);
+        // Cache unlock records for 30 minutes
+        await this.redisService.setUserUnlockRecords(userId, unlocks, 1800);
+      }
     }
 
     // Build hierarchy structure
     const resourceTypes = this.buildResourceTypeHierarchy(resources, user, unlockedResourceIds);
 
-    return {
+    const hierarchy = {
       college,
       resourceTypes
     };
+
+    // Cache hierarchy for 30 minutes
+    await this.redisService.set(cacheKey, hierarchy, 1800);
+
+    return hierarchy;
   }
 
   /**
@@ -311,11 +332,22 @@ export class ResourceService {
    * Get user's resource access records
    */
   async getUserResourceAccess(userId: string): Promise<ResourceAccess[]> {
-    return this.resourceAccessRepository.find({
+    // Try to get from cache first
+    const cachedRecords = await this.redisService.getUserUnlockRecords(userId);
+    if (cachedRecords) {
+      return cachedRecords;
+    }
+
+    const records = await this.resourceAccessRepository.find({
       where: { userId },
       relations: ['resource'],
       order: { unlockedAt: 'DESC' }
     });
+
+    // Cache for 30 minutes
+    await this.redisService.setUserUnlockRecords(userId, records, 1800);
+
+    return records;
   }
 
   /**
@@ -591,6 +623,12 @@ export class ResourceService {
     });
 
     await this.resourceAccessRepository.save(resourceAccess);
+
+    // Invalidate user's unlock records cache
+    await this.redisService.invalidateUserUnlockRecords(userId);
+    
+    // Invalidate resource hierarchy cache for the resource's college
+    await this.redisService.invalidateResourceHierarchy(resource.collegeId);
   }
 
   /**
@@ -628,6 +666,12 @@ export class ResourceService {
     });
 
     await this.resourceAccessRepository.save(resourceAccess);
+
+    // Invalidate user's unlock records cache
+    await this.redisService.invalidateUserUnlockRecords(userId);
+    
+    // Invalidate resource hierarchy cache for the resource's college
+    await this.redisService.invalidateResourceHierarchy(resource.collegeId);
   }
 
   /**
@@ -774,6 +818,9 @@ export class ResourceService {
 
     const savedResource = await this.resourceRepository.save(resource);
 
+    // Invalidate resource hierarchy cache for this college
+    await this.redisService.invalidateResourceHierarchy(collegeId);
+
     // Return the resource with relations loaded
     return this.resourceRepository.findOne({
       where: { id: savedResource.id },
@@ -825,5 +872,225 @@ export class ResourceService {
     }
 
     await this.resourceRepository.remove(resource);
+  }
+
+  /**
+   * Admin: Upload resource to any college
+   */
+  async adminUploadResource(
+    adminUserId: string,
+    collegeId: string,
+    resourceType: ResourceType,
+    department: string,
+    batch: string,
+    fileName: string,
+    fileUrl: string,
+    description?: string
+  ): Promise<Resource> {
+    const admin = await this.userRepository.findOne({
+      where: { id: adminUserId }
+    });
+
+    if (!admin || admin.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    // Validate college exists
+    const college = await this.collegeRepository.findOne({
+      where: { id: collegeId }
+    });
+
+    if (!college) {
+      throw new NotFoundException('College not found');
+    }
+
+    // Validate resource type
+    if (!this.validateResourceType(resourceType)) {
+      throw new BadRequestException('Invalid resource type');
+    }
+
+    const resource = this.resourceRepository.create({
+      collegeId,
+      resourceType,
+      department,
+      batch,
+      fileName,
+      fileUrl,
+      uploadedBy: adminUserId,
+      description: description || '',
+      uploadDate: new Date(),
+    });
+
+    const savedResource = await this.resourceRepository.save(resource);
+
+    // Invalidate resource hierarchy cache for this college
+    await this.redisService.invalidateResourceHierarchy(collegeId);
+
+    return savedResource;
+  }
+
+  /**
+   * Admin: Delete resource from any college
+   */
+  async adminDeleteResource(adminUserId: string, resourceId: string): Promise<void> {
+    const admin = await this.userRepository.findOne({
+      where: { id: adminUserId }
+    });
+
+    if (!admin || admin.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    const resource = await this.resourceRepository.findOne({
+      where: { id: resourceId }
+    });
+    
+    if (!resource) {
+      throw new NotFoundException('Resource not found');
+    }
+
+    await this.resourceRepository.remove(resource);
+  }
+
+  /**
+   * Admin: Get all resources across all colleges with filtering
+   */
+  async adminGetAllResources(
+    adminUserId: string,
+    options: {
+      page?: number;
+      limit?: number;
+      collegeId?: string;
+      resourceType?: ResourceType;
+      department?: string;
+      batch?: string;
+      search?: string;
+    } = {}
+  ): Promise<{
+    resources: Resource[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const admin = await this.userRepository.findOne({
+      where: { id: adminUserId }
+    });
+
+    if (!admin || admin.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    const { page = 1, limit = 20, collegeId, resourceType, department, batch, search } = options;
+    const skip = (page - 1) * limit;
+
+    // Build query
+    const queryBuilder = this.resourceRepository.createQueryBuilder('resource')
+      .leftJoinAndSelect('resource.uploader', 'uploader')
+      .leftJoinAndSelect('resource.college', 'college');
+
+    if (collegeId) {
+      queryBuilder.andWhere('resource.collegeId = :collegeId', { collegeId });
+    }
+
+    if (resourceType) {
+      queryBuilder.andWhere('resource.resourceType = :resourceType', { resourceType });
+    }
+
+    if (department) {
+      queryBuilder.andWhere('resource.department = :department', { department });
+    }
+
+    if (batch) {
+      queryBuilder.andWhere('resource.batch = :batch', { batch });
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(resource.fileName ILIKE :search OR resource.description ILIKE :search OR resource.department ILIKE :search OR resource.batch ILIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    const [resources, total] = await queryBuilder
+      .orderBy('resource.uploadDate', 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      resources,
+      total,
+      page,
+      limit,
+    };
+  }
+
+  /**
+   * Admin: Get resource statistics across all colleges
+   */
+  async adminGetResourceStatistics(adminUserId: string): Promise<{
+    totalResources: number;
+    resourcesByType: { [key in ResourceType]: number };
+    resourcesByCollege: { collegeId: string; collegeName: string; count: number }[];
+    recentUploads: Resource[];
+  }> {
+    const admin = await this.userRepository.findOne({
+      where: { id: adminUserId }
+    });
+
+    if (!admin || admin.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    // Get total resources
+    const totalResources = await this.resourceRepository.count();
+
+    // Get resources by type
+    const resourcesByTypeQuery = await this.resourceRepository
+      .createQueryBuilder('resource')
+      .select('resource.resourceType', 'type')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('resource.resourceType')
+      .getRawMany();
+
+    const resourcesByType = Object.values(ResourceType).reduce((acc, type) => {
+      acc[type] = 0;
+      return acc;
+    }, {} as { [key in ResourceType]: number });
+
+    resourcesByTypeQuery.forEach(item => {
+      resourcesByType[item.type as ResourceType] = parseInt(item.count);
+    });
+
+    // Get resources by college
+    const resourcesByCollegeQuery = await this.resourceRepository
+      .createQueryBuilder('resource')
+      .leftJoin('resource.college', 'college')
+      .select('resource.collegeId', 'collegeId')
+      .addSelect('college.name', 'collegeName')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('resource.collegeId')
+      .addGroupBy('college.name')
+      .getRawMany();
+
+    const resourcesByCollege = resourcesByCollegeQuery.map(item => ({
+      collegeId: item.collegeId,
+      collegeName: item.collegeName,
+      count: parseInt(item.count),
+    }));
+
+    // Get recent uploads (last 10)
+    const recentUploads = await this.resourceRepository.find({
+      relations: ['uploader', 'college'],
+      order: { uploadDate: 'DESC' },
+      take: 10,
+    });
+
+    return {
+      totalResources,
+      resourcesByType,
+      resourcesByCollege,
+      recentUploads,
+    };
   }
 }

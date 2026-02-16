@@ -300,4 +300,78 @@ export class ResourceController {
     await this.resourceService.deleteResource(resourceId, req.user.id);
     return { message: 'Resource deleted successfully' };
   }
+
+  /**
+   * Admin: Upload resource to any college
+   * POST /resources/admin/upload/:collegeId
+   */
+  @Post('admin/upload/:collegeId')
+  @Roles(UserRole.ADMIN)
+  async adminUploadResource(
+    @Param('collegeId') collegeId: string,
+    @Body() uploadResourceDto: UploadResourceDto,
+    @Request() req: any,
+  ): Promise<Resource> {
+    return this.resourceService.adminUploadResource(
+      req.user.id,
+      collegeId,
+      uploadResourceDto.resourceType,
+      uploadResourceDto.department,
+      uploadResourceDto.batch,
+      uploadResourceDto.fileName,
+      uploadResourceDto.fileUrl,
+      uploadResourceDto.description,
+    );
+  }
+
+  /**
+   * Admin: Delete resource from any college
+   * DELETE /resources/admin/:resourceId
+   */
+  @Delete('admin/:resourceId')
+  @Roles(UserRole.ADMIN)
+  async adminDeleteResource(
+    @Param('resourceId') resourceId: string,
+    @Request() req: any,
+  ): Promise<{ message: string }> {
+    await this.resourceService.adminDeleteResource(req.user.id, resourceId);
+    return { message: 'Resource deleted successfully' };
+  }
+
+  /**
+   * Admin: Get all resources across all colleges with filtering
+   * GET /resources/admin/all
+   */
+  @Get('admin/all')
+  @Roles(UserRole.ADMIN)
+  async adminGetAllResources(
+    @Request() req: any,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('collegeId') collegeId?: string,
+    @Query('resourceType') resourceType?: string,
+    @Query('department') department?: string,
+    @Query('batch') batch?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.resourceService.adminGetAllResources(req.user.id, {
+      page: page ? parseInt(page.toString()) : undefined,
+      limit: limit ? parseInt(limit.toString()) : undefined,
+      collegeId,
+      resourceType: resourceType as any,
+      department,
+      batch,
+      search,
+    });
+  }
+
+  /**
+   * Admin: Get resource statistics across all colleges
+   * GET /resources/admin/statistics
+   */
+  @Get('admin/statistics')
+  @Roles(UserRole.ADMIN)
+  async adminGetResourceStatistics(@Request() req: any) {
+    return this.resourceService.adminGetResourceStatistics(req.user.id);
+  }
 }

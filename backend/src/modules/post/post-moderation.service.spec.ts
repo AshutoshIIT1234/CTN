@@ -1,0 +1,12 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { getModelToken } from '@nestjs/mongoose';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Model, Types } from 'mongoose';
+import { Repository } from 'typeorm';
+import { PostService } from './post.service';
+import { Post } from '@/schemas/post.schema';
+import { Comment } from '@/schemas/comment.schema';
+import { Like } from '@/schemas/like.schema';
+import { Report } from '@/schemas/report.schema';
+import { User, UserRole } from '@/entities/user.entity';
+import { UserProfile } from '@/entities/user-profile.entity';

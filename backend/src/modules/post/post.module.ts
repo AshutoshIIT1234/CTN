@@ -11,6 +11,7 @@ import { User } from '@/entities/user.entity';
 import { UserProfile } from '@/entities/user-profile.entity';
 import { College } from '@/entities/college.entity';
 import { Moderator } from '@/entities/moderator.entity';
+import { RedisService } from '../../services/redis.service';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { Moderator } from '@/entities/moderator.entity';
     TypeOrmModule.forFeature([User, UserProfile, College, Moderator]),
   ],
   controllers: [PostController],
-  providers: [PostService],
+  providers: [PostService, RedisService],
   exports: [PostService],
 })
 export class PostModule {}

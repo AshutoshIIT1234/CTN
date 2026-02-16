@@ -56,6 +56,15 @@ export class User {
   @Column({ nullable: true })
   profilePictureUrl: string;
 
+  @Column({ default: false, nullable: true })
+  isEmailVerified: boolean;
+
+  @Column({ nullable: true })
+  emailVerificationToken: string;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  emailVerificationExpires: Date;
+
   @OneToOne(() => UserProfile, (profile) => profile.user, { cascade: true })
   profile: UserProfile;
 

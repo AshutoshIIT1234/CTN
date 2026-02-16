@@ -6,10 +6,11 @@ import { motion } from 'framer-motion'
 import { GraduationCap, Plus, Shield, AlertCircle } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/lib/api'
-import { MainLayout } from '@/components/layout/MainLayout'
-import { PostCard } from '@/components/post/PostCard'
+import { InstagramLayout } from '@/components/layout/InstagramLayout'
+import { InstagramPostCard } from '@/components/post/InstagramPostCard'
 import { CreatePostModal } from '@/components/post/CreatePostModal'
 import { PostSkeleton } from '@/components/post/PostSkeleton'
+import { LoginModal } from '@/components/premium/LoginModal'
 
 interface CollegeFeedData {
   college: {
@@ -29,6 +30,7 @@ interface CollegeFeedData {
 export default function CollegePage() {
   const { user } = useAuthStore()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [page, setPage] = useState(1)
 
   // Check if user has college access
@@ -58,168 +60,189 @@ export default function CollegePage() {
   // Access denied for non-college users
   if (!hasCollegeAccess) {
     return (
-      <MainLayout>
+      <InstagramLayout>
         <div className="max-w-2xl mx-auto">
-          <div className="text-center py-16">
-            <Shield className="w-16 h-16 text-gray-300 dark:text-dark-700 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <div className="text-center py-16 bg-white rounded-lg border border-gray-200 p-12">
+            <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
               College Panel Access Required
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-gray-600 mb-6">
               This section is only available to college users, moderators, and administrators.
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
+            <p className="text-sm text-gray-500 mb-6">
               Register with a college email address to access your college's discussion panel.
             </p>
+            <button
+              onClick={() => setLoginModalOpen(true)}
+              className="px-6 py-2 bg-royal-600 text-white rounded-lg font-semibold hover:bg-royal-700 transition-colors"
+            >
+              Login with College Email
+            </button>
           </div>
         </div>
-      </MainLayout>
+        <LoginModal
+          isOpen={loginModalOpen}
+          onClose={() => setLoginModalOpen(false)}
+          message="Login with your college email to access your college's private discussion panel"
+        />
+      </InstagramLayout>
     )
   }
 
   // No college ID available
   if (!user?.collegeId) {
     return (
-      <MainLayout>
+      <InstagramLayout>
         <div className="max-w-2xl mx-auto">
-          <div className="text-center py-16">
+          <div className="text-center py-16 bg-white rounded-lg border border-gray-200 p-12">
             <AlertCircle className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
               College Information Missing
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600">
               Your account doesn't have college information associated with it.
             </p>
           </div>
         </div>
-      </MainLayout>
+      </InstagramLayout>
     )
   }
 
   return (
-    <MainLayout>
-      <div className="max-w-2xl mx-auto">
-        {/* Header with College Branding */}
-        <div className="sticky top-0 z-10 bg-white/80 dark:bg-dark-950/80 backdrop-blur-xl border-b border-gray-200 dark:border-dark-800">
-          <div className="px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {data?.college?.logoUrl ? (
-                  <img
-                    src={data.college.logoUrl}
-                    alt={`${data.college.name} logo`}
-                    className="w-8 h-8 rounded-lg object-cover"
-                  />
-                ) : (
-                  <GraduationCap className="w-8 h-8 text-primary-600" />
-                )}
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                    {data?.college?.name || 'College Panel'}
-                  </h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    College Discussion
-                  </p>
-                </div>
+    <InstagramLayout>
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {data?.college?.logoUrl ? (
+              <img
+                src={data.college.logoUrl}
+                alt={`${data.college.name} logo`}
+                className="w-12 h-12 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 bg-gradient-to-br from-royal-500 to-primary-500 rounded-lg flex items-center justify-center">
+                <GraduationCap className="w-7 h-7 text-white" />
               </div>
-              
-              {user && (
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="btn-primary flex items-center gap-2"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span className="hidden sm:inline">Post</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Error State */}
-        {error && (
-          <div className="p-4 m-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-              <p className="text-red-600 dark:text-red-400">
-                Failed to load college feed. Please try again.
+            )}
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                College Discussion
+              </h1>
+              <p className="text-sm text-gray-600">
+                {data?.college?.name || 'Private college community'}
               </p>
             </div>
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* Feed */}
-        <div className="divide-y divide-gray-200 dark:divide-dark-800">
-          {isLoading ? (
-            <>
-              <PostSkeleton />
-              <PostSkeleton />
-              <PostSkeleton />
-            </>
-          ) : data?.posts && data.posts.length > 0 ? (
-            data.posts.map((post: any, index: number) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+      {/* Create Post Card */}
+      {user && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center">
+              <span className="text-white text-sm font-semibold">
+                {user.username[0].toUpperCase()}
+              </span>
+            </div>
+            <button
+              className="flex-1 text-left px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-full text-sm text-gray-500 transition-colors"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Share with your college community...
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600" />
+            <p className="text-red-600">
+              Failed to load college feed. Please try again.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Feed */}
+      <div>
+        {isLoading ? (
+          <>
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
+          </>
+        ) : data?.posts && data.posts.length > 0 ? (
+          data.posts.map((post: any) => (
+            <InstagramPostCard
+              key={post.id}
+              post={post}
+              onUpdate={refetch}
+              onLoginRequired={() => setLoginModalOpen(true)}
+            />
+          ))
+        ) : (
+          <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
+            <GraduationCap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No posts yet
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Be the first to start a discussion in your college!
+            </p>
+            {user && (
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="px-6 py-2 bg-royal-600 text-white rounded-lg font-semibold hover:bg-royal-700 transition-colors"
               >
-                <PostCard post={post} onUpdate={refetch} />
-              </motion.div>
-            ))
-          ) : (
-            <div className="py-16 text-center">
-              <GraduationCap className="w-16 h-16 text-gray-300 dark:text-dark-700 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No posts yet
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Be the first to start a discussion in your college!
-              </p>
-              {user && (
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="btn-primary"
-                >
-                  Create Post
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Pagination */}
-        {data?.pagination && data.pagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 py-8">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="btn-secondary disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Page {page} of {data.pagination.totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page >= data.pagination.totalPages}
-              className="btn-secondary disabled:opacity-50"
-            >
-              Next
-            </button>
+                Create Post
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      {/* Create Post Modal */}
-      {isCreateModalOpen && (
-        <CreatePostModal
-          onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={handlePostCreated}
-          panelType="COLLEGE"
-        />
+      {/* Pagination */}
+      {data?.pagination && data.pagination.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 py-8">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-600">
+            Page {page} of {data.pagination.totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= data.pagination.totalPages}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       )}
-    </MainLayout>
+
+      {/* Create Post Modal */}
+      <CreatePostModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onPostCreated={handlePostCreated}
+      />
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        message="Login with your college email to access your college's private discussion panel"
+      />
+    </InstagramLayout>
   )
 }

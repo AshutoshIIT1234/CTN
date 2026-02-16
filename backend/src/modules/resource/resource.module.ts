@@ -7,13 +7,14 @@ import { ResourceAccess } from '../../entities/resource-access.entity';
 import { User } from '../../entities/user.entity';
 import { College } from '../../entities/college.entity';
 import { PaymentSession } from '../../entities/payment-session.entity';
+import { RedisService } from '../../services/redis.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Resource, ResourceAccess, User, College, PaymentSession]),
   ],
   controllers: [ResourceController],
-  providers: [ResourceService],
+  providers: [ResourceService, RedisService],
   exports: [ResourceService],
 })
 export class ResourceModule {}

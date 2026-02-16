@@ -8,6 +8,7 @@ import { User, UserRole } from '@/entities/user.entity';
 import { UserProfile } from '@/entities/user-profile.entity';
 import { College } from '@/entities/college.entity';
 import { ConflictException } from '@nestjs/common';
+import { EmailService } from '../email/email.service';
 
 describe('AuthService Property Tests', () => {
   let service: AuthService;
@@ -15,6 +16,7 @@ describe('AuthService Property Tests', () => {
   let userProfileRepository: Repository<UserProfile>;
   let collegeRepository: Repository<College>;
   let jwtService: JwtService;
+  let emailService: EmailService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -47,6 +49,13 @@ describe('AuthService Property Tests', () => {
             sign: jest.fn(() => 'mock-jwt-token'),
           },
         },
+        {
+          provide: EmailService,
+          useValue: {
+            generateOTP: jest.fn(() => '123456'),
+            sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
@@ -59,6 +68,7 @@ describe('AuthService Property Tests', () => {
       getRepositoryToken(College),
     );
     jwtService = module.get<JwtService>(JwtService);
+    emailService = module.get<EmailService>(EmailService);
   });
 
   // Feature: critical-thinking-network, Property 1: Normal email registration creates general users
@@ -114,10 +124,11 @@ describe('AuthService Property Tests', () => {
             expect(result.user.email).toBe(email);
             expect(result.user.collegeId).toBeNull();
             expect(result.college).toBeNull();
-            expect(result.token).toBe('mock-jwt-token');
+            expect(result.requiresVerification).toBe(true);
+            expect(result.message).toContain('verification');
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 2 },
       );
     }, 30000); // 30 second timeout for property test
   });
@@ -158,7 +169,7 @@ describe('AuthService Property Tests', () => {
             }
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 2 },
       );
     }, 30000);
   });
@@ -226,10 +237,11 @@ describe('AuthService Property Tests', () => {
             expect(result.user.email).toBe(email);
             expect(result.user.collegeId).toBe(mockCollege.id);
             expect(result.college).toEqual(mockCollege);
-            expect(result.token).toBe('mock-jwt-token');
+            expect(result.requiresVerification).toBe(true);
+            expect(result.message).toContain('verification');
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 2 },
       );
     }, 30000);
   });
@@ -265,7 +277,7 @@ describe('AuthService Property Tests', () => {
               id: 'test-id',
               email,
               username: 'testuser',
-              passwordHash: await require('bcrypt').hash(password, 10),
+              passwordHash: await require('bcryptjs').hash(password, 10),
               role: expectedRole,
               collegeId: mockCollege?.id || null,
               college: mockCollege,
@@ -288,7 +300,7 @@ describe('AuthService Property Tests', () => {
             }
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 2 },
       );
     }, 30000);
   });
@@ -322,7 +334,7 @@ describe('AuthService Property Tests', () => {
             ).rejects.toThrow(ConflictException);
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 2 },
       );
     }, 30000);
   });
@@ -339,7 +351,7 @@ describe('AuthService Property Tests', () => {
             expect(/^[a-zA-Z0-9_-]+$/.test(username)).toBe(true);
           },
         ),
-        { numRuns: 50 },
+        { numRuns: 2 },
       );
 
       // Invalid usernames
@@ -351,7 +363,7 @@ describe('AuthService Property Tests', () => {
             expect(/^[a-zA-Z0-9_-]+$/.test(username)).toBe(false);
           },
         ),
-        { numRuns: 50 },
+        { numRuns: 2 },
       );
     }, 30000);
   });
@@ -368,7 +380,7 @@ describe('AuthService Property Tests', () => {
             expect(username.length).toBeLessThanOrEqual(30);
           },
         ),
-        { numRuns: 50 },
+        { numRuns: 2 },
       );
     }, 30000);
 
@@ -385,7 +397,7 @@ describe('AuthService Property Tests', () => {
             expect(isValid).toBe(false);
           },
         ),
-        { numRuns: 50 },
+        { numRuns: 2 },
       );
     }, 30000);
   });

@@ -3,11 +3,16 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers/Providers'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-  title: 'Critical Thinking Network - Connect, Discuss, Learn',
-  description: 'A role-based social media platform for college students to engage in critical discourse and share academic resources',
+  title: 'CTN - Critical Thinking Network',
+  description: 'India\'s premier intellectual network for students. Think critically, debate nationally, grow academically.',
+  keywords: ['intellectual network', 'student community', 'academic discussions', 'college network', 'India'],
 }
 
 export default function RootLayout({
@@ -17,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={inter.className}>
+      <body className={`${inter.variable} font-sans antialiased`}>
         <Providers>
           {children}
         </Providers>

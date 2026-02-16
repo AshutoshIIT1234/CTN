@@ -13,4 +13,14 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
+  // Performance optimizations
+  testTimeout: 5000, // Reduced from default 10s to 5s
+  maxWorkers: '50%', // Use half of available CPU cores
+  cache: true,
+  cacheDirectory: '<rootDir>/../.jest-cache',
+  // Skip coverage collection during development
+  collectCoverage: false,
+  // Faster test execution
+  verbose: false,
+  silent: false,
 };

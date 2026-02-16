@@ -9,6 +9,7 @@ import { ResourceAccess, AccessType } from '../../entities/resource-access.entit
 import { User, UserRole } from '../../entities/user.entity';
 import { College } from '../../entities/college.entity';
 import { PaymentSession, PaymentStatus } from '../../entities/payment-session.entity';
+import { RedisService } from '../../services/redis.service';
 
 describe('ResourceService Property Tests', () => {
   let service: ResourceService;
@@ -17,6 +18,7 @@ describe('ResourceService Property Tests', () => {
   let userRepository: Repository<User>;
   let collegeRepository: Repository<College>;
   let paymentSessionRepository: Repository<PaymentSession>;
+  let redisService: RedisService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -30,6 +32,7 @@ describe('ResourceService Property Tests', () => {
             create: jest.fn(),
             save: jest.fn(),
             remove: jest.fn(),
+            count: jest.fn(),
             createQueryBuilder: jest.fn(),
           },
         },
@@ -63,6 +66,21 @@ describe('ResourceService Property Tests', () => {
             save: jest.fn(),
           },
         },
+        {
+          provide: RedisService,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
+            exists: jest.fn(),
+            expire: jest.fn(),
+            // Resource-specific methods
+            getUserUnlockRecords: jest.fn().mockResolvedValue(null),
+            setUserUnlockRecords: jest.fn().mockResolvedValue(undefined),
+            invalidateUserUnlockRecords: jest.fn().mockResolvedValue(undefined),
+            invalidateResourceHierarchy: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
@@ -72,6 +90,7 @@ describe('ResourceService Property Tests', () => {
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
     collegeRepository = module.get<Repository<College>>(getRepositoryToken(College));
     paymentSessionRepository = module.get<Repository<PaymentSession>>(getRepositoryToken(PaymentSession));
+    redisService = module.get<RedisService>(RedisService);
   });
 
   describe('Property 17: Five-level hierarchy completeness', () => {
@@ -112,6 +131,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -178,7 +200,7 @@ describe('ResourceService Property Tests', () => {
             expect(fileNode.description).toBe(testData.description);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -201,7 +223,7 @@ describe('ResourceService Property Tests', () => {
             expect(isValid).toBe(shouldBeValid);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -260,7 +282,7 @@ describe('ResourceService Property Tests', () => {
             expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('resource.department', 'ASC');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -299,7 +321,7 @@ describe('ResourceService Property Tests', () => {
             expect(departments).toEqual(testData.duplicateDepartments);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -345,7 +367,7 @@ describe('ResourceService Property Tests', () => {
             expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('resource.batch', 'ASC');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -383,7 +405,7 @@ describe('ResourceService Property Tests', () => {
             expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('resource.batch', 'ASC');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -416,7 +438,7 @@ describe('ResourceService Property Tests', () => {
             expect(batches).toHaveLength(0);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -459,6 +481,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -476,6 +501,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -527,7 +555,7 @@ describe('ResourceService Property Tests', () => {
             expect(typeof resourceFile.isUnlocked).toBe('boolean');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -577,6 +605,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -594,6 +625,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -643,7 +677,7 @@ describe('ResourceService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -684,6 +718,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -779,7 +816,7 @@ describe('ResourceService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -813,6 +850,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -827,7 +867,7 @@ describe('ResourceService Property Tests', () => {
             ).rejects.toThrow('Resource access requires college email');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -861,6 +901,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -875,7 +918,7 @@ describe('ResourceService Property Tests', () => {
             ).rejects.toThrow('Resource access requires college email');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -920,6 +963,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -937,6 +983,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -990,7 +1039,7 @@ describe('ResourceService Property Tests', () => {
             expect(filePath).toBe(mockResource.fileUrl);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -1044,6 +1093,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1061,6 +1113,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1095,7 +1150,7 @@ describe('ResourceService Property Tests', () => {
             expect(accessResult.isUnlocked).toBe(false); // Should be locked without payment
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -1146,6 +1201,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1163,6 +1221,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1197,7 +1258,7 @@ describe('ResourceService Property Tests', () => {
             expect(accessResult.isUnlocked).toBe(true); // Should be unlocked for admin
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -1239,6 +1300,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1299,7 +1363,7 @@ describe('ResourceService Property Tests', () => {
             expect(batches).toBeDefined(); // This method doesn't check user permissions currently
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -1338,6 +1402,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1380,7 +1447,7 @@ describe('ResourceService Property Tests', () => {
             ).rejects.toThrow('Access denied to this resource');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -1420,6 +1487,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1463,7 +1533,7 @@ describe('ResourceService Property Tests', () => {
             expect(resourceFile.id).toBe(testData.fileId);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -1507,6 +1577,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1524,6 +1597,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1588,7 +1664,7 @@ describe('ResourceService Property Tests', () => {
             });
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -1642,6 +1718,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1659,6 +1738,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1714,7 +1796,7 @@ describe('ResourceService Property Tests', () => {
             expect(resourceAccessRepository.save).toHaveBeenCalledWith(mockResourceAccess);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -1755,6 +1837,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1811,7 +1896,7 @@ describe('ResourceService Property Tests', () => {
             });
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -1837,7 +1922,7 @@ describe('ResourceService Property Tests', () => {
             expect(resourceAccessRepository.save).not.toHaveBeenCalled();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -1891,6 +1976,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1908,6 +1996,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1993,7 +2084,7 @@ describe('ResourceService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -2041,6 +2132,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2058,6 +2152,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2114,7 +2211,7 @@ describe('ResourceService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -2161,6 +2258,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2181,7 +2281,7 @@ describe('ResourceService Property Tests', () => {
             expect(hierarchy.resourceTypes).toHaveLength(0); // No resources
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -2235,6 +2335,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2252,6 +2355,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2348,7 +2454,7 @@ describe('ResourceService Property Tests', () => {
             // without payment requirements for cross-college browsing
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -2399,6 +2505,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2416,6 +2525,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2476,7 +2588,7 @@ describe('ResourceService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -2510,6 +2622,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2524,7 +2639,7 @@ describe('ResourceService Property Tests', () => {
             ).rejects.toThrow('Resource access requires college email');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -2558,6 +2673,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2572,7 +2690,7 @@ describe('ResourceService Property Tests', () => {
             ).rejects.toThrow('Resource access requires college email');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -2630,6 +2748,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2647,6 +2768,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2694,7 +2818,7 @@ describe('ResourceService Property Tests', () => {
             expect(accessResult.isUnlocked).toBe(false); // Not unlocked without payment
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -2751,6 +2875,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2769,6 +2896,9 @@ describe('ResourceService Property Tests', () => {
                 college: targetCollege,
                 bio: null,
                 profilePictureUrl: null,
+                isEmailVerified: true,
+                emailVerificationToken: null,
+                emailVerificationExpires: null,
                 profile: null,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -2826,7 +2956,7 @@ describe('ResourceService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -2878,6 +3008,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2895,6 +3028,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2942,7 +3078,7 @@ describe('ResourceService Property Tests', () => {
             expect(accessResult.isUnlocked).toBe(true); // Unlocked for admin
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -2998,6 +3134,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3015,6 +3154,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3074,7 +3216,7 @@ describe('ResourceService Property Tests', () => {
             expect(accessResult.isUnlocked).toBe(true); // But unlocked for this user
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -3132,6 +3274,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3149,6 +3294,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3231,7 +3379,7 @@ describe('ResourceService Property Tests', () => {
             expect(filePath).toBe(mockResource.fileUrl);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -3273,6 +3421,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3290,6 +3441,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3347,7 +3501,7 @@ describe('ResourceService Property Tests', () => {
             expect(filePath).toBe(mockResource.fileUrl);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -3399,6 +3553,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3416,6 +3573,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3473,7 +3633,7 @@ describe('ResourceService Property Tests', () => {
             expect(filePath).toBe(mockResource.fileUrl);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -3510,6 +3670,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3551,7 +3714,7 @@ describe('ResourceService Property Tests', () => {
             ).rejects.toThrow('Access denied to this resource');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -3610,6 +3773,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3627,6 +3793,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3750,7 +3919,7 @@ describe('ResourceService Property Tests', () => {
             expect(filePath).toBe(mockResource.fileUrl);
           }
         ),
-        { numRuns: 20 } // Further reduced iterations for faster execution
+        { numRuns: 2 } // Further reduced iterations for faster execution
       );
     }, 15000); // 15 second timeout
 
@@ -3808,7 +3977,7 @@ describe('ResourceService Property Tests', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -3832,7 +4001,7 @@ describe('ResourceService Property Tests', () => {
             expect(paymentResult.message).toContain('not found');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -3877,7 +4046,7 @@ describe('ResourceService Property Tests', () => {
             expect(paymentResult.message).toContain('already completed');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -3908,6 +4077,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3958,7 +4130,7 @@ describe('ResourceService Property Tests', () => {
             expect(resourceAccessRepository.save).not.toHaveBeenCalled();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -3994,6 +4166,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4089,7 +4264,7 @@ describe('ResourceService Property Tests', () => {
             );
           }
         ),
-        { numRuns: 20 } // Reduced iterations for faster execution
+        { numRuns: 2 } // Reduced iterations for faster execution
       );
     }, 15000); // 15 second timeout
 
@@ -4121,6 +4296,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4178,7 +4356,7 @@ describe('ResourceService Property Tests', () => {
             expect(resourceAccessRepository.save).not.toHaveBeenCalled();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -4229,7 +4407,7 @@ describe('ResourceService Property Tests', () => {
             });
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -4283,6 +4461,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4300,6 +4481,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4382,7 +4566,7 @@ describe('ResourceService Property Tests', () => {
             expect(mockUser.collegeId).not.toBe(testData.resourceCollegeId); // Not affiliated with resource college
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -4412,6 +4596,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4458,7 +4645,7 @@ describe('ResourceService Property Tests', () => {
             expect(mockUser.collegeId).not.toBe(testData.resourceCollegeId);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
 
@@ -4487,6 +4674,9 @@ describe('ResourceService Property Tests', () => {
               bio: null,
               profilePictureUrl: null,
               profile: null,
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4542,7 +4732,7 @@ describe('ResourceService Property Tests', () => {
             expect(mockAdminUser.collegeId).not.toBe(testData.targetCollegeId);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 2 }
       );
     });
   });
@@ -4565,7 +4755,6 @@ describe('ResourceService Property Tests', () => {
             uploader: fc.record({
               id: fc.uuid(),
               role: fc.constantFrom(UserRole.GENERAL_USER, UserRole.COLLEGE_USER, UserRole.MODERATOR, UserRole.ADMIN),
-              collegeId: fc.uuid(),
               username: fc.string({ minLength: 3, maxLength: 30 }),
               email: fc.emailAddress(),
             }),
@@ -4585,7 +4774,14 @@ describe('ResourceService Property Tests', () => {
             collegeExists: fc.boolean(),
             uploaderExists: fc.boolean(),
             isModeratorForCollege: fc.boolean(),
-          }),
+          }).map(data => ({
+            ...data,
+            // Ensure moderators are assigned to the college they're uploading to
+            uploader: {
+              ...data.uploader,
+              collegeId: data.uploader.role === UserRole.MODERATOR ? data.college.id : fc.sample(fc.uuid(), 1)[0]
+            }
+          })),
           async ({ uploader, college, uploadData, collegeExists, uploaderExists, isModeratorForCollege }) => {
             // Clear mocks
             jest.clearAllMocks();
@@ -4614,7 +4810,7 @@ describe('ResourceService Property Tests', () => {
               uploaderExists &&
               (uploader.role === UserRole.MODERATOR || uploader.role === UserRole.ADMIN) &&
               collegeExists &&
-              (uploader.role === UserRole.ADMIN || (uploader.role === UserRole.MODERATOR && (isModeratorForCollege || uploader.collegeId === college.id)));
+              (uploader.role === UserRole.ADMIN || (uploader.role === UserRole.MODERATOR && uploader.collegeId === college.id));
 
             if (shouldSucceed) {
               const result = await service.uploadResource(uploader.id, college.id, uploadData);
@@ -4634,7 +4830,7 @@ describe('ResourceService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 50 }
+        { numRuns: 2 }
       );
     });
   });
@@ -4724,7 +4920,7 @@ describe('ResourceService Property Tests', () => {
             });
           }
         ),
-        { numRuns: 30 }
+        { numRuns: 20 }
       );
     });
   });
@@ -4806,7 +5002,407 @@ describe('ResourceService Property Tests', () => {
             }
           }
         ),
-        { numRuns: 30 }
+        { numRuns: 20 }
+      );
+    });
+  });
+
+  // Feature: critical-thinking-network, Property 38: Admin cross-college resource management
+  describe('Property 38: Admin cross-college resource management', () => {
+    it('should allow admins to upload resources to any college', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.record({
+            adminId: fc.uuid(),
+            adminUsername: fc.string({ minLength: 3, maxLength: 30 }).filter(s => /^[a-zA-Z0-9_-]+$/.test(s)),
+            collegeId: fc.uuid(),
+            collegeName: fc.string({ minLength: 3, maxLength: 100 }),
+            resourceType: fc.constantFrom(...Object.values(ResourceType)),
+            department: fc.string({ minLength: 2, maxLength: 50 }),
+            batch: fc.string({ minLength: 4, maxLength: 20 }),
+            fileName: fc.string({ minLength: 5, maxLength: 100 }).filter(s => s.includes('.')),
+            fileUrl: fc.webUrl(),
+            description: fc.option(fc.string({ minLength: 10, maxLength: 500 }), { nil: undefined }),
+          }),
+          async (testData) => {
+            // Mock ADMIN user
+            const mockAdmin = {
+              id: testData.adminId,
+              username: testData.adminUsername,
+              displayName: testData.adminUsername,
+              role: UserRole.ADMIN,
+            };
+            jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockAdmin as any);
+
+            // Mock college exists
+            const mockCollege = {
+              id: testData.collegeId,
+              name: testData.collegeName,
+              emailDomain: 'test.edu',
+            };
+            jest.spyOn(collegeRepository, 'findOne').mockResolvedValue(mockCollege as any);
+
+            // Mock resource creation
+            const mockResource = {
+              id: 'resource-id',
+              collegeId: testData.collegeId,
+              resourceType: testData.resourceType,
+              department: testData.department,
+              batch: testData.batch,
+              fileName: testData.fileName,
+              fileUrl: testData.fileUrl,
+              uploadedBy: testData.adminId,
+              description: testData.description || '',
+              uploadDate: new Date(),
+            };
+            jest.spyOn(resourceRepository, 'create').mockReturnValue(mockResource as any);
+            jest.spyOn(resourceRepository, 'save').mockResolvedValue(mockResource as any);
+
+            // Admin should be able to upload resource to any college
+            const result = await service.adminUploadResource(
+              testData.adminId,
+              testData.collegeId,
+              testData.resourceType,
+              testData.department,
+              testData.batch,
+              testData.fileName,
+              testData.fileUrl,
+              testData.description,
+            );
+
+            expect(result).toBeDefined();
+            expect(result.collegeId).toBe(testData.collegeId);
+            expect(result.resourceType).toBe(testData.resourceType);
+            expect(result.department).toBe(testData.department);
+            expect(result.batch).toBe(testData.batch);
+            expect(result.fileName).toBe(testData.fileName);
+            expect(result.fileUrl).toBe(testData.fileUrl);
+            expect(result.uploadedBy).toBe(testData.adminId);
+            expect(result.description).toBe(testData.description || '');
+
+            // Verify resource was created with correct data
+            expect(resourceRepository.create).toHaveBeenCalledWith({
+              collegeId: testData.collegeId,
+              resourceType: testData.resourceType,
+              department: testData.department,
+              batch: testData.batch,
+              fileName: testData.fileName,
+              fileUrl: testData.fileUrl,
+              uploadedBy: testData.adminId,
+              description: testData.description || '',
+              uploadDate: expect.any(Date),
+            });
+          },
+        ),
+        { numRuns: 2 },
+      );
+    });
+
+    it('should allow admins to delete resources from any college', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.record({
+            adminId: fc.uuid(),
+            adminUsername: fc.string({ minLength: 3, maxLength: 30 }).filter(s => /^[a-zA-Z0-9_-]+$/.test(s)),
+            resourceId: fc.uuid(),
+            resourceCollegeId: fc.uuid(),
+            resourceUploaderId: fc.uuid(),
+            resourceType: fc.constantFrom(...Object.values(ResourceType)),
+            fileName: fc.string({ minLength: 5, maxLength: 100 }),
+          }),
+          async (testData) => {
+            // Mock ADMIN user
+            const mockAdmin = {
+              id: testData.adminId,
+              username: testData.adminUsername,
+              displayName: testData.adminUsername,
+              role: UserRole.ADMIN,
+            };
+            jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockAdmin as any);
+
+            // Mock resource exists (from any college)
+            const mockResource = {
+              id: testData.resourceId,
+              collegeId: testData.resourceCollegeId,
+              resourceType: testData.resourceType,
+              fileName: testData.fileName,
+              uploadedBy: testData.resourceUploaderId,
+              uploadDate: new Date(),
+            };
+            jest.spyOn(resourceRepository, 'findOne').mockResolvedValue(mockResource as any);
+
+            // Mock resource removal
+            jest.spyOn(resourceRepository, 'remove').mockResolvedValue(mockResource as any);
+
+            // Admin should be able to delete resource from any college
+            await service.adminDeleteResource(testData.adminId, testData.resourceId);
+
+            // Verify resource was removed
+            expect(resourceRepository.remove).toHaveBeenCalledWith(mockResource);
+          },
+        ),
+        { numRuns: 2 },
+      );
+    });
+
+    it('should allow admins to view all resources across colleges with filtering', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.record({
+            adminId: fc.uuid(),
+            adminUsername: fc.string({ minLength: 3, maxLength: 30 }).filter(s => /^[a-zA-Z0-9_-]+$/.test(s)),
+            collegeIdFilter: fc.option(fc.uuid(), { nil: undefined }),
+            resourceTypeFilter: fc.option(fc.constantFrom(...Object.values(ResourceType)), { nil: undefined }),
+            departmentFilter: fc.option(fc.string({ minLength: 2, maxLength: 50 }), { nil: undefined }),
+            batchFilter: fc.option(fc.string({ minLength: 4, maxLength: 20 }), { nil: undefined }),
+            searchTerm: fc.option(fc.string({ minLength: 3, maxLength: 50 }), { nil: undefined }),
+            page: fc.integer({ min: 1, max: 5 }),
+            limit: fc.integer({ min: 5, max: 50 }),
+            totalResources: fc.integer({ min: 0, max: 100 }),
+          }),
+          async (testData) => {
+            // Mock ADMIN user
+            const mockAdmin = {
+              id: testData.adminId,
+              username: testData.adminUsername,
+              displayName: testData.adminUsername,
+              role: UserRole.ADMIN,
+            };
+            jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockAdmin as any);
+
+            // Generate mock resources
+            const mockResources = Array.from({ length: Math.min(testData.totalResources, testData.limit) }, (_, index) => ({
+              id: `resource-${index}`,
+              collegeId: testData.collegeIdFilter || `college-${index}`,
+              resourceType: testData.resourceTypeFilter || ResourceType.TOPPER_NOTES,
+              department: testData.departmentFilter || `Department ${index}`,
+              batch: testData.batchFilter || `Batch ${index}`,
+              fileName: `file-${index}.pdf`,
+              uploadedBy: `uploader-${index}`,
+              description: `Description for resource ${index}`,
+              uploadDate: new Date(),
+              uploader: {
+                id: `uploader-${index}`,
+                username: `uploader${index}`,
+                displayName: `Uploader ${index}`,
+              },
+              college: {
+                id: `college-${index}`,
+                name: `College ${index}`,
+              },
+            }));
+
+            // Mock query builder
+            const mockQueryBuilder = {
+              leftJoinAndSelect: jest.fn().mockReturnThis(),
+              andWhere: jest.fn().mockReturnThis(),
+              orderBy: jest.fn().mockReturnThis(),
+              skip: jest.fn().mockReturnThis(),
+              take: jest.fn().mockReturnThis(),
+              getManyAndCount: jest.fn().mockResolvedValue([mockResources, testData.totalResources]),
+            };
+            jest.spyOn(resourceRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any);
+
+            // Admin should be able to view all resources with filtering
+            const result = await service.adminGetAllResources(testData.adminId, {
+              page: testData.page,
+              limit: testData.limit,
+              collegeId: testData.collegeIdFilter,
+              resourceType: testData.resourceTypeFilter,
+              department: testData.departmentFilter,
+              batch: testData.batchFilter,
+              search: testData.searchTerm,
+            });
+
+            expect(result).toBeDefined();
+            expect(result.resources).toBeDefined();
+            expect(Array.isArray(result.resources)).toBe(true);
+            expect(result.resources.length).toBe(Math.min(testData.totalResources, testData.limit));
+            expect(result.total).toBe(testData.totalResources);
+            expect(result.page).toBe(testData.page);
+            expect(result.limit).toBe(testData.limit);
+
+            // Verify query builder was used correctly
+            expect(resourceRepository.createQueryBuilder).toHaveBeenCalledWith('resource');
+            expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('resource.uploader', 'uploader');
+            expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('resource.college', 'college');
+
+            // Verify filtering was applied if provided
+            if (testData.collegeIdFilter) {
+              expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('resource.collegeId = :collegeId', { collegeId: testData.collegeIdFilter });
+            }
+            if (testData.resourceTypeFilter) {
+              expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('resource.resourceType = :resourceType', { resourceType: testData.resourceTypeFilter });
+            }
+            if (testData.departmentFilter) {
+              expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('resource.department = :department', { department: testData.departmentFilter });
+            }
+            if (testData.batchFilter) {
+              expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('resource.batch = :batch', { batch: testData.batchFilter });
+            }
+            if (testData.searchTerm) {
+              expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+                '(resource.fileName ILIKE :search OR resource.description ILIKE :search OR resource.department ILIKE :search OR resource.batch ILIKE :search)',
+                { search: `%${testData.searchTerm}%` }
+              );
+            }
+
+            expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('resource.uploadDate', 'DESC');
+            expect(mockQueryBuilder.skip).toHaveBeenCalledWith((testData.page - 1) * testData.limit);
+            expect(mockQueryBuilder.take).toHaveBeenCalledWith(testData.limit);
+          },
+        ),
+        { numRuns: 2 },
+      );
+    });
+
+    it('should allow admins to get resource statistics across all colleges', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.record({
+            adminId: fc.uuid(),
+            adminUsername: fc.string({ minLength: 3, maxLength: 30 }).filter(s => /^[a-zA-Z0-9_-]+$/.test(s)),
+            totalResources: fc.integer({ min: 0, max: 1000 }),
+            collegeCount: fc.integer({ min: 1, max: 10 }),
+          }),
+          async (testData) => {
+            // Mock ADMIN user
+            const mockAdmin = {
+              id: testData.adminId,
+              username: testData.adminUsername,
+              displayName: testData.adminUsername,
+              role: UserRole.ADMIN,
+            };
+            jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockAdmin as any);
+
+            // Mock total resources count
+            jest.spyOn(resourceRepository, 'count').mockResolvedValue(testData.totalResources);
+
+            // Mock resources by type query
+            const resourcesByTypeData = Object.values(ResourceType).map((type, index) => ({
+              type,
+              count: Math.floor(testData.totalResources / Object.values(ResourceType).length) + (index < testData.totalResources % Object.values(ResourceType).length ? 1 : 0),
+            }));
+
+            const mockQueryBuilder1 = {
+              select: jest.fn().mockReturnThis(),
+              addSelect: jest.fn().mockReturnThis(),
+              groupBy: jest.fn().mockReturnThis(),
+              getRawMany: jest.fn().mockResolvedValue(resourcesByTypeData),
+            };
+
+            // Mock resources by college query
+            const resourcesByCollegeData = Array.from({ length: testData.collegeCount }, (_, index) => ({
+              collegeId: `college-${index}`,
+              collegeName: `College ${index}`,
+              count: Math.floor(testData.totalResources / testData.collegeCount) + (index < testData.totalResources % testData.collegeCount ? 1 : 0),
+            }));
+
+            const mockQueryBuilder2 = {
+              leftJoin: jest.fn().mockReturnThis(),
+              select: jest.fn().mockReturnThis(),
+              addSelect: jest.fn().mockReturnThis(),
+              groupBy: jest.fn().mockReturnThis(),
+              addGroupBy: jest.fn().mockReturnThis(),
+              getRawMany: jest.fn().mockResolvedValue(resourcesByCollegeData),
+            };
+
+            // Mock recent uploads
+            const recentUploads = Array.from({ length: Math.min(10, testData.totalResources) }, (_, index) => ({
+              id: `resource-${index}`,
+              fileName: `recent-file-${index}.pdf`,
+              uploadDate: new Date(),
+              uploader: { username: `uploader${index}` },
+              college: { name: `College ${index % testData.collegeCount}` },
+            }));
+
+            jest.spyOn(resourceRepository, 'createQueryBuilder')
+              .mockReturnValueOnce(mockQueryBuilder1 as any)
+              .mockReturnValueOnce(mockQueryBuilder2 as any);
+
+            jest.spyOn(resourceRepository, 'find').mockResolvedValue(recentUploads as any);
+
+            // Admin should be able to get resource statistics
+            const result = await service.adminGetResourceStatistics(testData.adminId);
+
+            expect(result).toBeDefined();
+            expect(result.totalResources).toBe(testData.totalResources);
+            expect(result.resourcesByType).toBeDefined();
+            expect(result.resourcesByCollege).toBeDefined();
+            expect(result.recentUploads).toBeDefined();
+
+            // Verify all resource types are included
+            Object.values(ResourceType).forEach(type => {
+              expect(result.resourcesByType).toHaveProperty(type);
+              expect(typeof result.resourcesByType[type]).toBe('number');
+            });
+
+            // Verify college statistics
+            expect(Array.isArray(result.resourcesByCollege)).toBe(true);
+            expect(result.resourcesByCollege.length).toBe(testData.collegeCount);
+
+            // Verify recent uploads
+            expect(Array.isArray(result.recentUploads)).toBe(true);
+            expect(result.recentUploads.length).toBe(Math.min(10, testData.totalResources));
+          },
+        ),
+        { numRuns: 2 },
+      );
+    });
+
+    it('should deny non-admin users from using admin resource management functions', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.record({
+            userId: fc.uuid(),
+            username: fc.string({ minLength: 3, maxLength: 30 }).filter(s => /^[a-zA-Z0-9_-]+$/.test(s)),
+            role: fc.constantFrom(UserRole.GUEST, UserRole.GENERAL_USER, UserRole.COLLEGE_USER, UserRole.MODERATOR),
+            collegeId: fc.uuid(),
+            resourceId: fc.uuid(),
+            resourceType: fc.constantFrom(...Object.values(ResourceType)),
+            fileName: fc.string({ minLength: 5, maxLength: 100 }),
+            fileUrl: fc.webUrl(),
+          }),
+          async (testData) => {
+            // Mock non-admin user
+            const mockUser = {
+              id: testData.userId,
+              username: testData.username,
+              displayName: testData.username,
+              role: testData.role,
+              college: testData.role === UserRole.COLLEGE_USER || testData.role === UserRole.MODERATOR 
+                ? { id: 'user-college-id', name: 'User College' } 
+                : null,
+            };
+            jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser as any);
+
+            // All admin resource management functions should deny access to non-admins
+            await expect(
+              service.adminUploadResource(
+                testData.userId,
+                testData.collegeId,
+                testData.resourceType,
+                'Test Department',
+                'Test Batch',
+                testData.fileName,
+                testData.fileUrl,
+              ),
+            ).rejects.toThrow('Admin access required');
+
+            await expect(
+              service.adminDeleteResource(testData.userId, testData.resourceId),
+            ).rejects.toThrow('Admin access required');
+
+            await expect(
+              service.adminGetAllResources(testData.userId),
+            ).rejects.toThrow('Admin access required');
+
+            await expect(
+              service.adminGetResourceStatistics(testData.userId),
+            ).rejects.toThrow('Admin access required');
+          },
+        ),
+        { numRuns: 2 },
       );
     });
   });

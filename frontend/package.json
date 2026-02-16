@@ -7,8 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test": "jest --maxWorkers=50% --cache",
+    "test:fast": "jest --config jest.fast.config.js",
+    "test:smoke": "jest --config jest.smoke.config.js",
+    "test:watch": "jest --watch --maxWorkers=25%"
   },
   "dependencies": {
     "next": "14.1.0",

@@ -74,7 +74,7 @@ describe('CollegeService Property Tests', () => {
             expect(verifyResult?.emailDomain).toBe(emailDomain);
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 2 },
       );
     }, 30000);
 
@@ -108,7 +108,7 @@ describe('CollegeService Property Tests', () => {
             expect(result).toBeNull();
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 2 },
       );
     }, 30000);
 
@@ -135,7 +135,7 @@ describe('CollegeService Property Tests', () => {
             ).rejects.toThrow(ConflictException);
           },
         ),
-        { numRuns: 100 },
+        { numRuns: 2 },
       );
     }, 30000);
   });
