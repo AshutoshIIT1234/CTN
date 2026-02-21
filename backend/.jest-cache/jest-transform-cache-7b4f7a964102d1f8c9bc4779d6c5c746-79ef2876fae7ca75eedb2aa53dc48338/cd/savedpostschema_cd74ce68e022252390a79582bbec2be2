@@ -1,0 +1,34 @@
+2befe7a09c5efac23d198d513d802957
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SavedPostSchema = exports.SavedPost = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+let SavedPost = class SavedPost {
+};
+exports.SavedPost = SavedPost;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, index: true }),
+    __metadata("design:type", String)
+], SavedPost.prototype, "userId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, type: mongoose_2.Types.ObjectId, ref: 'Post', index: true }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], SavedPost.prototype, "postId", void 0);
+exports.SavedPost = SavedPost = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], SavedPost);
+exports.SavedPostSchema = mongoose_1.SchemaFactory.createForClass(SavedPost);
+// Compound index for efficient queries
+exports.SavedPostSchema.index({ userId: 1, postId: 1 }, { unique: true });
+exports.SavedPostSchema.index({ userId: 1, createdAt: -1 });
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxIUFxcRGVza3RvcFxcQ1ROXFxiYWNrZW5kXFxzcmNcXHNjaGVtYXNcXHNhdmVkLXBvc3Quc2NoZW1hLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLCtDQUErRDtBQUMvRCx1Q0FBMkM7QUFLcEMsSUFBTSxTQUFTLEdBQWYsTUFBTSxTQUFTO0NBTXJCLENBQUE7QUFOWSw4QkFBUztBQUVwQjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxLQUFLLEVBQUUsSUFBSSxFQUFFLENBQUM7O3lDQUN2QjtBQUdmO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLElBQUksRUFBRSxnQkFBSyxDQUFDLFFBQVEsRUFBRSxHQUFHLEVBQUUsTUFBTSxFQUFFLEtBQUssRUFBRSxJQUFJLEVBQUUsQ0FBQzs4QkFDakUsZ0JBQUssQ0FBQyxRQUFRO3lDQUFDO29CQUxaLFNBQVM7SUFEckIsSUFBQSxpQkFBTSxFQUFDLEVBQUUsVUFBVSxFQUFFLElBQUksRUFBRSxDQUFDO0dBQ2hCLFNBQVMsQ0FNckI7QUFFWSxRQUFBLGVBQWUsR0FBRyx3QkFBYSxDQUFDLGNBQWMsQ0FBQyxTQUFTLENBQUMsQ0FBQztBQUV2RSx1Q0FBdUM7QUFDdkMsdUJBQWUsQ0FBQyxLQUFLLENBQUMsRUFBRSxNQUFNLEVBQUUsQ0FBQyxFQUFFLE1BQU0sRUFBRSxDQUFDLEVBQUUsRUFBRSxFQUFFLE1BQU0sRUFBRSxJQUFJLEVBQUUsQ0FBQyxDQUFDO0FBQ2xFLHVCQUFlLENBQUMsS0FBSyxDQUFDLEVBQUUsTUFBTSxFQUFFLENBQUMsRUFBRSxTQUFTLEVBQUUsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxDQUFDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcSFBcXERlc2t0b3BcXENUTlxcYmFja2VuZFxcc3JjXFxzY2hlbWFzXFxzYXZlZC1wb3N0LnNjaGVtYS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBQcm9wLCBTY2hlbWEsIFNjaGVtYUZhY3RvcnkgfSBmcm9tICdAbmVzdGpzL21vbmdvb3NlJztcclxuaW1wb3J0IHsgRG9jdW1lbnQsIFR5cGVzIH0gZnJvbSAnbW9uZ29vc2UnO1xyXG5cclxuZXhwb3J0IHR5cGUgU2F2ZWRQb3N0RG9jdW1lbnQgPSBTYXZlZFBvc3QgJiBEb2N1bWVudDtcclxuXHJcbkBTY2hlbWEoeyB0aW1lc3RhbXBzOiB0cnVlIH0pXHJcbmV4cG9ydCBjbGFzcyBTYXZlZFBvc3Qge1xyXG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUsIGluZGV4OiB0cnVlIH0pXHJcbiAgdXNlcklkOiBzdHJpbmc7XHJcblxyXG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUsIHR5cGU6IFR5cGVzLk9iamVjdElkLCByZWY6ICdQb3N0JywgaW5kZXg6IHRydWUgfSlcclxuICBwb3N0SWQ6IFR5cGVzLk9iamVjdElkO1xyXG59XHJcblxyXG5leHBvcnQgY29uc3QgU2F2ZWRQb3N0U2NoZW1hID0gU2NoZW1hRmFjdG9yeS5jcmVhdGVGb3JDbGFzcyhTYXZlZFBvc3QpO1xyXG5cclxuLy8gQ29tcG91bmQgaW5kZXggZm9yIGVmZmljaWVudCBxdWVyaWVzXHJcblNhdmVkUG9zdFNjaGVtYS5pbmRleCh7IHVzZXJJZDogMSwgcG9zdElkOiAxIH0sIHsgdW5pcXVlOiB0cnVlIH0pO1xyXG5TYXZlZFBvc3RTY2hlbWEuaW5kZXgoeyB1c2VySWQ6IDEsIGNyZWF0ZWRBdDogLTEgfSk7XHJcbiJdLCJ2ZXJzaW9uIjozfQ==

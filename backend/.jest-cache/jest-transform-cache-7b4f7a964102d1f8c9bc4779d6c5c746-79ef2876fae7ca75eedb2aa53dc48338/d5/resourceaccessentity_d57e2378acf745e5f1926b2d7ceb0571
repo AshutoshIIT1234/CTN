@@ -1,0 +1,65 @@
+4ae33a40a047e155a3b0eb02e44373d5
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ResourceAccess = exports.AccessType = void 0;
+const typeorm_1 = require("typeorm");
+const user_entity_1 = require("./user.entity");
+const resource_entity_1 = require("./resource.entity");
+var AccessType;
+(function (AccessType) {
+    AccessType["OWN_COLLEGE"] = "OWN_COLLEGE";
+    AccessType["PAID"] = "PAID";
+})(AccessType || (exports.AccessType = AccessType = {}));
+let ResourceAccess = class ResourceAccess {
+};
+exports.ResourceAccess = ResourceAccess;
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    __metadata("design:type", String)
+], ResourceAccess.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], ResourceAccess.prototype, "userId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User),
+    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
+    __metadata("design:type", user_entity_1.User)
+], ResourceAccess.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], ResourceAccess.prototype, "resourceId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => resource_entity_1.Resource),
+    (0, typeorm_1.JoinColumn)({ name: 'resourceId' }),
+    __metadata("design:type", resource_entity_1.Resource)
+], ResourceAccess.prototype, "resource", void 0);
+__decorate([
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: AccessType,
+    }),
+    __metadata("design:type", String)
+], ResourceAccess.prototype, "accessType", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, nullable: true }),
+    __metadata("design:type", Number)
+], ResourceAccess.prototype, "paymentAmount", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", Date)
+], ResourceAccess.prototype, "unlockedAt", void 0);
+exports.ResourceAccess = ResourceAccess = __decorate([
+    (0, typeorm_1.Entity)('resource_access')
+], ResourceAccess);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxIUFxcRGVza3RvcFxcQ1ROXFxiYWNrZW5kXFxzcmNcXGVudGl0aWVzXFxyZXNvdXJjZS1hY2Nlc3MuZW50aXR5LnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLHFDQU9pQjtBQUNqQiwrQ0FBcUM7QUFDckMsdURBQTZDO0FBRTdDLElBQVksVUFHWDtBQUhELFdBQVksVUFBVTtJQUNwQix5Q0FBMkIsQ0FBQTtJQUMzQiwyQkFBYSxDQUFBO0FBQ2YsQ0FBQyxFQUhXLFVBQVUsMEJBQVYsVUFBVSxRQUdyQjtBQUdNLElBQU0sY0FBYyxHQUFwQixNQUFNLGNBQWM7Q0E2QjFCLENBQUE7QUE3Qlksd0NBQWM7QUFFekI7SUFEQyxJQUFBLGdDQUFzQixFQUFDLE1BQU0sQ0FBQzs7MENBQ3BCO0FBR1g7SUFEQyxJQUFBLGdCQUFNLEdBQUU7OzhDQUNNO0FBSWY7SUFGQyxJQUFBLG1CQUFTLEVBQUMsR0FBRyxFQUFFLENBQUMsa0JBQUksQ0FBQztJQUNyQixJQUFBLG9CQUFVLEVBQUMsRUFBRSxJQUFJLEVBQUUsUUFBUSxFQUFFLENBQUM7OEJBQ3pCLGtCQUFJOzRDQUFDO0FBR1g7SUFEQyxJQUFBLGdCQUFNLEdBQUU7O2tEQUNVO0FBSW5CO0lBRkMsSUFBQSxtQkFBUyxFQUFDLEdBQUcsRUFBRSxDQUFDLDBCQUFRLENBQUM7SUFDekIsSUFBQSxvQkFBVSxFQUFDLEVBQUUsSUFBSSxFQUFFLFlBQVksRUFBRSxDQUFDOzhCQUN6QiwwQkFBUTtnREFBQztBQU1uQjtJQUpDLElBQUEsZ0JBQU0sRUFBQztRQUNOLElBQUksRUFBRSxNQUFNO1FBQ1osSUFBSSxFQUFFLFVBQVU7S0FDakIsQ0FBQzs7a0RBQ3FCO0FBR3ZCO0lBREMsSUFBQSxnQkFBTSxFQUFDLEVBQUUsSUFBSSxFQUFFLFNBQVMsRUFBRSxTQUFTLEVBQUUsRUFBRSxFQUFFLEtBQUssRUFBRSxDQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxDQUFDOztxREFDL0M7QUFHdEI7SUFEQyxJQUFBLDBCQUFnQixHQUFFOzhCQUNQLElBQUk7a0RBQUM7eUJBNUJOLGNBQWM7SUFEMUIsSUFBQSxnQkFBTSxFQUFDLGlCQUFpQixDQUFDO0dBQ2IsY0FBYyxDQTZCMUIiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiQzpcXFVzZXJzXFxIUFxcRGVza3RvcFxcQ1ROXFxiYWNrZW5kXFxzcmNcXGVudGl0aWVzXFxyZXNvdXJjZS1hY2Nlc3MuZW50aXR5LnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7XHJcbiAgRW50aXR5LFxyXG4gIFByaW1hcnlHZW5lcmF0ZWRDb2x1bW4sXHJcbiAgQ29sdW1uLFxyXG4gIENyZWF0ZURhdGVDb2x1bW4sXHJcbiAgTWFueVRvT25lLFxyXG4gIEpvaW5Db2x1bW4sXHJcbn0gZnJvbSAndHlwZW9ybSc7XHJcbmltcG9ydCB7IFVzZXIgfSBmcm9tICcuL3VzZXIuZW50aXR5JztcclxuaW1wb3J0IHsgUmVzb3VyY2UgfSBmcm9tICcuL3Jlc291cmNlLmVudGl0eSc7XHJcblxyXG5leHBvcnQgZW51bSBBY2Nlc3NUeXBlIHtcclxuICBPV05fQ09MTEVHRSA9ICdPV05fQ09MTEVHRScsXHJcbiAgUEFJRCA9ICdQQUlEJyxcclxufVxyXG5cclxuQEVudGl0eSgncmVzb3VyY2VfYWNjZXNzJylcclxuZXhwb3J0IGNsYXNzIFJlc291cmNlQWNjZXNzIHtcclxuICBAUHJpbWFyeUdlbmVyYXRlZENvbHVtbigndXVpZCcpXHJcbiAgaWQ6IHN0cmluZztcclxuXHJcbiAgQENvbHVtbigpXHJcbiAgdXNlcklkOiBzdHJpbmc7XHJcblxyXG4gIEBNYW55VG9PbmUoKCkgPT4gVXNlcilcclxuICBASm9pbkNvbHVtbih7IG5hbWU6ICd1c2VySWQnIH0pXHJcbiAgdXNlcjogVXNlcjtcclxuXHJcbiAgQENvbHVtbigpXHJcbiAgcmVzb3VyY2VJZDogc3RyaW5nO1xyXG5cclxuICBATWFueVRvT25lKCgpID0+IFJlc291cmNlKVxyXG4gIEBKb2luQ29sdW1uKHsgbmFtZTogJ3Jlc291cmNlSWQnIH0pXHJcbiAgcmVzb3VyY2U6IFJlc291cmNlO1xyXG5cclxuICBAQ29sdW1uKHtcclxuICAgIHR5cGU6ICdlbnVtJyxcclxuICAgIGVudW06IEFjY2Vzc1R5cGUsXHJcbiAgfSlcclxuICBhY2Nlc3NUeXBlOiBBY2Nlc3NUeXBlO1xyXG5cclxuICBAQ29sdW1uKHsgdHlwZTogJ2RlY2ltYWwnLCBwcmVjaXNpb246IDEwLCBzY2FsZTogMiwgbnVsbGFibGU6IHRydWUgfSlcclxuICBwYXltZW50QW1vdW50OiBudW1iZXI7XHJcblxyXG4gIEBDcmVhdGVEYXRlQ29sdW1uKClcclxuICB1bmxvY2tlZEF0OiBEYXRlO1xyXG59Il0sInZlcnNpb24iOjN9

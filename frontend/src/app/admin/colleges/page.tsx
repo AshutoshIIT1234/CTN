@@ -41,7 +41,7 @@ export default function AdminCollegesPage() {
     }
     
     if (user?.role !== UserRole.ADMIN) {
-      router.push('/feed')
+      router.push('/')
       return
     }
 

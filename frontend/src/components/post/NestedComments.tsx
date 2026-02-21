@@ -6,12 +6,14 @@ import { formatDistanceToNow } from 'date-fns'
 import { useAuthStore } from '@/store/authStore'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '@/lib/api'
+import Link from 'next/link'
 
 interface Comment {
   id: string
   content: string
   authorUsername: string
   authorName: string
+  authorId: string
   createdAt: string
   likes: number
   isLiked: boolean
@@ -136,19 +138,21 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
       <div className={`${depth > 0 ? 'ml-12 mt-3' : 'mt-4'}`}>
         <div className="flex gap-3">
           {/* Avatar */}
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-xs font-semibold">
-              {comment.authorUsername[0].toUpperCase()}
-            </span>
-          </div>
+          <Link href={`/profile/${comment.authorId}`}>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity">
+              <span className="text-white text-xs font-semibold">
+                {comment.authorUsername[0].toUpperCase()}
+              </span>
+            </div>
+          </Link>
 
           {/* Comment Content */}
           <div className="flex-1">
             <div className="bg-gray-50 rounded-2xl px-4 py-2">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-semibold text-gray-900">
+                <Link href={`/profile/${comment.authorId}`} className="text-sm font-semibold text-gray-900 hover:opacity-60 transition-opacity">
                   {comment.authorUsername}
-                </span>
+                </Link>
                 <span className="text-xs text-gray-500">
                   {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                 </span>

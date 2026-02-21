@@ -192,7 +192,7 @@ describe('MainLayout Navigation', () => {
             // Should not show user dropdown (check for user avatar/initial)
             const userAvatars = screen.queryAllByText((content, element) => {
               // Look for single uppercase letters that would be user initials
-              return /^[A-Z]$/.test(content) && element?.className?.includes('font-semibold')
+              return /^[A-Z]$/.test(content) && (element?.className?.includes('font-semibold') ?? false)
             })
             expect(userAvatars.length).toBe(0)
           }

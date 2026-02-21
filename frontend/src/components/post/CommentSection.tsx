@@ -59,26 +59,26 @@ export function CommentSection({ postId, onUpdate }: CommentSectionProps) {
       {/* Comment Input */}
       {user && (
         <form onSubmit={handleSubmitComment} className="flex gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center flex-shrink-0">
             <span className="text-white text-sm font-semibold">
               {user.username[0].toUpperCase()}
             </span>
           </div>
-          
+
           <div className="flex-1 flex gap-2">
             <input
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write a comment..."
-              className="input flex-1"
+              className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-royal-500 transition-all"
               disabled={isSubmitting}
               maxLength={1000}
             />
             <button
               type="submit"
               disabled={!newComment.trim() || isSubmitting}
-              className="btn-primary px-4"
+              className="bg-royal-600 hover:bg-royal-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -100,23 +100,23 @@ export function CommentSection({ postId, onUpdate }: CommentSectionProps) {
             transition={{ delay: index * 0.05 }}
             className="flex gap-3"
           >
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center flex-shrink-0">
               <span className="text-white text-sm font-semibold">
                 {comment.authorUsername[0].toUpperCase()}
               </span>
             </div>
 
             <div className="flex-1">
-              <div className="bg-gray-100 dark:bg-dark-800 rounded-2xl px-4 py-3">
+              <div className="bg-gray-50 rounded-2xl px-4 py-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-sm text-gray-900 dark:text-white">
+                  <span className="font-semibold text-sm text-gray-900">
                     {comment.authorName}
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-gray-500">
                     @{comment.authorUsername}
                   </span>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 text-sm">
+                <p className="text-gray-900 text-sm">
                   {comment.content}
                 </p>
               </div>
@@ -125,11 +125,10 @@ export function CommentSection({ postId, onUpdate }: CommentSectionProps) {
                 <button
                   onClick={() => handleLikeComment(comment.id)}
                   disabled={!user}
-                  className={`flex items-center gap-1 text-xs transition-colors ${
-                    comment.isLiked
+                  className={`flex items-center gap-1 text-xs transition-colors ${comment.isLiked
                       ? 'text-red-500'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-red-500'
-                  } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      : 'text-gray-500 hover:text-red-500'
+                    } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <Heart
                     className={`w-4 h-4 ${comment.isLiked ? 'fill-current' : ''}`}
@@ -137,7 +136,7 @@ export function CommentSection({ postId, onUpdate }: CommentSectionProps) {
                   <span>{comment.likes}</span>
                 </button>
 
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-gray-500">
                   {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                 </span>
               </div>
@@ -146,7 +145,7 @@ export function CommentSection({ postId, onUpdate }: CommentSectionProps) {
         ))}
 
         {comments?.length === 0 && (
-          <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+          <p className="text-center text-gray-500 py-8">
             No comments yet. Be the first to comment!
           </p>
         )}

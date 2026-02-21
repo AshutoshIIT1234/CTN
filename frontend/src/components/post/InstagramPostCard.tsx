@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/authStore'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '@/lib/api'
 import { NestedComments } from './NestedComments'
+import Link from 'next/link'
 
 interface InstagramPostCardProps {
   post: any
@@ -27,13 +28,13 @@ export function InstagramPostCard({ post, onUpdate, onLoginRequired }: Instagram
       onLoginRequired?.()
       return
     }
-    
+
     if (isLiking) return
-    
+
     // Optimistic update
     setLiked(!liked)
     setLikeCount(liked ? likeCount - 1 : likeCount + 1)
-    
+
     setIsLiking(true)
     try {
       await api.post(`/posts/${post.id}/like`)
@@ -78,43 +79,63 @@ export function InstagramPostCard({ post, onUpdate, onLoginRequired }: Instagram
   }
 
   return (
-    <article className="bg-white border border-gray-200 rounded-lg mb-6">
+    <article 
+      className="bg-white mb-4 rounded-lg transition-all duration-200 hover:-translate-y-0.5" 
+      style={{ 
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)'
+      }}
+    >
+
       {/* Header */}
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-between px-3 py-3">
         <div className="flex items-center gap-3">
           {/* Avatar */}
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center">
-            <span className="text-white text-sm font-semibold">
-              {post.authorUsername[0].toUpperCase()}
-            </span>
-          </div>
-          
-          {/* User Info */}
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-900 hover:text-gray-600 cursor-pointer">
-                {post.authorUsername}
+          <Link href={`/profile/${post.authorId}`}>
+            <div 
+              className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity duration-200"
+              style={{ 
+                background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+                border: '1px solid #E5E7EB'
+              }}
+            >
+              <span className="text-white text-xs font-semibold">
+                {post.authorUsername[0].toUpperCase()}
               </span>
-              {post.panelType === 'COLLEGE' && (
-                <span className="text-xs bg-royal-100 text-royal-700 px-2 py-0.5 rounded-full">
-                  🏛️ {post.collegeName || 'College'}
-                </span>
-              )}
             </div>
-            <div className="text-xs text-gray-500">
-              {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-            </div>
+          </Link>
+
+          {/* User Info */}
+          <div className="flex items-center gap-2">
+            <Link 
+              href={`/profile/${post.authorId}`} 
+              className="text-sm font-semibold hover:opacity-60 transition-opacity duration-200"
+              style={{ color: '#111827' }}
+            >
+              {post.authorUsername}
+            </Link>
+            {post.panelType === 'COLLEGE' && (
+              <span className="text-xs" style={{ color: '#6B7280' }}>
+                • {post.collegeName || 'College'}
+              </span>
+            )}
           </div>
         </div>
 
         {/* More Options */}
-        <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <MoreHorizontal className="w-5 h-5 text-gray-600" />
+        <button className="p-2 hover:opacity-60 transition-opacity duration-200">
+          <MoreHorizontal className="w-6 h-6" style={{ color: '#111827' }} />
         </button>
       </div>
 
       {/* Content */}
-      <div 
+      <div
         className="relative cursor-pointer select-none"
         onDoubleClick={handleDoubleClick}
       >
@@ -130,11 +151,10 @@ export function InstagramPostCard({ post, onUpdate, onLoginRequired }: Instagram
             ) : (
               <div className="grid grid-cols-2 gap-0.5">
                 {post.imageUrls.slice(0, 4).map((imageUrl: string, index: number) => (
-                  <div 
+                  <div
                     key={index}
-                    className={`relative aspect-square bg-gray-900 ${
-                      post.imageUrls.length === 3 && index === 0 ? 'col-span-2' : ''
-                    }`}
+                    className={`relative aspect-square bg-gray-900 ${post.imageUrls.length === 3 && index === 0 ? 'col-span-2' : ''
+                      }`}
                   >
                     <img
                       src={imageUrl}
@@ -155,17 +175,6 @@ export function InstagramPostCard({ post, onUpdate, onLoginRequired }: Instagram
           </div>
         )}
 
-        <div className="px-4 pb-3 pt-3">
-          {post.title && (
-            <h3 className="text-base font-semibold text-gray-900 mb-2">
-              {post.title}
-            </h3>
-          )}
-          <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">
-            {post.content}
-          </p>
-        </div>
-
         {/* Double-click Like Animation */}
         <AnimatePresence>
           {showLikeAnimation && (
@@ -173,90 +182,143 @@ export function InstagramPostCard({ post, onUpdate, onLoginRequired }: Instagram
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1.2, opacity: 1 }}
               exit={{ scale: 0, opacity: 0 }}
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
             >
-              <Heart className="w-24 h-24 text-red-500 fill-red-500 drop-shadow-lg" />
+              <Heart className="w-24 h-24 text-red-500 fill-red-500 drop-shadow-2xl" />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* Action Buttons */}
-      <div className="px-4 py-2">
+      <div className="px-3 pt-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-4">
             {/* Like */}
-            <button
+            <motion.button
               onClick={handleLike}
               disabled={isLiking}
-              className="hover:opacity-60 transition-opacity"
+              whileTap={{ scale: 0.85 }}
+              className="hover:opacity-60 transition-opacity duration-200"
             >
               <Heart
-                className={`w-6 h-6 ${
-                  liked
-                    ? 'text-red-500 fill-red-500'
-                    : 'text-gray-900'
-                }`}
+                className="w-7 h-7 transition-colors duration-200"
+                style={{
+                  color: liked ? '#EF4444' : '#111827',
+                  fill: liked ? '#EF4444' : 'none',
+                  strokeWidth: 2
+                }}
               />
-            </button>
+            </motion.button>
 
             {/* Comment */}
-            <button
+            <motion.button
               onClick={handleComment}
-              className="hover:opacity-60 transition-opacity"
+              whileTap={{ scale: 0.85 }}
+              className="hover:opacity-60 transition-opacity duration-200"
             >
-              <MessageCircle className="w-6 h-6 text-gray-900" />
-            </button>
+              <MessageCircle className="w-7 h-7" style={{ color: '#111827', strokeWidth: 2 }} />
+            </motion.button>
 
             {/* Share */}
-            <button
+            <motion.button
               onClick={handleShare}
-              className="hover:opacity-60 transition-opacity"
+              whileTap={{ scale: 0.85 }}
+              className="hover:opacity-60 transition-opacity duration-200"
             >
-              <Share2 className="w-6 h-6 text-gray-900" />
-            </button>
+              <Share2 className="w-7 h-7" style={{ color: '#111827', strokeWidth: 2 }} />
+            </motion.button>
           </div>
 
           {/* Bookmark */}
-          <button className="hover:opacity-60 transition-opacity">
-            <Bookmark className="w-6 h-6 text-gray-900" />
-          </button>
+          <motion.button
+            whileTap={{ scale: 0.85 }}
+            className="hover:opacity-60 transition-opacity duration-200"
+          >
+            <Bookmark className="w-6 h-6" style={{ color: '#111827', strokeWidth: 2 }} />
+          </motion.button>
         </div>
 
         {/* Like Count */}
-        <div className="text-sm font-semibold text-gray-900 mb-2">
-          {likeCount} {likeCount === 1 ? 'like' : 'likes'}
+        {likeCount > 0 && (
+          <div className="text-sm font-semibold mb-2" style={{ color: '#111827' }}>
+            {likeCount.toLocaleString()} {likeCount === 1 ? 'like' : 'likes'}
+          </div>
+        )}
+
+        {/* Caption */}
+        <div className="mb-2">
+          {post.title && (
+            <p className="text-sm mb-1">
+              <Link 
+                href={`/profile/${post.authorId}`} 
+                className="font-semibold hover:opacity-60 transition-opacity duration-200"
+                style={{ color: '#111827' }}
+              >
+                {post.authorUsername}
+              </Link>
+              <span className="font-semibold ml-2" style={{ color: '#111827' }}>{post.title}</span>
+            </p>
+          )}
+          <p className="text-sm" style={{ lineHeight: '1.6' }}>
+            <Link 
+              href={`/profile/${post.authorId}`} 
+              className="font-semibold hover:opacity-60 transition-opacity duration-200"
+              style={{ color: '#111827' }}
+            >
+              {post.authorUsername}
+            </Link>
+            <span className="ml-2 whitespace-pre-wrap" style={{ color: '#111827' }}>{post.content}</span>
+          </p>
         </div>
 
         {/* Comments Preview */}
         {post.commentCount > 0 && (
           <button
             onClick={handleComment}
-            className="text-sm text-gray-500 hover:text-gray-700 mb-2"
+            className="text-sm transition-colors duration-200 mb-1"
+            style={{ color: '#6B7280' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#111827'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
           >
             View all {post.commentCount} comments
           </button>
         )}
 
-        {/* Add Comment */}
-        {user && (
-          <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+        {/* Timestamp */}
+        <div className="text-xs uppercase mb-3" style={{ color: '#9CA3AF', fontWeight: 300 }}>
+          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+        </div>
+      </div>
+
+      {/* Add Comment */}
+      <div className="px-3 py-2.5" style={{ borderTop: '1px solid #E5E7EB' }}>
+        {user ? (
+          <div className="flex items-center gap-3">
             <input
               type="text"
               placeholder="Add a comment..."
               className="flex-1 text-sm outline-none"
+              style={{ color: '#111827' }}
               onFocus={handleComment}
             />
-            <button className="text-sm font-semibold text-royal-600 hover:text-royal-700">
+            <button 
+              className="text-sm font-semibold transition-colors duration-200 disabled:opacity-40"
+              style={{ color: '#3B82F6' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#2563EB'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#3B82F6'}
+            >
               Post
             </button>
           </div>
-        )}
-
-        {!user && (
+        ) : (
           <button
             onClick={onLoginRequired}
-            className="text-sm text-gray-500 hover:text-gray-700 pt-2 border-t border-gray-100 w-full text-left"
+            className="text-sm transition-colors duration-200 w-full text-left"
+            style={{ color: '#6B7280' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#111827'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
           >
             Login to comment...
           </button>

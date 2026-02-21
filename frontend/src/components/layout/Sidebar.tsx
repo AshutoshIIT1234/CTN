@@ -11,13 +11,13 @@ import {
   TrendingUp, 
   User, 
   Settings, 
-  PlusSquare,
-  LogOut,
-  Brain,
-  LogIn
+  LogIn,
+  PenSquare,
+  MessageSquare,
+  Search,
+  Lock
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { motion } from 'framer-motion'
 import { CreatePostModal } from '../post/CreatePostModal'
 
 export function Sidebar() {
@@ -26,10 +26,11 @@ export function Sidebar() {
   const router = useRouter()
   const [showCreateModal, setShowCreateModal] = useState(false)
 
-  const menuItems = [
+  const mainMenuItems = [
     { icon: Home, label: 'National', href: '/', auth: false },
     { icon: Building2, label: 'College', href: '/college', auth: true },
     { icon: BookOpen, label: 'Resources', href: '/resources', auth: true },
+    { icon: Search, label: 'Explore', href: '/search', auth: false },
     { icon: Bell, label: 'Notifications', href: '/notifications', auth: true },
     { icon: TrendingUp, label: 'Trending', href: '/trending', auth: false },
     { icon: User, label: 'Profile', href: '/profile', auth: true },
@@ -41,20 +42,40 @@ export function Sidebar() {
     router.push('/')
   }
 
+  const handleCreatePost = () => {
+    if (!user) {
+      router.push('/auth/login')
+    } else {
+      setShowCreateModal(true)
+    }
+  }
+
+  const handleNavClick = (item: typeof mainMenuItems[0], e: React.MouseEvent) => {
+    if (item.auth && !user) {
+      e.preventDefault()
+      router.push('/auth/login')
+    }
+  }
+
   return (
-    <aside className="w-60 h-screen sticky top-0 border-r border-gray-200 bg-white">
-      <div className="flex flex-col h-full p-6">
+    <aside className="w-[240px] h-screen sticky top-0 bg-white flex-col px-4 py-4" style={{ borderRight: '1px solid #E5E7EB' }}>
+      <div className="flex flex-col h-full">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 mb-8 group">
-          <div className="w-10 h-10 bg-gradient-to-br from-royal-500 to-primary-500 rounded-lg flex items-center justify-center">
-            <Brain className="w-6 h-6 text-white" />
+        <Link href="/" className="flex items-center gap-3 px-3 py-4 mb-6">
+          <div 
+            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm" 
+            style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}
+          >
+            <span className="text-white font-bold text-lg">✨</span>
           </div>
-          <span className="text-2xl font-bold text-gray-900">CTN</span>
+          <span className="text-xl font-bold" style={{ color: '#111827' }}>
+            CTN
+          </span>
         </Link>
 
         {/* Navigation Menu */}
         <nav className="flex-1 space-y-1">
-          {menuItems.map((item) => {
+          {mainMenuItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
             const isLocked = item.auth && !user
@@ -63,82 +84,73 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={isLocked ? '#' : item.href}
-                onClick={(e) => {
-                  if (isLocked) {
-                    e.preventDefault()
-                    router.push('/auth/login')
-                  }
+                onClick={(e) => handleNavClick(item, e)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative group"
+                style={{
+                  backgroundColor: isActive ? '#E8F0FF' : 'transparent',
+                  color: isActive ? '#3B82F6' : (isLocked ? '#9CA3AF' : '#6B7280'),
+                  fontWeight: isActive ? 600 : 400,
+                  opacity: isLocked ? 0.5 : 1
                 }}
-                className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
-                  isActive
-                    ? 'bg-royal-50 text-royal-600 font-semibold'
-                    : isLocked
-                    ? 'text-gray-400 hover:bg-gray-50'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
               >
-                <Icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5]' : ''}`} />
-                <span className="text-base">{item.label}</span>
+                <Icon className="w-5 h-5" />
+                <span className="text-[15px]">
+                  {item.label}
+                </span>
                 {isLocked && (
-                  <span className="ml-auto text-xs text-gray-400">🔒</span>
+                  <Lock className="w-3 h-3 ml-auto" style={{ color: '#9CA3AF' }} />
                 )}
               </Link>
             )
           })}
-
-          {/* Create Post Button */}
-          {user && (
-            <Link
-              href="/create-post"
-              className="flex items-center gap-4 px-4 py-3 rounded-lg bg-royal-600 text-white hover:bg-royal-700 transition-all font-semibold shadow-lg shadow-royal-200"
-            >
-              <PlusSquare className="w-6 h-6" />
-              <span className="text-base">Create Post</span>
-            </Link>
-          )}
         </nav>
 
         {/* Bottom Section */}
-        <div className="pt-4 border-t border-gray-200">
+        <div className="space-y-3">
+          {/* Create/Post Button */}
+          <button
+            onClick={handleCreatePost}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-[15px] transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99]"
+            style={{ backgroundColor: '#3B82F6', color: 'white' }}
+          >
+            <PenSquare className="w-5 h-5" />
+            <span>Create</span>
+          </button>
+
+          {/* User Profile or Login */}
           {user ? (
-            <>
-              {/* User Profile */}
+            <div className="relative group">
               <Link
-                href="/profile"
-                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-all mb-2"
+                href={`/profile/${user.id}`}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-all duration-200"
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center">
-                  <span className="text-white font-semibold">
+                <div 
+                  className="w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+                  style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}
+                >
+                  <span className="text-white font-semibold text-sm">
                     {user.username[0].toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-gray-900 truncate">
+                  <div className="text-sm font-semibold truncate" style={{ color: '#111827' }}>
                     {user.username}
                   </div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {user.email}
+                  <div className="text-xs truncate" style={{ color: '#6B7280' }}>
+                    @{user.username.toLowerCase()}
                   </div>
                 </div>
               </Link>
-
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-4 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all w-full"
-              >
-                <LogOut className="w-6 h-6" />
-                <span className="text-base">Logout</span>
-              </button>
-            </>
+            </div>
           ) : (
-            <Link
-              href="/auth/login"
-              className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-royal-600 text-white hover:bg-royal-700 transition-all font-semibold"
+            <button
+              onClick={() => router.push('/auth/login')}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-[15px] shadow-sm transition-all duration-200"
+              style={{ backgroundColor: '#3B82F6', color: 'white' }}
             >
               <LogIn className="w-5 h-5" />
               <span>Login</span>
-            </Link>
+            </button>
           )}
         </div>
       </div>
@@ -148,7 +160,7 @@ export function Sidebar() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onPostCreated={() => {
-          // Refresh the feed
+          setShowCreateModal(false)
           router.refresh()
         }}
       />

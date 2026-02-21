@@ -237,4 +237,21 @@ export class PostController {
   async adminHidePost(@Request() req, @Param('id') postId: string) {
     return await this.postService.adminHidePost(req.user.sub, postId);
   }
+
+  // Saved Posts Endpoints
+  @Post(':id/save')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async savePost(@Request() req, @Param('id') postId: string) {
+    await this.postService.savePost(req.user.sub, postId);
+    return { message: 'Post saved successfully' };
+  }
+
+  @Delete(':id/save')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async unsavePost(@Request() req, @Param('id') postId: string) {
+    await this.postService.unsavePost(req.user.sub, postId);
+    return { message: 'Post unsaved successfully' };
+  }
 }

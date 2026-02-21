@@ -7,12 +7,20 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+  weight: ['300', '400', '500', '600'], // Metadata, Body, Usernames, Titles
 })
 
 export const metadata: Metadata = {
   title: 'CTN - Critical Thinking Network',
   description: 'India\'s premier intellectual network for students. Think critically, debate nationally, grow academically.',
   keywords: ['intellectual network', 'student community', 'academic discussions', 'college network', 'India'],
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
+  themeColor: '#3B82F6',
 }
 
 export default function RootLayout({
@@ -21,8 +29,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans antialiased`}>
+    <html lang="en">
+      <body className={`${inter.variable} font-sans antialiased`} style={{ backgroundColor: '#F5F7FB' }}>
         <Providers>
           {children}
         </Providers>

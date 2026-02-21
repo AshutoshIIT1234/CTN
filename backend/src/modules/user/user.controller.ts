@@ -10,70 +10,108 @@ import {
   UseGuards,
   UploadedFile,
   UseInterceptors,
-  BadRequestException
+  BadRequestException,
+  ForbiddenException
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserService, ProfileUpdateData } from './user.service';
+import { UploadService } from '../upload/upload.service';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly uploadService: UploadService,
+  ) {}
 
-  @Get('profile/:userId')
-  @UseGuards(JwtAuthGuard)
+  @Get(':userId/profile')
   async getUserProfile(
     @Param('userId') userId: string,
     @Request() req: any
   ) {
-    const profile = await this.userService.getUserProfile(userId, req.user.id);
+    const requestingUserId = req.user?.sub || req.user?.id;
+    const profile = await this.userService.getUserProfile(userId, requestingUserId);
     return profile;
   }
 
-  @Put('profile')
+  @Put(':userId/profile')
   @UseGuards(JwtAuthGuard)
   async updateProfile(
+    @Param('userId') userId: string,
     @Body() updateData: ProfileUpdateData,
     @Request() req: any
   ) {
-    const profile = await this.userService.updateUserProfile(req.user.id, updateData);
+    // Only allow users to update their own profile
+    if (req.user.sub !== userId) {
+      throw new ForbiddenException('You can only update your own profile');
+    }
+
+    const profile = await this.userService.updateUserProfile(userId, updateData);
     return profile;
   }
 
-  @Post('profile/picture')
+  @Post(':userId/profile-photo')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('profilePicture'))
-  async uploadProfilePicture(
-    @UploadedFile() file: any,
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadProfilePhoto(
+    @Param('userId') userId: string,
+    @UploadedFile() file: Express.Multer.File,
     @Request() req: any
   ) {
+    // Only allow users to upload their own profile photo
+    if (req.user.sub !== userId) {
+      throw new ForbiddenException('You can only update your own profile photo');
+    }
+
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
 
-    // Validate file type
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedMimeTypes.includes(file.mimetype)) {
-      throw new BadRequestException('Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.');
+    // Upload to Cloudinary
+    const profilePhotoUrl = await this.uploadService.uploadImage(file);
+
+    // Update user profile
+    await this.userService.updateUserProfile(userId, {
+      profilePictureUrl: profilePhotoUrl,
+    });
+
+    return { url: profilePhotoUrl };
+  }
+
+  @Post(':userId/cover-photo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadCoverPhoto(
+    @Param('userId') userId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: any
+  ) {
+    // Only allow users to upload their own cover photo
+    if (req.user.sub !== userId) {
+      throw new ForbiddenException('You can only update your own cover photo');
     }
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      throw new BadRequestException('File too large. Maximum size is 5MB.');
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
     }
 
-    const profilePictureUrl = await this.userService.uploadProfilePicture(
-      req.user.id,
-      file.buffer,
-      file.originalname
-    );
+    // Upload to Cloudinary
+    const coverPhotoUrl = await this.uploadService.uploadImage(file);
 
-    return { profilePictureUrl };
+    // Update user profile
+    await this.userService.uploadCoverPhoto(userId, coverPhotoUrl);
+
+    return { url: coverPhotoUrl };
+  }
+
+  @Get(':userId/stats')
+  async getProfileStats(@Param('userId') userId: string) {
+    const stats = await this.userService.getProfileStats(userId);
+    return stats;
   }
 
   @Get('search')
-  @UseGuards(JwtAuthGuard)
   async searchUsers(
     @Query('q') query: string,
     @Query('limit') limit?: string
@@ -91,10 +129,48 @@ export class UserController {
     return { users };
   }
 
-  @Get('stats/:userId')
+  @Get('settings/notifications')
   @UseGuards(JwtAuthGuard)
-  async getUserStats(@Param('userId') userId: string) {
-    const stats = await this.userService.getUserStats(userId);
-    return stats;
+  async getNotificationSettings(@Request() req: any) {
+    return await this.userService.getNotificationSettings(req.user.sub);
+  }
+
+  @Put('settings/notifications')
+  @UseGuards(JwtAuthGuard)
+  async updateNotificationSettings(
+    @Request() req: any,
+    @Body() settings: any
+  ) {
+    return await this.userService.updateNotificationSettings(req.user.sub, settings);
+  }
+
+  @Get('settings/privacy')
+  @UseGuards(JwtAuthGuard)
+  async getPrivacySettings(@Request() req: any) {
+    return await this.userService.getPrivacySettings(req.user.sub);
+  }
+
+  @Put('settings/privacy')
+  @UseGuards(JwtAuthGuard)
+  async updatePrivacySettings(
+    @Request() req: any,
+    @Body() settings: any
+  ) {
+    return await this.userService.updatePrivacySettings(req.user.sub, settings);
+  }
+
+  @Get('settings/appearance')
+  @UseGuards(JwtAuthGuard)
+  async getAppearanceSettings(@Request() req: any) {
+    return await this.userService.getAppearanceSettings(req.user.sub);
+  }
+
+  @Put('settings/appearance')
+  @UseGuards(JwtAuthGuard)
+  async updateAppearanceSettings(
+    @Request() req: any,
+    @Body() settings: any
+  ) {
+    return await this.userService.updateAppearanceSettings(req.user.sub, settings);
   }
 }

@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { useRouter } from 'next/navigation'
-import { MainLayout } from '@/components/layout/MainLayout'
+import { InstagramLayout } from '@/components/layout/InstagramLayout'
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuthStore()
@@ -26,10 +26,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <MainLayout>
+    <InstagramLayout>
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-royal-600 border-t-transparent"></div>
       </div>
-    </MainLayout>
+    </InstagramLayout>
   )
 }

@@ -17,11 +17,15 @@ import {
   Mail,
   Bookmark,
   User,
-  MoreHorizontal
+  MoreHorizontal,
+  TrendingUp
 } from 'lucide-react'
 import { useAuthStore, UserRole } from '@/store/authStore'
 import { useState } from 'react'
 import { TrendingSection } from '@/components/trending/TrendingSection'
+import { MobileBottomNav } from './MobileBottomNav'
+import { Sidebar } from './Sidebar'
+import { RightPanel } from './RightPanel'
 import Link from 'next/link'
 
 interface MainLayoutProps {
@@ -40,23 +44,15 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   const navigation = [
     { 
-      name: 'Critical Thinking', 
-      href: '/feed', 
+      name: 'National', 
+      href: '/', 
       icon: Sparkles, 
       show: true,
       enabled: true,
       description: 'National discussion panel for critical discourse'
     },
     { 
-      name: 'Academic Resources', 
-      href: '/resources', 
-      icon: BookOpen, 
-      show: true,
-      enabled: user?.role === UserRole.COLLEGE_USER || user?.role === UserRole.MODERATOR || user?.role === UserRole.ADMIN,
-      description: 'Hierarchical academic resource repository'
-    },
-    { 
-      name: 'College Discussion', 
+      name: 'College', 
       href: '/college', 
       icon: Users, 
       show: true,
@@ -64,12 +60,12 @@ export function MainLayout({ children }: MainLayoutProps) {
       description: 'Private college-specific discussion space'
     },
     { 
-      name: 'Profile', 
-      href: '/profile', 
-      icon: User, 
-      show: !!user,
-      enabled: !!user,
-      description: 'Your personal profile and settings'
+      name: 'Resources', 
+      href: '/resources', 
+      icon: BookOpen, 
+      show: true,
+      enabled: user?.role === UserRole.COLLEGE_USER || user?.role === UserRole.MODERATOR || user?.role === UserRole.ADMIN,
+      description: 'Hierarchical academic resource repository'
     },
     { 
       name: 'Explore', 
@@ -79,266 +75,148 @@ export function MainLayout({ children }: MainLayoutProps) {
       enabled: true,
       description: 'Search and discover content'
     },
-    // Additional navigation items (shown after main sections)
     { name: 'Notifications', href: '/notifications', icon: Bell, show: !!user, enabled: !!user },
-    { name: 'Messages', href: '/messages', icon: Mail, show: !!user, enabled: !!user },
-    { name: 'Bookmarks', href: '/bookmarks', icon: Bookmark, show: !!user, enabled: !!user },
     { 
-      name: 'Moderator', 
-      href: '/moderator', 
-      icon: Shield, 
-      show: user?.role === UserRole.MODERATOR || user?.role === UserRole.ADMIN,
-      enabled: user?.role === UserRole.MODERATOR || user?.role === UserRole.ADMIN
+      name: 'Trending', 
+      href: '/trending', 
+      icon: TrendingUp, 
+      show: true,
+      enabled: true,
+      description: 'Trending topics and discussions'
     },
     { 
-      name: 'Admin', 
-      href: '/admin', 
-      icon: Settings, 
-      show: user?.role === UserRole.ADMIN,
-      enabled: user?.role === UserRole.ADMIN
-    }
+      name: 'Profile', 
+      href: '/profile', 
+      icon: User, 
+      show: !!user,
+      enabled: !!user,
+      description: 'Your personal profile and settings'
+    },
+    { name: 'Settings', href: '/settings', icon: Settings, show: !!user, enabled: !!user },
   ]
 
-  // Separate main navigation from additional items
-  const mainNavigation = navigation.slice(0, 5) // Critical Thinking through Explore (removed Home)
-  const additionalNavigation = navigation.slice(5) // Notifications, Messages, etc.
+  const mainNavigation = navigation.slice(0, 8)
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="flex max-w-7xl mx-auto">
-        {/* Left Sidebar - X.com style */}
-        <div className="hidden lg:flex flex-col w-64 xl:w-80 px-4 py-4 fixed h-full">
-          {/* Logo */}
-          <div className="mb-8">
-            <Link href="/" className="flex items-center gap-3 p-3 rounded-full hover:bg-gray-900 transition-colors w-fit">
-              <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+    <div className="min-h-screen" style={{ backgroundColor: '#F5F7FB' }}>
+      {/* Desktop: Three-column grid layout */}
+      <div className="hidden lg:grid lg:grid-cols-[240px_680px_320px] lg:gap-6 lg:max-w-[1264px] lg:mx-auto">
+        {/* Left Sidebar - Use Sidebar component */}
+        <Sidebar />
+
+        {/* Main Content Area - 680px */}
+        <main className="w-[680px] min-h-screen bg-white" style={{ borderLeft: '1px solid #E5E7EB', borderRight: '1px solid #E5E7EB' }}>
+          {children}
+        </main>
+
+        {/* Right Sidebar - Use RightPanel component */}
+        <RightPanel />
+      </div>
+
+      {/* Tablet: Two-column layout (Icon Sidebar + Main) */}
+      <div className="hidden md:grid lg:hidden md:grid-cols-[80px_1fr] md:gap-6 md:max-w-[920px] md:mx-auto">
+        {/* Icon-only Sidebar */}
+        <div className="w-[80px] px-2 py-4 fixed h-full bg-white" style={{ borderRight: '1px solid #E5E7EB' }}>
+          <div className="flex flex-col items-center gap-4">
+            <Link href="/" className="p-3 rounded-xl hover:bg-gray-50 transition-colors">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}>
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+            </Link>
+            {mainNavigation.filter(item => item.show && item.enabled).map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="p-3 rounded-xl hover:bg-gray-50 transition-colors"
+                title={item.name}
+              >
+                <item.icon className="w-6 h-6" style={{ color: '#6B7280' }} />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <main className="ml-[80px] min-h-screen bg-white" style={{ borderLeft: '1px solid #E5E7EB', borderRight: '1px solid #E5E7EB' }}>
+          {children}
+        </main>
+      </div>
+
+      {/* Mobile: Single column with bottom nav */}
+      <div className="md:hidden">
+        {/* Mobile Header */}
+        <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl" style={{ borderBottom: '1px solid #E5E7EB' }}>
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-full hover:bg-gray-50 transition-colors"
+            >
+              <Menu className="w-6 h-6" style={{ color: '#111827' }} />
+            </button>
+            
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}>
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <span className="hidden xl:block text-xl font-bold">CTN</span>
             </Link>
-          </div>
 
-          {/* Navigation */}
-          <nav className="flex-1">
-            {/* Main Navigation Sections */}
-            <div className="space-y-2 mb-6">
-              <div className="px-3 py-2">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Main</h3>
-              </div>
-              {mainNavigation.filter(item => item.show).map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.enabled ? item.href : '#'}
-                  className={`flex items-center gap-4 px-3 py-3 rounded-full text-xl transition-colors group ${
-                    item.enabled 
-                      ? 'hover:bg-gray-900 text-white' 
-                      : 'text-gray-600 cursor-not-allowed'
-                  }`}
-                  onClick={(e) => {
-                    if (!item.enabled) {
-                      e.preventDefault()
-                    }
-                  }}
-                  title={item.enabled ? item.description : `${item.name} - Requires college email verification`}
-                >
-                  <item.icon className={`w-7 h-7 ${item.enabled ? '' : 'opacity-50'}`} />
-                  <span className={`hidden xl:block font-normal ${item.enabled ? '' : 'opacity-50'}`}>
-                    {item.name}
+            {user ? (
+              <Link href="/profile" className="p-2 rounded-full hover:bg-gray-50 transition-colors">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}>
+                  <span className="text-white text-sm font-semibold">
+                    {user.username[0].toUpperCase()}
                   </span>
-                  {!item.enabled && (
-                    <div className="hidden xl:block ml-auto">
-                      <div className="w-2 h-2 bg-gray-600 rounded-full opacity-50"></div>
-                    </div>
-                  )}
-                </Link>
-              ))}
-            </div>
-
-            {/* Additional Navigation */}
-            {additionalNavigation.some(item => item.show) && (
-              <div className="space-y-2">
-                <div className="px-3 py-2">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">More</h3>
                 </div>
-                {additionalNavigation.filter(item => item.show).map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className="flex items-center gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-900 transition-colors group"
-                  >
-                    <item.icon className="w-7 h-7" />
-                    <span className="hidden xl:block font-normal">{item.name}</span>
-                  </Link>
-                ))}
-              </div>
+              </Link>
+            ) : (
+              <Link href="/auth/login" className="font-bold py-2 px-4 rounded-full text-sm" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)', color: 'white' }}>
+                Sign In
+              </Link>
             )}
-
-            {/* Post Button */}
-            {user && (
-              <button className="w-full xl:w-auto bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 px-8 rounded-full mt-6 transition-colors">
-                <span className="hidden xl:block">Post</span>
-                <span className="xl:hidden">+</span>
-              </button>
-            )}
-          </nav>
-
-          {/* User Menu */}
-          {user && (
-            <div className="mt-auto">
-              <div className="relative group">
-                <button className="flex items-center gap-3 p-3 rounded-full hover:bg-gray-900 transition-colors w-full">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-sm font-semibold">
-                      {user.username[0].toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="hidden xl:block text-left flex-1 min-w-0">
-                    <p className="font-bold text-white truncate">{user.displayName || user.username}</p>
-                    <p className="text-gray-500 text-sm truncate">@{user.username}</p>
-                  </div>
-                  <MoreHorizontal className="w-5 h-5 text-gray-500 hidden xl:block" />
-                </button>
-
-                {/* Dropdown */}
-                <div className="absolute bottom-full left-0 mb-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="bg-black border border-gray-800 rounded-2xl shadow-2xl overflow-hidden">
-                    <div className="p-4 border-b border-gray-800">
-                      <p className="font-bold text-white">@{user.username}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                      <span className="inline-block mt-2 px-2 py-1 text-xs font-medium bg-primary-900/30 text-primary-400 rounded-lg">
-                        {user.role.replace('_', ' ')}
-                      </span>
-                    </div>
-                    
-                    <div className="p-2">
-                      <Link
-                        href="/profile"
-                        className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-900 transition-colors"
-                      >
-                        <Settings className="w-5 h-5 text-gray-500" />
-                        <span className="text-white">Settings</span>
-                      </Link>
-                      
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-900 transition-colors text-red-400"
-                      >
-                        <LogOut className="w-5 h-5" />
-                        <span>Log out @{user.username}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 lg:ml-64 xl:ml-80">
-          <div className="flex">
-            {/* Center Column - Main Feed */}
-            <main className="flex-1 max-w-2xl border-x border-gray-800 min-h-screen">
-              {/* Mobile Header */}
-              <div className="lg:hidden sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-gray-800">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <button
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="p-2 rounded-full hover:bg-gray-900 transition-colors"
-                  >
-                    <Menu className="w-6 h-6" />
-                  </button>
-                  
-                  <Link href="/" className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-white" />
-                    </div>
-                  </Link>
-
-                  {user ? (
-                    <Link href="/profile" className="p-2 rounded-full hover:bg-gray-900 transition-colors">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
-                        <span className="text-white text-sm font-semibold">
-                          {user.username[0].toUpperCase()}
-                        </span>
-                      </div>
-                    </Link>
-                  ) : (
-                    <Link href="/auth/login" className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-full text-sm">
-                      Sign In
-                    </Link>
-                  )}
-                </div>
-              </div>
-
-              {children}
-            </main>
-
-            {/* Right Sidebar - Trends/Suggestions */}
-            <aside className="hidden xl:block w-80 p-4">
-              <div className="sticky top-4 space-y-4">
-                {/* Search */}
-                <div className="bg-gray-900 rounded-2xl p-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
-                    <input
-                      type="text"
-                      placeholder="Search Critical Thinking Network"
-                      className="w-full bg-transparent pl-12 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const query = (e.target as HTMLInputElement).value
-                          if (query.trim()) {
-                            router.push(`/search?q=${encodeURIComponent(query)}`)
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Trending Section */}
-                <TrendingSection />
-              </div>
-            </aside>
           </div>
         </div>
+
+        <main className="min-h-screen pb-20 bg-white">
+          {children}
+        </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="lg:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+          className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <motion.div
             initial={{ x: -300 }}
             animate={{ x: 0 }}
-            className="w-80 h-full bg-black border-r border-gray-800 p-4"
+            className="w-80 h-full bg-white p-4"
+            style={{ borderRight: '1px solid #E5E7EB' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-8">
-                  <Link href="/" className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-xl font-bold">CTN</span>
-                  </Link>
+              <Link href="/" className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}>
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl font-bold" style={{ color: '#111827' }}>CTN</span>
+              </Link>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 rounded-full hover:bg-gray-900 transition-colors"
+                className="p-2 rounded-full hover:bg-gray-50 transition-colors"
               >
-                <X className="w-6 h-6" />
+                <X className="w-6 h-6" style={{ color: '#111827' }} />
               </button>
             </div>
 
             <nav className="space-y-4">
-              {/* Main Navigation Sections */}
               <div>
                 <div className="px-3 py-2 mb-2">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Main</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#6B7280' }}>Main</h3>
                 </div>
                 <div className="space-y-2">
                   {mainNavigation.filter(item => item.show).map((item) => (
@@ -352,63 +230,45 @@ export function MainLayout({ children }: MainLayoutProps) {
                           setIsMobileMenuOpen(false)
                         }
                       }}
-                      className={`flex items-center gap-4 px-3 py-3 rounded-full text-xl transition-colors ${
+                      className={`flex items-center gap-4 px-3 py-3 rounded-xl text-base transition-colors ${
                         item.enabled 
-                          ? 'hover:bg-gray-900 text-white' 
-                          : 'text-gray-600 cursor-not-allowed'
+                          ? 'hover:bg-gray-50' 
+                          : 'cursor-not-allowed'
                       }`}
+                      style={{
+                        color: item.enabled ? '#111827' : '#9CA3AF',
+                        opacity: item.enabled ? 1 : 0.5
+                      }}
                     >
-                      <item.icon className={`w-7 h-7 ${item.enabled ? '' : 'opacity-50'}`} />
-                      <span className={item.enabled ? '' : 'opacity-50'}>{item.name}</span>
+                      <item.icon className="w-6 h-6" />
+                      <span>{item.name}</span>
                       {!item.enabled && (
                         <div className="ml-auto">
-                          <div className="w-2 h-2 bg-gray-600 rounded-full opacity-50"></div>
+                          <span className="text-sm">🔒</span>
                         </div>
                       )}
                     </Link>
                   ))}
                 </div>
               </div>
-
-              {/* Additional Navigation */}
-              {additionalNavigation.some(item => item.show) && (
-                <div>
-                  <div className="px-3 py-2 mb-2">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">More</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {additionalNavigation.filter(item => item.show).map((item) => (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center gap-4 px-3 py-3 rounded-full text-xl hover:bg-gray-900 transition-colors"
-                      >
-                        <item.icon className="w-7 h-7" />
-                        <span>{item.name}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
             </nav>
 
             {user && (
-              <div className="mt-8 pt-8 border-t border-gray-800">
+              <div className="mt-8 pt-8" style={{ borderTop: '1px solid #E5E7EB' }}>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}>
                     <span className="text-white font-semibold">
                       {user.username[0].toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <p className="font-bold">{user.displayName || user.username}</p>
-                    <p className="text-gray-500 text-sm">@{user.username}</p>
+                    <p className="font-bold" style={{ color: '#111827' }}>{user.displayName || user.username}</p>
+                    <p className="text-sm" style={{ color: '#6B7280' }}>@{user.username}</p>
                   </div>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-900 transition-colors text-red-400"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors text-red-600"
                 >
                   <LogOut className="w-5 h-5" />
                   <span>Log out</span>

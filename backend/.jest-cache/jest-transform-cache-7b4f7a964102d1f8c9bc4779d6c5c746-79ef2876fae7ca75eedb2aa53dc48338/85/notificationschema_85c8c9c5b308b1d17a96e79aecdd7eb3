@@ -1,0 +1,65 @@
+c8ff5fafed15bd422c6c6b0f98345c7d
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.NotificationSchema = exports.Notification = exports.NotificationType = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+var NotificationType;
+(function (NotificationType) {
+    NotificationType["FOLLOW"] = "follow";
+    NotificationType["LIKE"] = "like";
+    NotificationType["COMMENT"] = "comment";
+    NotificationType["MESSAGE"] = "message";
+})(NotificationType || (exports.NotificationType = NotificationType = {}));
+let Notification = class Notification {
+};
+exports.Notification = Notification;
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, index: true }),
+    __metadata("design:type", String)
+], Notification.prototype, "userId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, enum: NotificationType }),
+    __metadata("design:type", String)
+], Notification.prototype, "type", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], Notification.prototype, "actorId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Notification.prototype, "actorName", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Notification.prototype, "actorUsername", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Post' }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], Notification.prototype, "postId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], Notification.prototype, "message", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: false, index: true }),
+    __metadata("design:type", Boolean)
+], Notification.prototype, "read", void 0);
+exports.Notification = Notification = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], Notification);
+exports.NotificationSchema = mongoose_1.SchemaFactory.createForClass(Notification);
+// Indexes for performance
+exports.NotificationSchema.index({ userId: 1, createdAt: -1 });
+exports.NotificationSchema.index({ userId: 1, read: 1 });
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxIUFxcRGVza3RvcFxcQ1ROXFxiYWNrZW5kXFxzcmNcXHNjaGVtYXNcXG5vdGlmaWNhdGlvbi5zY2hlbWEudHMiLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7O0FBQUEsK0NBQStEO0FBQy9ELHVDQUEyQztBQUkzQyxJQUFZLGdCQUtYO0FBTEQsV0FBWSxnQkFBZ0I7SUFDMUIscUNBQWlCLENBQUE7SUFDakIsaUNBQWEsQ0FBQTtJQUNiLHVDQUFtQixDQUFBO0lBQ25CLHVDQUFtQixDQUFBO0FBQ3JCLENBQUMsRUFMVyxnQkFBZ0IsZ0NBQWhCLGdCQUFnQixRQUszQjtBQUdNLElBQU0sWUFBWSxHQUFsQixNQUFNLFlBQVk7Q0F3QnhCLENBQUE7QUF4Qlksb0NBQVk7QUFFdkI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsS0FBSyxFQUFFLElBQUksRUFBRSxDQUFDOzs0Q0FDdkI7QUFHZjtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxJQUFJLEVBQUUsZ0JBQWdCLEVBQUUsQ0FBQzs7MENBQzFCO0FBR3ZCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxRQUFRLEVBQUUsSUFBSSxFQUFFLENBQUM7OzZDQUNUO0FBR2hCO0lBREMsSUFBQSxlQUFJLEdBQUU7OytDQUNXO0FBR2xCO0lBREMsSUFBQSxlQUFJLEdBQUU7O21EQUNlO0FBR3RCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxJQUFJLEVBQUUsZ0JBQUssQ0FBQyxRQUFRLEVBQUUsR0FBRyxFQUFFLE1BQU0sRUFBRSxDQUFDOzhCQUNuQyxnQkFBSyxDQUFDLFFBQVE7NENBQUM7QUFHeEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsQ0FBQzs7NkNBQ1Q7QUFHaEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLE9BQU8sRUFBRSxLQUFLLEVBQUUsS0FBSyxFQUFFLElBQUksRUFBRSxDQUFDOzswQ0FDeEI7dUJBdkJILFlBQVk7SUFEeEIsSUFBQSxpQkFBTSxFQUFDLEVBQUUsVUFBVSxFQUFFLElBQUksRUFBRSxDQUFDO0dBQ2hCLFlBQVksQ0F3QnhCO0FBRVksUUFBQSxrQkFBa0IsR0FBRyx3QkFBYSxDQUFDLGNBQWMsQ0FBQyxZQUFZLENBQUMsQ0FBQztBQUU3RSwwQkFBMEI7QUFDMUIsMEJBQWtCLENBQUMsS0FBSyxDQUFDLEVBQUUsTUFBTSxFQUFFLENBQUMsRUFBRSxTQUFTLEVBQUUsQ0FBQyxDQUFDLEVBQUUsQ0FBQyxDQUFDO0FBQ3ZELDBCQUFrQixDQUFDLEtBQUssQ0FBQyxFQUFFLE1BQU0sRUFBRSxDQUFDLEVBQUUsSUFBSSxFQUFFLENBQUMsRUFBRSxDQUFDLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiQzpcXFVzZXJzXFxIUFxcRGVza3RvcFxcQ1ROXFxiYWNrZW5kXFxzcmNcXHNjaGVtYXNcXG5vdGlmaWNhdGlvbi5zY2hlbWEudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgUHJvcCwgU2NoZW1hLCBTY2hlbWFGYWN0b3J5IH0gZnJvbSAnQG5lc3Rqcy9tb25nb29zZSc7XHJcbmltcG9ydCB7IERvY3VtZW50LCBUeXBlcyB9IGZyb20gJ21vbmdvb3NlJztcclxuXHJcbmV4cG9ydCB0eXBlIE5vdGlmaWNhdGlvbkRvY3VtZW50ID0gTm90aWZpY2F0aW9uICYgRG9jdW1lbnQ7XHJcblxyXG5leHBvcnQgZW51bSBOb3RpZmljYXRpb25UeXBlIHtcclxuICBGT0xMT1cgPSAnZm9sbG93JyxcclxuICBMSUtFID0gJ2xpa2UnLFxyXG4gIENPTU1FTlQgPSAnY29tbWVudCcsXHJcbiAgTUVTU0FHRSA9ICdtZXNzYWdlJyxcclxufVxyXG5cclxuQFNjaGVtYSh7IHRpbWVzdGFtcHM6IHRydWUgfSlcclxuZXhwb3J0IGNsYXNzIE5vdGlmaWNhdGlvbiB7XHJcbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSwgaW5kZXg6IHRydWUgfSlcclxuICB1c2VySWQ6IHN0cmluZztcclxuXHJcbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSwgZW51bTogTm90aWZpY2F0aW9uVHlwZSB9KVxyXG4gIHR5cGU6IE5vdGlmaWNhdGlvblR5cGU7XHJcblxyXG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUgfSlcclxuICBhY3RvcklkOiBzdHJpbmc7XHJcblxyXG4gIEBQcm9wKClcclxuICBhY3Rvck5hbWU6IHN0cmluZztcclxuXHJcbiAgQFByb3AoKVxyXG4gIGFjdG9yVXNlcm5hbWU6IHN0cmluZztcclxuXHJcbiAgQFByb3AoeyB0eXBlOiBUeXBlcy5PYmplY3RJZCwgcmVmOiAnUG9zdCcgfSlcclxuICBwb3N0SWQ/OiBUeXBlcy5PYmplY3RJZDtcclxuXHJcbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSB9KVxyXG4gIG1lc3NhZ2U6IHN0cmluZztcclxuXHJcbiAgQFByb3AoeyBkZWZhdWx0OiBmYWxzZSwgaW5kZXg6IHRydWUgfSlcclxuICByZWFkOiBib29sZWFuO1xyXG59XHJcblxyXG5leHBvcnQgY29uc3QgTm90aWZpY2F0aW9uU2NoZW1hID0gU2NoZW1hRmFjdG9yeS5jcmVhdGVGb3JDbGFzcyhOb3RpZmljYXRpb24pO1xyXG5cclxuLy8gSW5kZXhlcyBmb3IgcGVyZm9ybWFuY2VcclxuTm90aWZpY2F0aW9uU2NoZW1hLmluZGV4KHsgdXNlcklkOiAxLCBjcmVhdGVkQXQ6IC0xIH0pO1xyXG5Ob3RpZmljYXRpb25TY2hlbWEuaW5kZXgoeyB1c2VySWQ6IDEsIHJlYWQ6IDEgfSk7XHJcbiJdLCJ2ZXJzaW9uIjozfQ==

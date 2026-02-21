@@ -33,13 +33,6 @@ export default function SearchPage() {
   
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login')
-    }
-  }, [isAuthenticated, router])
-
   // Perform search when debounced query changes
   useEffect(() => {
     if (debouncedSearchQuery.trim().length >= 2) {
@@ -72,15 +65,15 @@ export default function SearchPage() {
   const getRoleColor = (role: UserRole) => {
     switch (role) {
       case UserRole.ADMIN:
-        return 'bg-red-900/30 text-red-400'
+        return 'bg-red-100 text-red-700'
       case UserRole.MODERATOR:
-        return 'bg-purple-900/30 text-purple-400'
+        return 'bg-purple-100 text-purple-700'
       case UserRole.COLLEGE_USER:
-        return 'bg-blue-900/30 text-blue-400'
+        return 'bg-blue-100 text-blue-700'
       case UserRole.GENERAL_USER:
-        return 'bg-green-900/30 text-green-400'
+        return 'bg-green-100 text-green-700'
       default:
-        return 'bg-gray-900/30 text-gray-400'
+        return 'bg-gray-100 text-gray-700'
     }
   }
 
@@ -97,84 +90,85 @@ export default function SearchPage() {
     { name: 'Ethics & Morality', posts: '2,456', category: 'Philosophy' }
   ]
 
-  if (!isAuthenticated) {
-    return null // Will redirect
-  }
-
   return (
     <MainLayout>
-      {/* Header - X.com style */}
-      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-gray-800">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-white backdrop-blur-xl" style={{ borderBottom: '1px solid #E5E7EB' }}>
         <div className="px-4 py-0">
           <div className="flex items-center gap-8 h-14">
             <button
               onClick={() => router.back()}
-              className="p-2 rounded-full hover:bg-gray-900 transition-colors"
+              className="p-2 rounded-full hover:bg-gray-50 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" style={{ color: '#111827' }} />
             </button>
-            <h1 className="text-xl font-bold">Search</h1>
+            <h1 className="text-xl font-bold" style={{ color: '#111827' }}>Explore</h1>
           </div>
         </div>
       </div>
 
       {/* Search Input */}
-      <div className="border-b border-gray-800 p-4">
+      <div className="p-4" style={{ borderBottom: '1px solid #E5E7EB' }}>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-500" />
+            <Search className="h-5 w-5" style={{ color: '#6B7280' }} />
           </div>
           <input
             type="text"
             placeholder="Search Critical Thinking Network"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-full focus:ring-2 focus:ring-primary-500 focus:border-transparent text-white placeholder-gray-500"
+            className="w-full pl-12 pr-4 py-3 rounded-full focus:ring-2 focus:outline-none"
+            style={{ 
+              backgroundColor: '#F9FAFB',
+              border: '1px solid #E5E7EB',
+              color: '#111827'
+            }}
             autoFocus
           />
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-800">
+      <div style={{ borderBottom: '1px solid #E5E7EB' }}>
         <div className="flex">
           <button
             onClick={() => setActiveTab('users')}
-            className={`flex-1 py-4 text-center font-medium transition-colors relative ${
-              activeTab === 'users' 
-                ? 'text-white' 
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
+            className="flex-1 py-4 text-center font-medium transition-colors relative"
+            style={{ color: activeTab === 'users' ? '#111827' : '#6B7280' }}
           >
             People
             {activeTab === 'users' && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 bg-primary-600 rounded-full" />
+              <div 
+                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 rounded-full"
+                style={{ backgroundColor: '#3B82F6' }}
+              />
             )}
           </button>
           <button
             onClick={() => setActiveTab('posts')}
-            className={`flex-1 py-4 text-center font-medium transition-colors relative ${
-              activeTab === 'posts' 
-                ? 'text-white' 
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
+            className="flex-1 py-4 text-center font-medium transition-colors relative"
+            style={{ color: activeTab === 'posts' ? '#111827' : '#6B7280' }}
           >
             Posts
             {activeTab === 'posts' && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 bg-primary-600 rounded-full" />
+              <div 
+                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 rounded-full"
+                style={{ backgroundColor: '#3B82F6' }}
+              />
             )}
           </button>
           <button
             onClick={() => setActiveTab('topics')}
-            className={`flex-1 py-4 text-center font-medium transition-colors relative ${
-              activeTab === 'topics' 
-                ? 'text-white' 
-                : 'text-gray-500 hover:text-gray-300'
-            }`}
+            className="flex-1 py-4 text-center font-medium transition-colors relative"
+            style={{ color: activeTab === 'topics' ? '#111827' : '#6B7280' }}
           >
             Topics
             {activeTab === 'topics' && (
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 bg-primary-600 rounded-full" />
+              <div 
+                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 rounded-full"
+                style={{ backgroundColor: '#3B82F6' }}
+              />
             )}
           </button>
         </div>
@@ -185,7 +179,7 @@ export default function SearchPage() {
         {/* Loading State */}
         {isLoading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#3B82F6' }}></div>
           </div>
         )}
 
@@ -194,11 +188,11 @@ export default function SearchPage() {
           <>
             {hasSearched && searchResults.length === 0 && (
               <div className="text-center py-16">
-                <User className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">
+                <User className="h-16 w-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
+                <h3 className="text-xl font-bold mb-2" style={{ color: '#111827' }}>
                   No people found for "{searchQuery}"
                 </h3>
-                <p className="text-gray-500">
+                <p style={{ color: '#6B7280' }}>
                   Try searching for something else.
                 </p>
               </div>
@@ -213,7 +207,8 @@ export default function SearchPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={() => handleUserClick(result.id)}
-                    className="border-b border-gray-800 hover:bg-gray-950/50 transition-colors cursor-pointer p-4"
+                    className="hover:bg-gray-50 transition-colors cursor-pointer p-4"
+                    style={{ borderBottom: '1px solid #E5E7EB' }}
                   >
                     <div className="flex items-center gap-3">
                       {/* Profile Picture */}
@@ -225,7 +220,10 @@ export default function SearchPage() {
                             className="w-12 h-12 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                          <div 
+                            className="w-12 h-12 rounded-full flex items-center justify-center"
+                            style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}
+                          >
                             <span className="text-white text-lg font-semibold">
                               {result.username[0].toUpperCase()}
                             </span>
@@ -236,7 +234,7 @@ export default function SearchPage() {
                       {/* User Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-white truncate">
+                          <h3 className="font-bold truncate" style={{ color: '#111827' }}>
                             {result.displayName || result.username}
                           </h3>
                           <span className={`px-2 py-1 text-xs font-medium rounded-lg ${getRoleColor(result.role)}`}>
@@ -244,10 +242,10 @@ export default function SearchPage() {
                           </span>
                         </div>
                         
-                        <p className="text-gray-500 text-sm mb-1">@{result.username}</p>
+                        <p className="text-sm mb-1" style={{ color: '#6B7280' }}>@{result.username}</p>
 
                         {result.college && (
-                          <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <div className="flex items-center gap-1 text-sm" style={{ color: '#6B7280' }}>
                             <MapPin className="h-4 w-4" />
                             <span>{result.college.name}</span>
                           </div>
@@ -261,11 +259,11 @@ export default function SearchPage() {
 
             {!hasSearched && (
               <div className="text-center py-16">
-                <Search className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">
+                <Search className="h-16 w-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
+                <h3 className="text-xl font-bold mb-2" style={{ color: '#111827' }}>
                   Search for people
                 </h3>
-                <p className="text-gray-500">
+                <p style={{ color: '#6B7280' }}>
                   Find other users by their username, display name, or college.
                 </p>
               </div>
@@ -276,11 +274,11 @@ export default function SearchPage() {
         {/* Posts Tab */}
         {activeTab === 'posts' && !isLoading && (
           <div className="text-center py-16">
-            <Search className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">
+            <Search className="h-16 w-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
+            <h3 className="text-xl font-bold mb-2" style={{ color: '#111827' }}>
               Post search coming soon
             </h3>
-            <p className="text-gray-500">
+            <p style={{ color: '#6B7280' }}>
               We're working on adding the ability to search through posts.
             </p>
           </div>
@@ -291,18 +289,18 @@ export default function SearchPage() {
           <div>
             {searchQuery.trim() ? (
               <div className="text-center py-16">
-                <Hash className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">
+                <Hash className="h-16 w-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
+                <h3 className="text-xl font-bold mb-2" style={{ color: '#111827' }}>
                   No topics found for "{searchQuery}"
                 </h3>
-                <p className="text-gray-500">
+                <p style={{ color: '#6B7280' }}>
                   Try searching for something else or browse trending topics below.
                 </p>
               </div>
             ) : (
               <div className="p-4">
-                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-primary-400" />
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: '#111827' }}>
+                  <TrendingUp className="w-5 h-5" style={{ color: '#3B82F6' }} />
                   Trending topics
                 </h2>
                 <div className="space-y-1">
@@ -313,15 +311,15 @@ export default function SearchPage() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
                       onClick={() => setSearchQuery(topic.name.toLowerCase())}
-                      className="hover:bg-gray-950/50 p-3 rounded-lg cursor-pointer transition-colors"
+                      className="hover:bg-gray-50 p-3 rounded-lg cursor-pointer transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-gray-500 text-sm">{topic.category} · Trending</p>
-                          <p className="font-bold text-white">{topic.name}</p>
-                          <p className="text-gray-500 text-sm">{topic.posts} posts</p>
+                          <p className="text-sm" style={{ color: '#6B7280' }}>{topic.category} · Trending</p>
+                          <p className="font-bold" style={{ color: '#111827' }}>{topic.name}</p>
+                          <p className="text-sm" style={{ color: '#6B7280' }}>{topic.posts} posts</p>
                         </div>
-                        <Hash className="w-5 h-5 text-gray-600" />
+                        <Hash className="w-5 h-5" style={{ color: '#9CA3AF' }} />
                       </div>
                     </motion.div>
                   ))}

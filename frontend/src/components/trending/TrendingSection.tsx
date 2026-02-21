@@ -137,11 +137,11 @@ export function TrendingSection() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gray-900 rounded-2xl p-4"
+        className="bg-white border border-gray-200 rounded-2xl p-4"
       >
         <div className="flex items-center gap-2 mb-4">
-          <Hash className="w-5 h-5 text-primary-400" />
-          <h2 className="text-xl font-bold">What's trending</h2>
+          <Hash className="w-5 h-5 text-royal-600" />
+          <h2 className="text-xl font-bold text-gray-900">What's trending</h2>
         </div>
         
         <div className="space-y-3">
@@ -154,7 +154,7 @@ export function TrendingSection() {
             >
               <Link 
                 href={`/search?q=${encodeURIComponent(topic.name.toLowerCase().replace(/\s+/g, '-'))}`}
-                className="block hover:bg-gray-800 p-3 rounded-lg cursor-pointer transition-colors group"
+                className="block hover:bg-gray-50 p-3 rounded-lg cursor-pointer transition-colors group"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -164,14 +164,14 @@ export function TrendingSection() {
                         {topic.category} · Trending
                       </p>
                     </div>
-                    <p className="font-bold text-white group-hover:text-primary-400 transition-colors">
+                    <p className="font-bold text-gray-900 group-hover:text-royal-600 transition-colors">
                       {topic.name}
                     </p>
                     <p className="text-gray-500 text-sm">
                       {formatNumber(topic.postCount)} posts
                     </p>
                     {topic.description && (
-                      <p className="text-gray-400 text-xs mt-1 line-clamp-2">
+                      <p className="text-gray-600 text-xs mt-1 line-clamp-2">
                         {topic.description}
                       </p>
                     )}
@@ -184,7 +184,7 @@ export function TrendingSection() {
         
         <Link 
           href="/search" 
-          className="block text-primary-400 hover:text-primary-300 text-sm mt-3 transition-colors"
+          className="block text-royal-600 hover:text-royal-700 text-sm mt-3 transition-colors"
         >
           Show more
         </Link>
@@ -195,11 +195,11 @@ export function TrendingSection() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-gray-900 rounded-2xl p-4"
+        className="bg-white border border-gray-200 rounded-2xl p-4"
       >
         <div className="flex items-center gap-2 mb-4">
-          <Users className="w-5 h-5 text-primary-400" />
-          <h2 className="text-xl font-bold">Who to follow</h2>
+          <Users className="w-5 h-5 text-royal-600" />
+          <h2 className="text-xl font-bold text-gray-900">Who to follow</h2>
         </div>
         
         <div className="space-y-3">
@@ -209,21 +209,21 @@ export function TrendingSection() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 + index * 0.1 }}
-              className="flex items-center justify-between hover:bg-gray-800 p-2 rounded-lg transition-colors"
+              className="flex items-center justify-between hover:bg-gray-50 p-2 rounded-lg transition-colors"
             >
               <Link href={`/profile/${user.id}`} className="flex items-center gap-3 flex-1">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-sm font-semibold">
                     {user.avatar}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1">
-                    <p className="font-bold text-white truncate">
+                    <p className="font-bold text-gray-900 truncate">
                       {user.displayName}
                     </p>
                     {user.isVerified && (
-                      <div className="w-4 h-4 bg-primary-500 rounded-full flex items-center justify-center">
+                      <div className="w-4 h-4 bg-royal-500 rounded-full flex items-center justify-center">
                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -231,12 +231,12 @@ export function TrendingSection() {
                     )}
                   </div>
                   <p className="text-gray-500 text-sm truncate">@{user.username}</p>
-                  <p className="text-gray-400 text-xs">
+                  <p className="text-gray-600 text-xs">
                     {formatNumber(user.followerCount)} followers
                   </p>
                 </div>
               </Link>
-              <button className="bg-white text-black font-bold py-1.5 px-4 rounded-full text-sm hover:bg-gray-200 transition-colors flex-shrink-0">
+              <button className="bg-gray-900 text-white font-bold py-1.5 px-4 rounded-full text-sm hover:bg-gray-800 transition-colors flex-shrink-0">
                 Follow
               </button>
             </motion.div>
@@ -245,7 +245,7 @@ export function TrendingSection() {
         
         <Link 
           href="/search" 
-          className="block text-primary-400 hover:text-primary-300 text-sm mt-3 transition-colors"
+          className="block text-royal-600 hover:text-royal-700 text-sm mt-3 transition-colors"
         >
           Show more
         </Link>
@@ -256,11 +256,11 @@ export function TrendingSection() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-gray-900 rounded-2xl p-4"
+        className="bg-white border border-gray-200 rounded-2xl p-4"
       >
         <div className="flex items-center gap-2 mb-4">
-          <BookOpen className="w-5 h-5 text-primary-400" />
-          <h2 className="text-xl font-bold">Topics to follow</h2>
+          <BookOpen className="w-5 h-5 text-royal-600" />
+          <h2 className="text-xl font-bold text-gray-900">Topics to follow</h2>
         </div>
         
         <div className="flex flex-wrap gap-2">
@@ -276,7 +276,7 @@ export function TrendingSection() {
             >
               <Link 
                 href={`/search?q=${topic.toLowerCase()}`}
-                className="inline-block bg-gray-800 hover:bg-gray-700 px-3 py-2 rounded-full text-sm transition-colors"
+                className="inline-block bg-gray-100 hover:bg-gray-200 text-gray-900 px-3 py-2 rounded-full text-sm transition-colors"
               >
                 #{topic}
               </Link>
@@ -290,11 +290,11 @@ export function TrendingSection() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="bg-gray-900 rounded-2xl p-4"
+        className="bg-white border border-gray-200 rounded-2xl p-4"
       >
         <div className="flex items-center gap-2 mb-4">
-          <MessageCircle className="w-5 h-5 text-primary-400" />
-          <h2 className="text-xl font-bold">Recent discussions</h2>
+          <MessageCircle className="w-5 h-5 text-royal-600" />
+          <h2 className="text-xl font-bold text-gray-900">Recent discussions</h2>
         </div>
         
         <div className="space-y-3">
@@ -323,9 +323,9 @@ export function TrendingSection() {
             >
               <Link 
                 href={`/search?q=${encodeURIComponent(discussion.title)}`}
-                className="block hover:bg-gray-800 p-2 rounded-lg cursor-pointer transition-colors"
+                className="block hover:bg-gray-50 p-2 rounded-lg cursor-pointer transition-colors"
               >
-                <p className="text-white text-sm font-medium line-clamp-2 mb-1">
+                <p className="text-gray-900 text-sm font-medium line-clamp-2 mb-1">
                   {discussion.title}
                 </p>
                 <div className="flex items-center gap-3 text-xs text-gray-500">

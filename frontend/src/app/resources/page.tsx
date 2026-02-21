@@ -22,16 +22,16 @@ export default function ResourcesPage() {
   if (!hasResourceAccess) {
     return (
       <MainLayout>
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center py-16">
-            <Shield className="w-16 h-16 text-gray-300 dark:text-dark-700 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <div className="px-4 sm:px-0 max-w-4xl mx-auto">
+          <div className="text-center py-12 sm:py-16 bg-white rounded-lg border border-gray-200 p-6 sm:p-12">
+            <Shield className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               Resource Access Required
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
               This section is only available to college users, moderators, and administrators.
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500">
               Register with a college email address to access academic resources.
             </p>
           </div>
@@ -44,13 +44,13 @@ export default function ResourcesPage() {
   if (!user?.collegeId) {
     return (
       <MainLayout>
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center py-16">
-            <AlertCircle className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <div className="px-4 sm:px-0 max-w-4xl mx-auto">
+          <div className="text-center py-12 sm:py-16 bg-white rounded-lg border border-gray-200 p-6 sm:p-12">
+            <AlertCircle className="w-12 h-12 sm:w-16 sm:h-16 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               College Information Missing
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-sm sm:text-base text-gray-600">
               Your account doesn't have college information associated with it.
             </p>
           </div>
@@ -61,17 +61,17 @@ export default function ResourcesPage() {
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-0">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-gray-800">
-          <div className="px-4 py-4">
-            <div className="flex items-center gap-3">
-              <BookOpen className="w-6 h-6 text-primary-600" />
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-xl border-b border-gray-200 -mx-4 sm:mx-0 px-4 sm:px-0">
+          <div className="py-3 sm:py-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-royal-600 flex-shrink-0" />
               <div>
-                <h1 className="text-xl font-bold text-white">
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">
                   Academic Resources
                 </h1>
-                <p className="text-sm text-gray-400">
+                <p className="text-xs sm:text-sm text-gray-600">
                   Browse and access study materials across colleges
                 </p>
               </div>
@@ -80,7 +80,7 @@ export default function ResourcesPage() {
         </div>
 
         {/* Resource Browser */}
-        <div className="p-4">
+        <div className="py-4">
           <ResourceBrowser defaultCollegeId={user.collegeId} />
         </div>
       </div>

@@ -1,0 +1,63 @@
+574fd4130397dce57e2f7903996e960b
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CommentSchema = exports.Comment = void 0;
+const mongoose_1 = require("@nestjs/mongoose");
+const mongoose_2 = require("mongoose");
+let Comment = class Comment {
+};
+exports.Comment = Comment;
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, required: true }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], Comment.prototype, "postId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], Comment.prototype, "authorId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], Comment.prototype, "authorName", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], Comment.prototype, "authorUsername", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true }),
+    __metadata("design:type", String)
+], Comment.prototype, "content", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], Comment.prototype, "likes", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [String], default: [] }),
+    __metadata("design:type", Array)
+], Comment.prototype, "likedBy", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], Comment.prototype, "parentCommentId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: false }),
+    __metadata("design:type", Boolean)
+], Comment.prototype, "isDeleted", void 0);
+exports.Comment = Comment = __decorate([
+    (0, mongoose_1.Schema)({ timestamps: true })
+], Comment);
+exports.CommentSchema = mongoose_1.SchemaFactory.createForClass(Comment);
+// Indexes for performance
+exports.CommentSchema.index({ postId: 1, createdAt: -1 });
+exports.CommentSchema.index({ parentCommentId: 1 });
+exports.CommentSchema.index({ authorId: 1 });
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxIUFxcRGVza3RvcFxcQ1ROXFxiYWNrZW5kXFxzcmNcXHNjaGVtYXNcXGNvbW1lbnQuc2NoZW1hLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUFBLCtDQUErRDtBQUMvRCx1Q0FBMkM7QUFRcEMsSUFBTSxPQUFPLEdBQWIsTUFBTSxPQUFPO0NBMkJuQixDQUFBO0FBM0JZLDBCQUFPO0FBRWxCO0lBREMsSUFBQSxlQUFJLEVBQUMsRUFBRSxJQUFJLEVBQUUsZ0JBQUssQ0FBQyxRQUFRLEVBQUUsUUFBUSxFQUFFLElBQUksRUFBRSxDQUFDOzhCQUN2QyxnQkFBSyxDQUFDLFFBQVE7dUNBQUM7QUFHdkI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsQ0FBQzs7eUNBQ1I7QUFHakI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsQ0FBQzs7MkNBQ047QUFHbkI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsQ0FBQzs7K0NBQ0Y7QUFHdkI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLFFBQVEsRUFBRSxJQUFJLEVBQUUsQ0FBQzs7d0NBQ1Q7QUFHaEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLE9BQU8sRUFBRSxDQUFDLEVBQUUsQ0FBQzs7c0NBQ1A7QUFHZDtJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsSUFBSSxFQUFFLENBQUMsTUFBTSxDQUFDLEVBQUUsT0FBTyxFQUFFLEVBQUUsRUFBRSxDQUFDOzt3Q0FDcEI7QUFHbEI7SUFEQyxJQUFBLGVBQUksRUFBQyxFQUFFLElBQUksRUFBRSxnQkFBSyxDQUFDLFFBQVEsRUFBRSxDQUFDOzhCQUNiLGdCQUFLLENBQUMsUUFBUTtnREFBQztBQUdqQztJQURDLElBQUEsZUFBSSxFQUFDLEVBQUUsT0FBTyxFQUFFLEtBQUssRUFBRSxDQUFDOzswQ0FDTjtrQkExQlIsT0FBTztJQURuQixJQUFBLGlCQUFNLEVBQUMsRUFBRSxVQUFVLEVBQUUsSUFBSSxFQUFFLENBQUM7R0FDaEIsT0FBTyxDQTJCbkI7QUFFWSxRQUFBLGFBQWEsR0FBRyx3QkFBYSxDQUFDLGNBQWMsQ0FBQyxPQUFPLENBQUMsQ0FBQztBQUVuRSwwQkFBMEI7QUFDMUIscUJBQWEsQ0FBQyxLQUFLLENBQUMsRUFBRSxNQUFNLEVBQUUsQ0FBQyxFQUFFLFNBQVMsRUFBRSxDQUFDLENBQUMsRUFBRSxDQUFDLENBQUM7QUFDbEQscUJBQWEsQ0FBQyxLQUFLLENBQUMsRUFBRSxlQUFlLEVBQUUsQ0FBQyxFQUFFLENBQUMsQ0FBQztBQUM1QyxxQkFBYSxDQUFDLEtBQUssQ0FBQyxFQUFFLFFBQVEsRUFBRSxDQUFDLEVBQUUsQ0FBQyxDQUFDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcSFBcXERlc2t0b3BcXENUTlxcYmFja2VuZFxcc3JjXFxzY2hlbWFzXFxjb21tZW50LnNjaGVtYS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBQcm9wLCBTY2hlbWEsIFNjaGVtYUZhY3RvcnkgfSBmcm9tICdAbmVzdGpzL21vbmdvb3NlJztcclxuaW1wb3J0IHsgRG9jdW1lbnQsIFR5cGVzIH0gZnJvbSAnbW9uZ29vc2UnO1xyXG5cclxuZXhwb3J0IHR5cGUgQ29tbWVudERvY3VtZW50ID0gQ29tbWVudCAmIERvY3VtZW50ICYge1xyXG4gIGNyZWF0ZWRBdDogRGF0ZTtcclxuICB1cGRhdGVkQXQ6IERhdGU7XHJcbn07XHJcblxyXG5AU2NoZW1hKHsgdGltZXN0YW1wczogdHJ1ZSB9KVxyXG5leHBvcnQgY2xhc3MgQ29tbWVudCB7XHJcbiAgQFByb3AoeyB0eXBlOiBUeXBlcy5PYmplY3RJZCwgcmVxdWlyZWQ6IHRydWUgfSlcclxuICBwb3N0SWQ6IFR5cGVzLk9iamVjdElkO1xyXG5cclxuICBAUHJvcCh7IHJlcXVpcmVkOiB0cnVlIH0pXHJcbiAgYXV0aG9ySWQ6IHN0cmluZztcclxuXHJcbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSB9KVxyXG4gIGF1dGhvck5hbWU6IHN0cmluZztcclxuXHJcbiAgQFByb3AoeyByZXF1aXJlZDogdHJ1ZSB9KVxyXG4gIGF1dGhvclVzZXJuYW1lOiBzdHJpbmc7XHJcblxyXG4gIEBQcm9wKHsgcmVxdWlyZWQ6IHRydWUgfSlcclxuICBjb250ZW50OiBzdHJpbmc7XHJcblxyXG4gIEBQcm9wKHsgZGVmYXVsdDogMCB9KVxyXG4gIGxpa2VzOiBudW1iZXI7XHJcblxyXG4gIEBQcm9wKHsgdHlwZTogW1N0cmluZ10sIGRlZmF1bHQ6IFtdIH0pXHJcbiAgbGlrZWRCeTogc3RyaW5nW107XHJcblxyXG4gIEBQcm9wKHsgdHlwZTogVHlwZXMuT2JqZWN0SWQgfSlcclxuICBwYXJlbnRDb21tZW50SWQ/OiBUeXBlcy5PYmplY3RJZDtcclxuXHJcbiAgQFByb3AoeyBkZWZhdWx0OiBmYWxzZSB9KVxyXG4gIGlzRGVsZXRlZDogYm9vbGVhbjtcclxufVxyXG5cclxuZXhwb3J0IGNvbnN0IENvbW1lbnRTY2hlbWEgPSBTY2hlbWFGYWN0b3J5LmNyZWF0ZUZvckNsYXNzKENvbW1lbnQpO1xyXG5cclxuLy8gSW5kZXhlcyBmb3IgcGVyZm9ybWFuY2VcclxuQ29tbWVudFNjaGVtYS5pbmRleCh7IHBvc3RJZDogMSwgY3JlYXRlZEF0OiAtMSB9KTtcclxuQ29tbWVudFNjaGVtYS5pbmRleCh7IHBhcmVudENvbW1lbnRJZDogMSB9KTtcclxuQ29tbWVudFNjaGVtYS5pbmRleCh7IGF1dGhvcklkOiAxIH0pO1xyXG4iXSwidmVyc2lvbiI6M30=

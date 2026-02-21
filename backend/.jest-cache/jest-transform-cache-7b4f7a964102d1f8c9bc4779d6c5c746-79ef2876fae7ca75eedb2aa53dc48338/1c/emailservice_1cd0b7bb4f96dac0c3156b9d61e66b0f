@@ -1,0 +1,101 @@
+1cbb97d979577b55dbdc04105f2a9846
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var EmailService_1;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EmailService = void 0;
+const common_1 = require("@nestjs/common");
+const nodemailer = require("nodemailer");
+const config_1 = require("@nestjs/config");
+let EmailService = EmailService_1 = class EmailService {
+    constructor(configService) {
+        this.configService = configService;
+        this.logger = new common_1.Logger(EmailService_1.name);
+        this.transporter = nodemailer.createTransport({
+            host: this.configService.get('SMTP_HOST') || 'smtp.gmail.com',
+            port: this.configService.get('SMTP_PORT') || 587,
+            secure: false,
+            auth: {
+                user: this.configService.get('SMTP_USER'),
+                pass: this.configService.get('SMTP_PASS'),
+            },
+        });
+    }
+    async sendVerificationEmail(email, otp) {
+        try {
+            const mailOptions = {
+                from: `"CTN - Critical Thinking Network" <${this.configService.get('SMTP_USER')}>`,
+                to: email,
+                subject: 'Verify Your Email - CTN',
+                html: `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                .otp-box { background: white; border: 2px dashed #667eea; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
+                .otp-code { font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 8px; }
+                .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+                .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>🧠 Welcome to CTN!</h1>
+                  <p>Critical Thinking Network</p>
+                </div>
+                <div class="content">
+                  <h2>Verify Your Email Address</h2>
+                  <p>Thank you for signing up! Please use the following OTP to verify your email address:</p>
+                  
+                  <div class="otp-box">
+                    <p style="margin: 0; color: #666; font-size: 14px;">Your Verification Code</p>
+                    <div class="otp-code">${otp}</div>
+                    <p style="margin: 10px 0 0 0; color: #999; font-size: 12px;">Valid for 10 minutes</p>
+                  </div>
+                  
+                  <p>Enter this code on the verification page to complete your registration.</p>
+                  
+                  <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                    <strong>Note:</strong> If you didn't create an account with CTN, please ignore this email.
+                  </p>
+                </div>
+                <div class="footer">
+                  <p>© ${new Date().getFullYear()} Critical Thinking Network. All rights reserved.</p>
+                  <p>This is an automated email. Please do not reply.</p>
+                </div>
+              </div>
+            </body>
+          </html>
+        `,
+            };
+            await this.transporter.sendMail(mailOptions);
+            this.logger.log(`Verification email sent to ${email}`);
+        }
+        catch (error) {
+            this.logger.error(`Failed to send email to ${email}:`, error);
+            throw new Error('Failed to send verification email');
+        }
+    }
+    generateOTP() {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+};
+exports.EmailService = EmailService;
+exports.EmailService = EmailService = EmailService_1 = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [config_1.ConfigService])
+], EmailService);
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxIUFxcRGVza3RvcFxcQ1ROXFxiYWNrZW5kXFxzcmNcXG1vZHVsZXNcXGVtYWlsXFxlbWFpbC5zZXJ2aWNlLnRzIiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7QUFBQSwyQ0FBb0Q7QUFDcEQseUNBQXlDO0FBQ3pDLDJDQUErQztBQUd4QyxJQUFNLFlBQVksb0JBQWxCLE1BQU0sWUFBWTtJQUl2QixZQUFvQixhQUE0QjtRQUE1QixrQkFBYSxHQUFiLGFBQWEsQ0FBZTtRQUYvQixXQUFNLEdBQUcsSUFBSSxlQUFNLENBQUMsY0FBWSxDQUFDLElBQUksQ0FBQyxDQUFDO1FBR3RELElBQUksQ0FBQyxXQUFXLEdBQUcsVUFBVSxDQUFDLGVBQWUsQ0FBQztZQUM1QyxJQUFJLEVBQUUsSUFBSSxDQUFDLGFBQWEsQ0FBQyxHQUFHLENBQUMsV0FBVyxDQUFDLElBQUksZ0JBQWdCO1lBQzdELElBQUksRUFBRSxJQUFJLENBQUMsYUFBYSxDQUFDLEdBQUcsQ0FBQyxXQUFXLENBQUMsSUFBSSxHQUFHO1lBQ2hELE1BQU0sRUFBRSxLQUFLO1lBQ2IsSUFBSSxFQUFFO2dCQUNKLElBQUksRUFBRSxJQUFJLENBQUMsYUFBYSxDQUFDLEdBQUcsQ0FBQyxXQUFXLENBQUM7Z0JBQ3pDLElBQUksRUFBRSxJQUFJLENBQUMsYUFBYSxDQUFDLEdBQUcsQ0FBQyxXQUFXLENBQUM7YUFDMUM7U0FDRixDQUFDLENBQUM7SUFDTCxDQUFDO0lBRUQsS0FBSyxDQUFDLHFCQUFxQixDQUFDLEtBQWEsRUFBRSxHQUFXO1FBQ3BELElBQUksQ0FBQztZQUNILE1BQU0sV0FBVyxHQUFHO2dCQUNsQixJQUFJLEVBQUUsc0NBQXNDLElBQUksQ0FBQyxhQUFhLENBQUMsR0FBRyxDQUFDLFdBQVcsQ0FBQyxHQUFHO2dCQUNsRixFQUFFLEVBQUUsS0FBSztnQkFDVCxPQUFPLEVBQUUseUJBQXlCO2dCQUNsQyxJQUFJLEVBQUU7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs0Q0EyQjhCLEdBQUc7Ozs7Ozs7Ozs7O3lCQVd0QixJQUFJLElBQUksRUFBRSxDQUFDLFdBQVcsRUFBRTs7Ozs7O1NBTXhDO2FBQ0YsQ0FBQztZQUVGLE1BQU0sSUFBSSxDQUFDLFdBQVcsQ0FBQyxRQUFRLENBQUMsV0FBVyxDQUFDLENBQUM7WUFDN0MsSUFBSSxDQUFDLE1BQU0sQ0FBQyxHQUFHLENBQUMsOEJBQThCLEtBQUssRUFBRSxDQUFDLENBQUM7UUFDekQsQ0FBQztRQUFDLE9BQU8sS0FBSyxFQUFFLENBQUM7WUFDZixJQUFJLENBQUMsTUFBTSxDQUFDLEtBQUssQ0FBQywyQkFBMkIsS0FBSyxHQUFHLEVBQUUsS0FBSyxDQUFDLENBQUM7WUFDOUQsTUFBTSxJQUFJLEtBQUssQ0FBQyxtQ0FBbUMsQ0FBQyxDQUFDO1FBQ3ZELENBQUM7SUFDSCxDQUFDO0lBRUQsV0FBVztRQUNULE9BQU8sSUFBSSxDQUFDLEtBQUssQ0FBQyxNQUFNLEdBQUcsSUFBSSxDQUFDLE1BQU0sRUFBRSxHQUFHLE1BQU0sQ0FBQyxDQUFDLFFBQVEsRUFBRSxDQUFDO0lBQ2hFLENBQUM7Q0FDRixDQUFBO0FBaEZZLG9DQUFZO3VCQUFaLFlBQVk7SUFEeEIsSUFBQSxtQkFBVSxHQUFFO3FDQUt3QixzQkFBYTtHQUpyQyxZQUFZLENBZ0Z4QiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyJDOlxcVXNlcnNcXEhQXFxEZXNrdG9wXFxDVE5cXGJhY2tlbmRcXHNyY1xcbW9kdWxlc1xcZW1haWxcXGVtYWlsLnNlcnZpY2UudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgSW5qZWN0YWJsZSwgTG9nZ2VyIH0gZnJvbSAnQG5lc3Rqcy9jb21tb24nO1xyXG5pbXBvcnQgKiBhcyBub2RlbWFpbGVyIGZyb20gJ25vZGVtYWlsZXInO1xyXG5pbXBvcnQgeyBDb25maWdTZXJ2aWNlIH0gZnJvbSAnQG5lc3Rqcy9jb25maWcnO1xyXG5cclxuQEluamVjdGFibGUoKVxyXG5leHBvcnQgY2xhc3MgRW1haWxTZXJ2aWNlIHtcclxuICBwcml2YXRlIHRyYW5zcG9ydGVyOiBub2RlbWFpbGVyLlRyYW5zcG9ydGVyO1xyXG4gIHByaXZhdGUgcmVhZG9ubHkgbG9nZ2VyID0gbmV3IExvZ2dlcihFbWFpbFNlcnZpY2UubmFtZSk7XHJcblxyXG4gIGNvbnN0cnVjdG9yKHByaXZhdGUgY29uZmlnU2VydmljZTogQ29uZmlnU2VydmljZSkge1xyXG4gICAgdGhpcy50cmFuc3BvcnRlciA9IG5vZGVtYWlsZXIuY3JlYXRlVHJhbnNwb3J0KHtcclxuICAgICAgaG9zdDogdGhpcy5jb25maWdTZXJ2aWNlLmdldCgnU01UUF9IT1NUJykgfHwgJ3NtdHAuZ21haWwuY29tJyxcclxuICAgICAgcG9ydDogdGhpcy5jb25maWdTZXJ2aWNlLmdldCgnU01UUF9QT1JUJykgfHwgNTg3LFxyXG4gICAgICBzZWN1cmU6IGZhbHNlLFxyXG4gICAgICBhdXRoOiB7XHJcbiAgICAgICAgdXNlcjogdGhpcy5jb25maWdTZXJ2aWNlLmdldCgnU01UUF9VU0VSJyksXHJcbiAgICAgICAgcGFzczogdGhpcy5jb25maWdTZXJ2aWNlLmdldCgnU01UUF9QQVNTJyksXHJcbiAgICAgIH0sXHJcbiAgICB9KTtcclxuICB9XHJcblxyXG4gIGFzeW5jIHNlbmRWZXJpZmljYXRpb25FbWFpbChlbWFpbDogc3RyaW5nLCBvdHA6IHN0cmluZyk6IFByb21pc2U8dm9pZD4ge1xyXG4gICAgdHJ5IHtcclxuICAgICAgY29uc3QgbWFpbE9wdGlvbnMgPSB7XHJcbiAgICAgICAgZnJvbTogYFwiQ1ROIC0gQ3JpdGljYWwgVGhpbmtpbmcgTmV0d29ya1wiIDwke3RoaXMuY29uZmlnU2VydmljZS5nZXQoJ1NNVFBfVVNFUicpfT5gLFxyXG4gICAgICAgIHRvOiBlbWFpbCxcclxuICAgICAgICBzdWJqZWN0OiAnVmVyaWZ5IFlvdXIgRW1haWwgLSBDVE4nLFxyXG4gICAgICAgIGh0bWw6IGBcclxuICAgICAgICAgIDwhRE9DVFlQRSBodG1sPlxyXG4gICAgICAgICAgPGh0bWw+XHJcbiAgICAgICAgICAgIDxoZWFkPlxyXG4gICAgICAgICAgICAgIDxzdHlsZT5cclxuICAgICAgICAgICAgICAgIGJvZHkgeyBmb250LWZhbWlseTogQXJpYWwsIHNhbnMtc2VyaWY7IGxpbmUtaGVpZ2h0OiAxLjY7IGNvbG9yOiAjMzMzOyB9XHJcbiAgICAgICAgICAgICAgICAuY29udGFpbmVyIHsgbWF4LXdpZHRoOiA2MDBweDsgbWFyZ2luOiAwIGF1dG87IHBhZGRpbmc6IDIwcHg7IH1cclxuICAgICAgICAgICAgICAgIC5oZWFkZXIgeyBiYWNrZ3JvdW5kOiBsaW5lYXItZ3JhZGllbnQoMTM1ZGVnLCAjNjY3ZWVhIDAlLCAjNzY0YmEyIDEwMCUpOyBjb2xvcjogd2hpdGU7IHBhZGRpbmc6IDMwcHg7IHRleHQtYWxpZ246IGNlbnRlcjsgYm9yZGVyLXJhZGl1czogMTBweCAxMHB4IDAgMDsgfVxyXG4gICAgICAgICAgICAgICAgLmNvbnRlbnQgeyBiYWNrZ3JvdW5kOiAjZjlmOWY5OyBwYWRkaW5nOiAzMHB4OyBib3JkZXItcmFkaXVzOiAwIDAgMTBweCAxMHB4OyB9XHJcbiAgICAgICAgICAgICAgICAub3RwLWJveCB7IGJhY2tncm91bmQ6IHdoaXRlOyBib3JkZXI6IDJweCBkYXNoZWQgIzY2N2VlYTsgcGFkZGluZzogMjBweDsgdGV4dC1hbGlnbjogY2VudGVyOyBtYXJnaW46IDIwcHggMDsgYm9yZGVyLXJhZGl1czogOHB4OyB9XHJcbiAgICAgICAgICAgICAgICAub3RwLWNvZGUgeyBmb250LXNpemU6IDMycHg7IGZvbnQtd2VpZ2h0OiBib2xkOyBjb2xvcjogIzY2N2VlYTsgbGV0dGVyLXNwYWNpbmc6IDhweDsgfVxyXG4gICAgICAgICAgICAgICAgLmZvb3RlciB7IHRleHQtYWxpZ246IGNlbnRlcjsgbWFyZ2luLXRvcDogMjBweDsgY29sb3I6ICM2NjY7IGZvbnQtc2l6ZTogMTJweDsgfVxyXG4gICAgICAgICAgICAgICAgLmJ1dHRvbiB7IGRpc3BsYXk6IGlubGluZS1ibG9jazsgcGFkZGluZzogMTJweCAzMHB4OyBiYWNrZ3JvdW5kOiAjNjY3ZWVhOyBjb2xvcjogd2hpdGU7IHRleHQtZGVjb3JhdGlvbjogbm9uZTsgYm9yZGVyLXJhZGl1czogNXB4OyBtYXJnaW46IDEwcHggMDsgfVxyXG4gICAgICAgICAgICAgIDwvc3R5bGU+XHJcbiAgICAgICAgICAgIDwvaGVhZD5cclxuICAgICAgICAgICAgPGJvZHk+XHJcbiAgICAgICAgICAgICAgPGRpdiBjbGFzcz1cImNvbnRhaW5lclwiPlxyXG4gICAgICAgICAgICAgICAgPGRpdiBjbGFzcz1cImhlYWRlclwiPlxyXG4gICAgICAgICAgICAgICAgICA8aDE+8J+noCBXZWxjb21lIHRvIENUTiE8L2gxPlxyXG4gICAgICAgICAgICAgICAgICA8cD5Dcml0aWNhbCBUaGlua2luZyBOZXR3b3JrPC9wPlxyXG4gICAgICAgICAgICAgICAgPC9kaXY+XHJcbiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPVwiY29udGVudFwiPlxyXG4gICAgICAgICAgICAgICAgICA8aDI+VmVyaWZ5IFlvdXIgRW1haWwgQWRkcmVzczwvaDI+XHJcbiAgICAgICAgICAgICAgICAgIDxwPlRoYW5rIHlvdSBmb3Igc2lnbmluZyB1cCEgUGxlYXNlIHVzZSB0aGUgZm9sbG93aW5nIE9UUCB0byB2ZXJpZnkgeW91ciBlbWFpbCBhZGRyZXNzOjwvcD5cclxuICAgICAgICAgICAgICAgICAgXHJcbiAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9XCJvdHAtYm94XCI+XHJcbiAgICAgICAgICAgICAgICAgICAgPHAgc3R5bGU9XCJtYXJnaW46IDA7IGNvbG9yOiAjNjY2OyBmb250LXNpemU6IDE0cHg7XCI+WW91ciBWZXJpZmljYXRpb24gQ29kZTwvcD5cclxuICAgICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPVwib3RwLWNvZGVcIj4ke290cH08L2Rpdj5cclxuICAgICAgICAgICAgICAgICAgICA8cCBzdHlsZT1cIm1hcmdpbjogMTBweCAwIDAgMDsgY29sb3I6ICM5OTk7IGZvbnQtc2l6ZTogMTJweDtcIj5WYWxpZCBmb3IgMTAgbWludXRlczwvcD5cclxuICAgICAgICAgICAgICAgICAgPC9kaXY+XHJcbiAgICAgICAgICAgICAgICAgIFxyXG4gICAgICAgICAgICAgICAgICA8cD5FbnRlciB0aGlzIGNvZGUgb24gdGhlIHZlcmlmaWNhdGlvbiBwYWdlIHRvIGNvbXBsZXRlIHlvdXIgcmVnaXN0cmF0aW9uLjwvcD5cclxuICAgICAgICAgICAgICAgICAgXHJcbiAgICAgICAgICAgICAgICAgIDxwIHN0eWxlPVwiY29sb3I6ICM2NjY7IGZvbnQtc2l6ZTogMTRweDsgbWFyZ2luLXRvcDogMjBweDtcIj5cclxuICAgICAgICAgICAgICAgICAgICA8c3Ryb25nPk5vdGU6PC9zdHJvbmc+IElmIHlvdSBkaWRuJ3QgY3JlYXRlIGFuIGFjY291bnQgd2l0aCBDVE4sIHBsZWFzZSBpZ25vcmUgdGhpcyBlbWFpbC5cclxuICAgICAgICAgICAgICAgICAgPC9wPlxyXG4gICAgICAgICAgICAgICAgPC9kaXY+XHJcbiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPVwiZm9vdGVyXCI+XHJcbiAgICAgICAgICAgICAgICAgIDxwPsKpICR7bmV3IERhdGUoKS5nZXRGdWxsWWVhcigpfSBDcml0aWNhbCBUaGlua2luZyBOZXR3b3JrLiBBbGwgcmlnaHRzIHJlc2VydmVkLjwvcD5cclxuICAgICAgICAgICAgICAgICAgPHA+VGhpcyBpcyBhbiBhdXRvbWF0ZWQgZW1haWwuIFBsZWFzZSBkbyBub3QgcmVwbHkuPC9wPlxyXG4gICAgICAgICAgICAgICAgPC9kaXY+XHJcbiAgICAgICAgICAgICAgPC9kaXY+XHJcbiAgICAgICAgICAgIDwvYm9keT5cclxuICAgICAgICAgIDwvaHRtbD5cclxuICAgICAgICBgLFxyXG4gICAgICB9O1xyXG5cclxuICAgICAgYXdhaXQgdGhpcy50cmFuc3BvcnRlci5zZW5kTWFpbChtYWlsT3B0aW9ucyk7XHJcbiAgICAgIHRoaXMubG9nZ2VyLmxvZyhgVmVyaWZpY2F0aW9uIGVtYWlsIHNlbnQgdG8gJHtlbWFpbH1gKTtcclxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XHJcbiAgICAgIHRoaXMubG9nZ2VyLmVycm9yKGBGYWlsZWQgdG8gc2VuZCBlbWFpbCB0byAke2VtYWlsfTpgLCBlcnJvcik7XHJcbiAgICAgIHRocm93IG5ldyBFcnJvcignRmFpbGVkIHRvIHNlbmQgdmVyaWZpY2F0aW9uIGVtYWlsJyk7XHJcbiAgICB9XHJcbiAgfVxyXG5cclxuICBnZW5lcmF0ZU9UUCgpOiBzdHJpbmcge1xyXG4gICAgcmV0dXJuIE1hdGguZmxvb3IoMTAwMDAwICsgTWF0aC5yYW5kb20oKSAqIDkwMDAwMCkudG9TdHJpbmcoKTtcclxuICB9XHJcbn1cclxuIl0sInZlcnNpb24iOjN9

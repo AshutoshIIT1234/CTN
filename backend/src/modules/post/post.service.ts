@@ -12,6 +12,7 @@ import { Post, PostDocument } from '@/schemas/post.schema';
 import { Comment, CommentDocument } from '@/schemas/comment.schema';
 import { Like, LikeDocument } from '@/schemas/like.schema';
 import { Report, ReportDocument } from '@/schemas/report.schema';
+import { SavedPost, SavedPostDocument } from '@/schemas/saved-post.schema';
 import { User } from '@/entities/user.entity';
 import { UserProfile } from '@/entities/user-profile.entity';
 import { College } from '@/entities/college.entity';
@@ -27,6 +28,7 @@ export class PostService {
     @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
     @InjectModel(Like.name) private likeModel: Model<LikeDocument>,
     @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
+    @InjectModel(SavedPost.name) private savedPostModel: Model<SavedPostDocument>,
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(UserProfile) private userProfileRepository: Repository<UserProfile>,
     @InjectRepository(College) private collegeRepository: Repository<College>,
@@ -950,6 +952,170 @@ export class PostService {
       isLiked,
       createdAt: comment.createdAt,
       updatedAt: comment.updatedAt,
+    };
+  }
+
+  // Saved Posts
+  async savePost(userId: string, postId: string): Promise<void> {
+    if (!Types.ObjectId.isValid(postId)) {
+      throw new BadRequestException('Invalid post ID');
+    }
+
+    const post = await this.postModel.findById(postId);
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    // Check if already saved
+    const existingSave = await this.savedPostModel.findOne({
+      userId,
+      postId: new Types.ObjectId(postId),
+    });
+
+    if (existingSave) {
+      throw new BadRequestException('Post already saved');
+    }
+
+    const savedPost = new this.savedPostModel({
+      userId,
+      postId: new Types.ObjectId(postId),
+    });
+
+    await savedPost.save();
+  }
+
+  async unsavePost(userId: string, postId: string): Promise<void> {
+    if (!Types.ObjectId.isValid(postId)) {
+      throw new BadRequestException('Invalid post ID');
+    }
+
+    const savedPost = await this.savedPostModel.findOne({
+      userId,
+      postId: new Types.ObjectId(postId),
+    });
+
+    if (!savedPost) {
+      throw new BadRequestException('Post not saved');
+    }
+
+    await this.savedPostModel.deleteOne({ _id: savedPost._id });
+  }
+
+  async getSavedPosts(userId: string, page: number = 1, limit: number = 20) {
+    const skip = (page - 1) * limit;
+
+    const savedPosts = await this.savedPostModel
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const postIds = savedPosts.map((sp) => sp.postId);
+
+    const posts = await this.postModel
+      .find({ _id: { $in: postIds }, isDeleted: false })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    const formattedPosts = await Promise.all(
+      posts.map((post) => this.formatPost(post, userId)),
+    );
+
+    return {
+      posts: formattedPosts,
+      page,
+      hasMore: posts.length === limit,
+    };
+  }
+
+  async isSaved(userId: string, postId: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(postId)) {
+      return false;
+    }
+
+    const savedPost = await this.savedPostModel.findOne({
+      userId,
+      postId: new Types.ObjectId(postId),
+    });
+
+    return !!savedPost;
+  }
+
+  async getUserPosts(userId: string, page: number = 1, limit: number = 20, currentUserId?: string) {
+    const skip = (page - 1) * limit;
+
+    const posts = await this.postModel
+      .find({ authorId: userId, isDeleted: false })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const formattedPosts = await Promise.all(
+      posts.map((post) => this.formatPost(post, currentUserId)),
+    );
+
+    return {
+      posts: formattedPosts,
+      page,
+      hasMore: posts.length === limit,
+    };
+  }
+
+  async getUserMediaPosts(userId: string, page: number = 1, limit: number = 20, currentUserId?: string) {
+    const skip = (page - 1) * limit;
+
+    const posts = await this.postModel
+      .find({
+        authorId: userId,
+        isDeleted: false,
+        imageUrls: { $exists: true, $ne: [] },
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const formattedPosts = await Promise.all(
+      posts.map((post) => this.formatPost(post, currentUserId)),
+    );
+
+    return {
+      posts: formattedPosts,
+      page,
+      hasMore: posts.length === limit,
+    };
+  }
+
+  async getUserReplies(userId: string, page: number = 1, limit: number = 20, currentUserId?: string) {
+    const skip = (page - 1) * limit;
+
+    const comments = await this.commentModel
+      .find({ authorId: userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const formattedComments = await Promise.all(
+      comments.map(async (comment) => {
+        const post = await this.postModel.findById(comment.postId);
+        return {
+          ...await this.formatComment(comment, currentUserId),
+          post: post ? {
+            id: post._id.toString(),
+            title: post.title,
+            content: post.content.substring(0, 100),
+          } : null,
+        };
+      }),
+    );
+
+    return {
+      replies: formattedComments,
+      page,
+      hasMore: comments.length === limit,
     };
   }
 }

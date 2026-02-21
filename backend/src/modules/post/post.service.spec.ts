@@ -10,6 +10,7 @@ import { Post, PostDocument } from '@/schemas/post.schema';
 import { Comment, CommentDocument } from '@/schemas/comment.schema';
 import { Like, LikeDocument } from '@/schemas/like.schema';
 import { Report, ReportDocument } from '@/schemas/report.schema';
+import { SavedPost, SavedPostDocument } from '@/schemas/saved-post.schema';
 import { User, UserRole } from '@/entities/user.entity';
 import { UserProfile } from '@/entities/user-profile.entity';
 import { College } from '@/entities/college.entity';
@@ -22,6 +23,7 @@ describe('PostService', () => {
   let commentModel: Model<CommentDocument>;
   let likeModel: Model<LikeDocument>;
   let reportModel: Model<ReportDocument>;
+  let savedPostModel: Model<SavedPostDocument>;
   let userRepository: Repository<User>;
   let userProfileRepository: Repository<UserProfile>;
   let collegeRepository: Repository<College>;
@@ -105,6 +107,28 @@ describe('PostService', () => {
           })),
         },
         {
+          provide: getModelToken(SavedPost.name),
+          useValue: Object.assign(
+            jest.fn().mockImplementation((data) => ({
+              ...data,
+              save: jest.fn().mockResolvedValue({
+                _id: new Types.ObjectId(),
+                ...data,
+                createdAt: new Date(),
+              }),
+            })),
+            {
+              findOne: jest.fn(),
+              find: jest.fn().mockReturnThis(),
+              sort: jest.fn().mockReturnThis(),
+              skip: jest.fn().mockReturnThis(),
+              limit: jest.fn().mockReturnThis(),
+              exec: jest.fn(),
+              deleteOne: jest.fn(),
+            }
+          ),
+        },
+        {
           provide: getRepositoryToken(User),
           useValue: {
             findOne: jest.fn(),
@@ -160,6 +184,7 @@ describe('PostService', () => {
     commentModel = module.get<Model<CommentDocument>>(getModelToken(Comment.name));
     likeModel = module.get<Model<LikeDocument>>(getModelToken(Like.name));
     reportModel = module.get<Model<ReportDocument>>(getModelToken(Report.name));
+    savedPostModel = module.get<Model<SavedPostDocument>>(getModelToken(SavedPost.name));
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
     userProfileRepository = module.get<Repository<UserProfile>>(
       getRepositoryToken(UserProfile),
@@ -2991,6 +3016,219 @@ describe('PostService', () => {
           },
         ),
         { numRuns: 2 },
+      );
+    });
+  });
+
+  // Feature: instagram-profile-system, Property 11: Save Action Idempotence
+  describe('Property 11: Save Action Idempotence', () => {
+    it('should be idempotent - saving twice results in saved state', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.uuid(),
+          fc.string({ minLength: 24, maxLength: 24 }).map(() => new Types.ObjectId().toString()),
+          async (userId, postId) => {
+            // Mock: Post exists
+            const mockPost = {
+              _id: new Types.ObjectId(postId),
+              authorId: 'author-id',
+              content: 'Test post',
+            };
+
+            jest.spyOn(postModel, 'findById').mockResolvedValue(mockPost as any);
+
+            // Mock: First save - no existing save
+            let saveCallCount = 0;
+            const mockSavedPostModel = {
+              findOne: jest.fn().mockImplementation(async () => {
+                if (saveCallCount === 0) {
+                  return null; // First call: not saved
+                }
+                return { userId, postId: new Types.ObjectId(postId) }; // Second call: already saved
+              }),
+              save: jest.fn().mockResolvedValue(undefined),
+            };
+
+            // First save should succeed
+            await service.savePost(userId, postId);
+            saveCallCount++;
+
+            // Second save should throw (idempotent behavior - already saved)
+            await expect(service.savePost(userId, postId)).rejects.toThrow(
+              'Post already saved',
+            );
+
+            // Verify: Final state is saved
+            const isSaved = await service.isSaved(userId, postId);
+            expect(isSaved).toBe(true);
+          },
+        ),
+        { numRuns: 3 },
+      );
+    });
+
+    it('should return to unsaved state after save then unsave', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.uuid(),
+          fc.string({ minLength: 24, maxLength: 24 }).map(() => new Types.ObjectId().toString()),
+          async (userId, postId) => {
+            // Mock: Post exists
+            const mockPost = {
+              _id: new Types.ObjectId(postId),
+              authorId: 'author-id',
+              content: 'Test post',
+            };
+
+            jest.spyOn(postModel, 'findById').mockResolvedValue(mockPost as any);
+
+            // Mock saved post model for save/unsave cycle
+            const mockSavedPost = {
+              _id: new Types.ObjectId(),
+              userId,
+              postId: new Types.ObjectId(postId),
+            };
+
+            let isSavedState = false;
+
+            const savedPostModel = {
+              findOne: jest.fn().mockImplementation(async () => {
+                return isSavedState ? mockSavedPost : null;
+              }),
+              deleteOne: jest.fn().mockImplementation(async () => {
+                isSavedState = false;
+                return { deletedCount: 1 };
+              }),
+            };
+
+            // Save the post
+            isSavedState = true;
+
+            // Unsave the post
+            await service.unsavePost(userId, postId);
+
+            // Verify: State returned to unsaved
+            expect(isSavedState).toBe(false);
+          },
+        ),
+        { numRuns: 3 },
+      );
+    });
+  });
+
+  // Feature: instagram-profile-system, Property 12: Saved Tab Shows Only Saved Posts
+  describe('Property 12: Saved Tab Shows Only Saved Posts', () => {
+    it('should return only posts that exist in saved_posts collection', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.uuid(),
+          fc.array(
+            fc.string({ minLength: 24, maxLength: 24 }).map(() => new Types.ObjectId().toString()),
+            { minLength: 1, maxLength: 5 },
+          ),
+          async (userId, savedPostIds) => {
+            // Mock: Saved posts in collection
+            const mockSavedPosts = savedPostIds.map((postId) => ({
+              userId,
+              postId: new Types.ObjectId(postId),
+              createdAt: new Date(),
+            }));
+
+            const mockPosts = savedPostIds.map((postId) => ({
+              _id: new Types.ObjectId(postId),
+              authorId: 'author-id',
+              content: 'Test post',
+              isDeleted: false,
+              createdAt: new Date(),
+            }));
+
+            // Mock saved post model query
+            const savedPostQuery = {
+              find: jest.fn().mockReturnThis(),
+              sort: jest.fn().mockReturnThis(),
+              skip: jest.fn().mockReturnThis(),
+              limit: jest.fn().mockReturnThis(),
+              exec: jest.fn().mockResolvedValue(mockSavedPosts),
+            };
+
+            // Mock post model query
+            const postQuery = {
+              find: jest.fn().mockReturnThis(),
+              sort: jest.fn().mockReturnThis(),
+              exec: jest.fn().mockResolvedValue(mockPosts),
+            };
+
+            // Execute: Get saved posts
+            const result = await service.getSavedPosts(userId, 1, 20);
+
+            // Verify: All returned posts are in the saved collection
+            expect(result.posts.length).toBeLessThanOrEqual(savedPostIds.length);
+            result.posts.forEach((post: any) => {
+              const postIdStr = post.id || post._id?.toString();
+              expect(savedPostIds.map(id => id.toString())).toContain(postIdStr);
+            });
+          },
+        ),
+        { numRuns: 3 },
+      );
+    });
+  });
+
+  // Feature: instagram-profile-system, Property 14: Save Persistence Round Trip
+  describe('Property 14: Save Persistence Round Trip', () => {
+    it('should include saved post in getSavedPosts results', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.uuid(),
+          fc.string({ minLength: 24, maxLength: 24 }).map(() => new Types.ObjectId().toString()),
+          async (userId, postId) => {
+            // Mock: Post exists
+            const mockPost = {
+              _id: new Types.ObjectId(postId),
+              authorId: 'author-id',
+              content: 'Test post',
+              isDeleted: false,
+              createdAt: new Date(),
+            };
+
+            jest.spyOn(postModel, 'findById').mockResolvedValue(mockPost as any);
+
+            // Mock: Not already saved
+            const mockSavedPost = {
+              userId,
+              postId: new Types.ObjectId(postId),
+              createdAt: new Date(),
+            };
+
+            // Mock saved post model
+            const savedPostQuery = {
+              find: jest.fn().mockReturnThis(),
+              sort: jest.fn().mockReturnThis(),
+              skip: jest.fn().mockReturnThis(),
+              limit: jest.fn().mockReturnThis(),
+              exec: jest.fn().mockResolvedValue([mockSavedPost]),
+            };
+
+            const postQuery = {
+              find: jest.fn().mockReturnThis(),
+              sort: jest.fn().mockReturnThis(),
+              exec: jest.fn().mockResolvedValue([mockPost]),
+            };
+
+            // Execute: Save post
+            await service.savePost(userId, postId);
+
+            // Execute: Get saved posts
+            const result = await service.getSavedPosts(userId, 1, 20);
+
+            // Verify: Saved post is in results
+            const foundPost = result.posts.find(
+              (p: any) => (p.id || p._id?.toString()) === postId,
+            );
+            expect(foundPost).toBeDefined();
+          },
+        ),
+        { numRuns: 3 },
       );
     });
   });

@@ -56,6 +56,9 @@ export class User {
   @Column({ nullable: true })
   profilePictureUrl: string;
 
+  @Column({ nullable: true })
+  coverPhotoUrl: string;
+
   @Column({ default: false, nullable: true })
   isEmailVerified: boolean;
 

@@ -20,7 +20,7 @@ export default function AdminPage() {
     }
     
     if (user?.role !== UserRole.ADMIN) {
-      router.push('/feed')
+      router.push('/')
       return
     }
 

@@ -48,4 +48,17 @@ export class AuthController {
   async getProfile(@Request() req) {
     return await this.authService.validateUser(req.user.sub);
   }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(
+    @Request() req,
+    @Body() body: { currentPassword: string; newPassword: string }
+  ) {
+    return await this.authService.changePassword(
+      req.user.sub,
+      body.currentPassword,
+      body.newPassword
+    );
+  }
 }

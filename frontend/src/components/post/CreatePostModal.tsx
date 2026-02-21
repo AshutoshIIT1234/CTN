@@ -5,6 +5,7 @@ import { X, Image as ImageIcon, Smile, MapPin, Upload, Trash2 } from 'lucide-rea
 import { useAuthStore } from '@/store/authStore'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '@/lib/api'
+import { uploadMultipleToCloudinary, validateFile } from '@/lib/cloudinary'
 
 interface CreatePostModalProps {
   isOpen: boolean
@@ -41,28 +42,25 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
 
     setUploadingImage(true)
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          throw new Error(`${file.name} is too large. Maximum size is 5MB.`)
+      const filesToUpload = Array.from(files)
+      
+      // Validate all files first
+      for (const file of filesToUpload) {
+        const validation = validateFile(file, 'image')
+        if (!validation.valid) {
+          throw new Error(validation.error)
         }
+      }
 
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-          throw new Error(`${file.name} is not an image file.`)
+      // Upload to Cloudinary
+      const uploadedUrls = await uploadMultipleToCloudinary(
+        filesToUpload,
+        'post-media',
+        (fileIndex, progress) => {
+          console.log(`Uploading file ${fileIndex + 1}: ${progress.percentage}%`)
         }
+      )
 
-        // For now, convert to base64 data URL
-        // In production, you'd upload to a cloud storage service
-        return new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result as string)
-          reader.onerror = reject
-          reader.readAsDataURL(file)
-        })
-      })
-
-      const uploadedUrls = await Promise.all(uploadPromises)
       setImages(prev => [...prev, ...uploadedUrls])
     } catch (error: any) {
       alert(error.message || 'Failed to upload images')
@@ -129,7 +127,7 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
           />
 
           {/* Modal */}
@@ -137,33 +135,41 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white rounded-2xl shadow-2xl z-50 max-h-[90vh] overflow-y-auto"
+            transition={{ type: 'spring', duration: 0.3 }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl mx-4 sm:mx-0 bg-white rounded-2xl shadow-2xl z-50 max-h-[90vh] flex flex-col lg:max-h-[85vh]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
-              <h2 className="text-lg font-semibold text-gray-900">Create Post</h2>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3" style={{ borderBottom: '1px solid #E5E7EB' }}>
+              <h2 className="text-base font-semibold" style={{ color: '#111827' }}>Create new post</h2>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1.5 hover:bg-gray-100 rounded-full transition-all duration-200"
+                aria-label="Close"
               >
-                <X className="w-5 h-5 text-gray-600" />
+                <X className="w-5 h-5" style={{ color: '#6B7280' }} />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="p-6">
+            {/* Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {/* User Info */}
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center">
+                <div 
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ 
+                    background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
+                    border: '2px solid #F3F4F6'
+                  }}
+                >
                   <span className="text-white text-sm font-semibold">
                     {user.username[0].toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-gray-900">
+                  <div className="text-sm font-semibold" style={{ color: '#111827' }}>
                     {user.username}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs" style={{ color: '#6B7280' }}>
                     {user.email}
                   </div>
                 </div>
@@ -173,41 +179,50 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
               <div className="flex gap-2 mb-4">
                 <button
                   onClick={() => setPanelType('NATIONAL')}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    panelType === 'NATIONAL'
-                      ? 'bg-royal-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200"
+                  style={{
+                    backgroundColor: panelType === 'NATIONAL' ? '#3B82F6' : '#F3F4F6',
+                    color: panelType === 'NATIONAL' ? 'white' : '#374151',
+                    boxShadow: panelType === 'NATIONAL' ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none'
+                  }}
                 >
-                  🌍 National Portal
+                  🌍 National
                 </button>
                 <button
                   onClick={() => setPanelType('COLLEGE')}
                   disabled={!canPostToCollege}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    panelType === 'COLLEGE'
-                      ? 'bg-royal-600 text-white'
-                      : canPostToCollege
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      : 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                  }`}
+                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200"
+                  style={{
+                    backgroundColor: panelType === 'COLLEGE' ? '#3B82F6' : (canPostToCollege ? '#F3F4F6' : '#F9FAFB'),
+                    color: panelType === 'COLLEGE' ? 'white' : (canPostToCollege ? '#374151' : '#9CA3AF'),
+                    boxShadow: panelType === 'COLLEGE' ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+                    cursor: canPostToCollege ? 'pointer' : 'not-allowed'
+                  }}
                 >
-                  🏛️ College Portal
+                  🏛️ College
                   {!canPostToCollege && ' 🔒'}
                 </button>
               </div>
 
               {/* Info Message */}
               {panelType === 'COLLEGE' && canPostToCollege && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-                  📢 This post will be visible only to members of your college
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800"
+                >
+                  📢 Visible only to your college members
+                </motion.div>
               )}
 
               {panelType === 'NATIONAL' && (
-                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
-                  🌐 This post will be visible to everyone on the national portal
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800"
+                >
+                  🌐 Visible to everyone on the national portal
+                </motion.div>
               )}
 
               {/* Title Input */}
@@ -215,8 +230,13 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Title (optional)"
-                className="w-full px-4 py-2 mb-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-royal-500"
+                placeholder="Add a title (optional)"
+                className="w-full px-4 py-2.5 mb-3 rounded-lg text-sm focus:outline-none focus:ring-2 transition-all duration-200"
+                style={{
+                  backgroundColor: '#F9FAFB',
+                  border: '1px solid #E5E7EB',
+                  color: '#111827'
+                }}
                 maxLength={200}
               />
 
@@ -225,79 +245,129 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="What's on your mind?"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-royal-500 resize-none"
+                className="w-full px-4 py-3 rounded-lg text-sm focus:outline-none focus:ring-2 resize-none transition-all duration-200"
+                style={{
+                  backgroundColor: '#F9FAFB',
+                  border: '1px solid #E5E7EB',
+                  color: '#111827'
+                }}
                 rows={6}
                 maxLength={5000}
               />
 
               {/* Character Count */}
-              <div className="text-right text-xs text-gray-500 mt-1">
-                {content.length}/5000
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-xs" style={{ color: '#9CA3AF' }}>
+                  {content.length > 0 && `${content.length}/5000 characters`}
+                </span>
+                {content.length > 4500 && (
+                  <span className="text-xs font-medium" style={{ color: '#F97316' }}>
+                    {5000 - content.length} characters left
+                  </span>
+                )}
               </div>
 
               {/* Image Preview */}
               {images.length > 0 && (
-                <div className="mt-4 grid grid-cols-2 gap-2">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2"
+                >
                   {images.map((image, index) => (
-                    <div key={index} className="relative group">
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="relative group aspect-square"
+                    >
                       <img
                         src={image}
                         alt={`Upload ${index + 1}`}
-                        className="w-full h-40 object-cover rounded-lg"
+                        className="w-full h-full object-cover rounded-lg"
                       />
                       <button
                         onClick={() => removeImage(index)}
-                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-600 hover:scale-110"
+                        aria-label="Remove image"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    </div>
+                      {/* Image number indicator */}
+                      <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded-full">
+                        {index + 1}
+                      </div>
+                    </motion.div>
                   ))}
-                </div>
+                </motion.div>
               )}
 
               {/* Toolbar */}
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingImage || images.length >= 5}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={images.length >= 5 ? 'Maximum 5 images' : 'Add images'}
-                >
-                  {uploadingImage ? (
-                    <Upload className="w-5 h-5 text-gray-600 animate-pulse" />
-                  ) : (
-                    <ImageIcon className="w-5 h-5 text-gray-600" />
-                  )}
-                </button>
-                <span className="text-xs text-gray-500">
-                  {images.length}/5 images
-                </span>
+              <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: '1px solid #E5E7EB' }}>
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage || images.length >= 5}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+                    title={images.length >= 5 ? 'Maximum 5 images' : 'Add images'}
+                  >
+                    {uploadingImage ? (
+                      <Upload className="w-5 h-5 animate-pulse" style={{ color: '#3B82F6' }} />
+                    ) : (
+                      <ImageIcon className="w-5 h-5 group-hover:text-[#3B82F6] transition-colors" style={{ color: '#6B7280' }} />
+                    )}
+                  </button>
+                  <span className="text-xs font-medium" style={{ color: '#6B7280' }}>
+                    {images.length}/5
+                  </span>
+                </div>
+                {uploadingImage && (
+                  <span className="text-xs font-medium animate-pulse" style={{ color: '#3B82F6' }}>
+                    Uploading...
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 sticky bottom-0 bg-white">
+            {/* Footer - Fixed */}
+            <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-3" style={{ borderTop: '1px solid #E5E7EB', backgroundColor: '#F9FAFB' }}>
               <button
                 onClick={onClose}
-                className="px-6 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                disabled={loading}
+                className="px-5 py-2 text-sm font-semibold hover:bg-gray-200 rounded-lg transition-all duration-200 disabled:opacity-50"
+                style={{ color: '#374151' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={!content.trim() || loading || uploadingImage}
-                className="px-6 py-2 bg-royal-600 text-white text-sm font-semibold rounded-lg hover:bg-royal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 text-white text-sm font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
+                style={{ 
+                  background: !content.trim() || loading || uploadingImage 
+                    ? '#9CA3AF' 
+                    : 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)'
+                }}
               >
-                {loading ? 'Posting...' : 'Post'}
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Posting...
+                  </span>
+                ) : (
+                  'Post'
+                )}
               </button>
             </div>
           </motion.div>

@@ -1,39 +1,87 @@
-export function PostSkeleton() {
+export interface PostSkeletonProps {
+  count?: number
+}
+
+export function PostSkeleton({ count = 3 }: PostSkeletonProps) {
   return (
-    <div className="border-b border-gray-800 p-4 animate-pulse">
-      <div className="flex gap-3">
-        <div className="w-12 h-12 rounded-full bg-gray-800" />
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-4 bg-gray-800 rounded w-24" />
-            <div className="h-4 bg-gray-800 rounded w-20" />
-            <div className="h-4 bg-gray-800 rounded w-16" />
+    <>
+      {Array.from({ length: count }).map((_, index) => (
+        <div
+          key={index}
+          className="bg-white mb-4 rounded-lg animate-pulse"
+          style={{ border: '1px solid #E5E7EB' }}
+        >
+          {/* Header */}
+          <div className="flex items-center gap-3 px-3 py-3">
+            <div 
+              className="w-8 h-8 rounded-full"
+              style={{ backgroundColor: '#E5E7EB' }}
+            />
+            <div className="flex-1 space-y-2">
+              <div 
+                className="h-3 rounded"
+                style={{ backgroundColor: '#E5E7EB', width: '120px' }}
+              />
+              <div 
+                className="h-2 rounded"
+                style={{ backgroundColor: '#E5E7EB', width: '80px' }}
+              />
+            </div>
           </div>
 
-          <div className="space-y-2 mb-3">
-            <div className="h-4 bg-gray-800 rounded w-full" />
-            <div className="h-4 bg-gray-800 rounded w-4/5" />
-            <div className="h-4 bg-gray-800 rounded w-3/4" />
+          {/* Image placeholder */}
+          <div 
+            className="w-full"
+            style={{ 
+              backgroundColor: '#E5E7EB',
+              height: '400px'
+            }}
+          />
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-4 px-3 pt-2">
+            <div 
+              className="w-7 h-7 rounded"
+              style={{ backgroundColor: '#E5E7EB' }}
+            />
+            <div 
+              className="w-7 h-7 rounded"
+              style={{ backgroundColor: '#E5E7EB' }}
+            />
+            <div 
+              className="w-7 h-7 rounded"
+              style={{ backgroundColor: '#E5E7EB' }}
+            />
           </div>
 
-          <div className="flex items-center justify-between max-w-md">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-800 rounded-full" />
-              <div className="h-4 bg-gray-800 rounded w-8" />
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-800 rounded-full" />
-              <div className="h-4 bg-gray-800 rounded w-8" />
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-800 rounded-full" />
-              <div className="h-4 bg-gray-800 rounded w-8" />
-            </div>
-            <div className="w-8 h-8 bg-gray-800 rounded-full" />
-            <div className="w-8 h-8 bg-gray-800 rounded-full" />
+          {/* Content */}
+          <div className="px-3 py-3 space-y-2">
+            <div 
+              className="h-3 rounded"
+              style={{ backgroundColor: '#E5E7EB', width: '60%' }}
+            />
+            <div 
+              className="h-3 rounded"
+              style={{ backgroundColor: '#E5E7EB', width: '90%' }}
+            />
+            <div 
+              className="h-3 rounded"
+              style={{ backgroundColor: '#E5E7EB', width: '75%' }}
+            />
+          </div>
+
+          {/* Comment input */}
+          <div 
+            className="px-3 py-2.5"
+            style={{ borderTop: '1px solid #E5E7EB' }}
+          >
+            <div 
+              className="h-4 rounded"
+              style={{ backgroundColor: '#E5E7EB', width: '150px' }}
+            />
           </div>
         </div>
-      </div>
-    </div>
+      ))}
+    </>
   )
 }

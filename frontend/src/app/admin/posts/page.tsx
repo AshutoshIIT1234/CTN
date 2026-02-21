@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore, UserRole } from '@/store/authStore'
+import { MainLayout } from '@/components/layout/MainLayout'
 import { InstagramLayout } from '@/components/layout/InstagramLayout'
 import { InstagramPostCard } from '@/components/post/InstagramPostCard'
 import { 
@@ -51,7 +52,7 @@ export default function AdminPostsPage() {
     }
     
     if (user?.role !== UserRole.ADMIN) {
-      router.push('/feed')
+      router.push('/')
       return
     }
 

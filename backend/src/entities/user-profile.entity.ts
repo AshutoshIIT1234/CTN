@@ -28,6 +28,12 @@ export class UserProfile {
   @Column({ default: 0 })
   likesReceived: number;
 
+  @Column({ default: 0 })
+  followersCount: number;
+
+  @Column({ default: 0 })
+  followingCount: number;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   lastActive: Date;
 }

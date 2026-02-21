@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
@@ -21,6 +21,7 @@ import { useAuthStore, UserRole } from '@/store/authStore'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { api } from '@/lib/api'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { uploadToCloudinary, validateFile } from '@/lib/cloudinary'
 
 interface Resource {
   id: string
@@ -78,6 +79,8 @@ export default function ModeratorDashboard() {
   const { user, college } = useAuthStore()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<'upload' | 'moderation' | 'my-uploads'>('upload')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingFile, setUploadingFile] = useState(false)
 
   // Resource upload form state
   const [uploadForm, setUploadForm] = useState({
@@ -92,7 +95,7 @@ export default function ModeratorDashboard() {
   // Check if user is a moderator
   useEffect(() => {
     if (!user || user.role !== UserRole.MODERATOR) {
-      router.push('/feed')
+      router.push('/')
     }
   }, [user, router])
 
@@ -180,6 +183,34 @@ export default function ModeratorDashboard() {
       queryClient.invalidateQueries({ queryKey: ['my-uploads'] })
     }
   })
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validation = validateFile(file, 'document')
+    if (!validation.valid) {
+      alert(validation.error || 'Invalid file')
+      return
+    }
+
+    setUploadingFile(true)
+    try {
+      const url = await uploadToCloudinary(file, 'resource')
+      setUploadForm(prev => ({
+        ...prev,
+        fileName: file.name,
+        fileUrl: url
+      }))
+    } catch (error: any) {
+      alert(error.message || 'Failed to upload file')
+    } finally {
+      setUploadingFile(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
 
   const handleUploadSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -339,24 +370,64 @@ export default function ModeratorDashboard() {
                       placeholder="e.g., Data Structures Notes.pdf"
                       className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       required
+                      readOnly
                     />
                   </div>
                 </div>
 
-                {/* File URL */}
+                {/* File Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    File URL
+                    Upload File
                   </label>
-                  <input
-                    type="url"
-                    value={uploadForm.fileUrl}
-                    onChange={(e) => setUploadForm(prev => ({ ...prev, fileUrl: e.target.value }))}
-                    placeholder="https://example.com/path/to/file.pdf"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-dark-600 bg-white dark:bg-dark-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    required
-                  />
+                  <div className="flex gap-3">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingFile}
+                      className="flex-1 px-4 py-3 bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-dark-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {uploadingFile ? (
+                        <>
+                          <Upload className="w-5 h-5 animate-pulse" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-5 h-5" />
+                          Choose File
+                        </>
+                      )}
+                    </button>
+                    {uploadForm.fileUrl && (
+                      <a
+                        href={uploadForm.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-xl hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors flex items-center gap-2"
+                      >
+                        <Eye className="w-5 h-5" />
+                        Preview
+                      </a>
+                    )}
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Supported formats: PDF, DOC, DOCX, PPT, PPTX, Images (max 50MB)
+                  </p>
                 </div>
+
+                {/* File URL (Hidden - Auto-filled) */}
+                <input
+                  type="hidden"
+                  value={uploadForm.fileUrl}
+                />
 
                 {/* Description */}
                 <div>

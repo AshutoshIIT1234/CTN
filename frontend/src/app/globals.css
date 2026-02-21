@@ -6,20 +6,24 @@
 
 @layer base {
   :root {
-    --background: 250 250 250; /* #FAFAFA */
-    --foreground: 38 38 38; /* #262626 */
+    --background: 245 247 251; /* #F5F7FB - Soft grey background */
+    --foreground: 17 24 39; /* #111827 - Primary text */
     
-    --primary: 59 130 246; /* #3B82F6 Royal Blue */
+    --primary: 59 130 246; /* #3B82F6 - Primary Blue */
     --primary-foreground: 255 255 255;
+    
+    --soft-blue-bg: 232 240 255; /* #E8F0FF - Soft Blue Background */
     
     --royal: 59 130 246; /* #3B82F6 */
     --royal-foreground: 255 255 255;
     
-    --card: 255 255 255; /* White */
-    --card-foreground: 38 38 38;
+    --card: 255 255 255; /* #FFFFFF - White cards */
+    --card-foreground: 17 24 39; /* #111827 */
     
-    --border: 219 219 219; /* #DBDBDB */
-    --input: 219 219 219;
+    --border: 229 231 235; /* #E5E7EB - Border color */
+    --input: 229 231 235;
+    
+    --secondary-text: 107 114 128; /* #6B7280 - Secondary text */
     
     --ring: 59 130 246;
     
@@ -44,58 +48,174 @@
   }
   
   body {
-    @apply bg-gray-50 text-gray-900 font-sans antialiased;
+    @apply text-gray-900 font-sans antialiased;
+    background-color: #F5F7FB; /* Soft grey background */
   }
   
-  /* Typography */
+  /* Typography - Inter font with specific weights */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold;
+    font-weight: 600; /* Titles */
+  }
+  
+  /* Username styling */
+  .username {
+    font-weight: 500;
+  }
+  
+  /* Body text */
+  p, span {
+    font-weight: 400;
+  }
+  
+  /* Metadata (timestamps, counts) */
+  .metadata {
+    font-weight: 300;
   }
 }
 
 @layer components {
   /* Instagram-style Card */
   .instagram-card {
-    @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+    background-color: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .instagram-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 200ms ease;
   }
   
   /* Button Styles */
   .btn-primary {
-    @apply bg-royal-600 hover:bg-royal-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors;
+    background-color: #3B82F6;
+    color: white;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 200ms ease;
+  }
+  
+  .btn-primary:hover {
+    background-color: #2563eb;
   }
   
   .btn-secondary {
-    @apply bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold px-4 py-2 rounded-lg transition-colors;
+    background-color: white;
+    border: 1px solid #E5E7EB;
+    color: #111827;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 200ms ease;
+  }
+  
+  .btn-secondary:hover {
+    background-color: #F9FAFB;
   }
   
   .btn-ghost {
-    @apply text-gray-700 hover:bg-gray-100 font-medium px-4 py-2 rounded-lg transition-colors;
+    color: #111827;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 200ms ease;
+  }
+  
+  .btn-ghost:hover {
+    background-color: #F3F4F6;
   }
   
   /* Input Styles */
   .input-instagram {
-    @apply bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm;
-    @apply focus:outline-none focus:ring-2 focus:ring-royal-500 focus:border-transparent;
-    @apply transition-all;
+    background-color: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    transition: all 200ms ease;
+  }
+  
+  .input-instagram:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #3B82F6;
+    border-color: transparent;
   }
   
   /* Badge */
   .badge {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
   }
   
   .badge-primary {
-    @apply bg-royal-100 text-royal-700;
+    background-color: #DBEAFE;
+    color: #1D4ED8;
+  }
+  
+  /* Filter Pills */
+  .filter-pill {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 200ms ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .filter-pill-active {
+    background-color: #3B82F6;
+    color: white;
+  }
+  
+  .filter-pill-inactive {
+    background-color: white;
+    color: #111827;
+    border: 1px solid #E5E7EB;
+  }
+  
+  .filter-pill:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: scale(1.02);
   }
   
   /* Hover Effects */
   .hover-lift {
-    @apply transition-transform hover:-translate-y-0.5;
+    transition: transform 200ms ease;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
   }
   
   /* Skeleton Loading */
   .skeleton {
-    @apply animate-pulse bg-gray-200 rounded;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    background-color: #E5E7EB;
+    border-radius: 8px;
+  }
+  
+  /* Active Navigation Item */
+  .nav-item-active {
+    background-color: #E8F0FF;
+    color: #3B82F6;
+    font-weight: 600;
+  }
+  
+  .nav-item-inactive {
+    color: #6B7280;
+  }
+  
+  .nav-item-inactive:hover {
+    background-color: #F9FAFB;
   }
 }
 
@@ -200,3 +320,29 @@
   animation: likeHeart 0.4s ease-out;
 }
 
+/* Mobile Safe Area Support */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Responsive Utilities */
+@media (max-width: 640px) {
+  /* Ensure content doesn't go under mobile bottom nav */
+  .mobile-content {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+}

@@ -4,6 +4,7 @@ import { Repository, Like } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { UserProfile } from '../../entities/user-profile.entity';
 import { College } from '../../entities/college.entity';
+import { UserSettings } from '../../entities/user-settings.entity';
 import { RedisService } from '../../services/redis.service';
 
 export interface UserProfileData {
@@ -19,11 +20,14 @@ export interface UserProfileData {
   };
   bio?: string;
   profilePictureUrl?: string;
+  coverPhotoUrl?: string;
   joinDate: Date;
   stats: {
     postCount: number;
     commentCount: number;
     likesReceived: number;
+    followersCount: number;
+    followingCount: number;
   };
 }
 
@@ -43,6 +47,7 @@ export interface ProfileUpdateData {
   displayName?: string;
   bio?: string;
   profilePictureUrl?: string;
+  coverPhotoUrl?: string;
 }
 
 @Injectable()
@@ -54,6 +59,8 @@ export class UserService {
     private userProfileRepository: Repository<UserProfile>,
     @InjectRepository(College)
     private collegeRepository: Repository<College>,
+    @InjectRepository(UserSettings)
+    private userSettingsRepository: Repository<UserSettings>,
     private redisService: RedisService
   ) {}
 
@@ -89,11 +96,14 @@ export class UserService {
       role: user.role,
       bio: user.bio,
       profilePictureUrl: user.profilePictureUrl,
+      coverPhotoUrl: user.coverPhotoUrl,
       joinDate: user.createdAt,
       stats: {
         postCount: userProfile.postCount,
         commentCount: userProfile.commentCount,
-        likesReceived: userProfile.likesReceived
+        likesReceived: userProfile.likesReceived,
+        followersCount: userProfile.followersCount || 0,
+        followingCount: userProfile.followingCount || 0,
       }
     };
 
@@ -137,6 +147,9 @@ export class UserService {
     if (updateData.profilePictureUrl !== undefined) {
       user.profilePictureUrl = updateData.profilePictureUrl;
     }
+    if (updateData.coverPhotoUrl !== undefined) {
+      user.coverPhotoUrl = updateData.coverPhotoUrl;
+    }
 
     await this.userRepository.save(user);
 
@@ -156,7 +169,55 @@ export class UserService {
       profilePictureUrl
     });
 
+    // Invalidate cached profile data
+    await this.redisService.invalidateUserProfile(userId);
+
     return profilePictureUrl;
+  }
+
+  async uploadCoverPhoto(userId: string, coverPhotoUrl: string): Promise<void> {
+    await this.userRepository.update(userId, {
+      coverPhotoUrl
+    });
+
+    // Invalidate cached profile data
+    await this.redisService.invalidateUserProfile(userId);
+  }
+
+  async getProfileStats(userId: string): Promise<{
+    postCount: number;
+    commentCount: number;
+    likesReceived: number;
+    followersCount: number;
+    followingCount: number;
+  }> {
+    // Try to get from cache first
+    const cacheKey = `profile:stats:${userId}`;
+    const cachedStats = await this.redisService.get(cacheKey);
+    if (cachedStats) {
+      return cachedStats;
+    }
+
+    let userProfile = await this.userProfileRepository.findOne({
+      where: { userId }
+    });
+
+    if (!userProfile) {
+      userProfile = await this.createUserProfile(userId);
+    }
+
+    const stats = {
+      postCount: userProfile.postCount,
+      commentCount: userProfile.commentCount,
+      likesReceived: userProfile.likesReceived,
+      followersCount: userProfile.followersCount || 0,
+      followingCount: userProfile.followingCount || 0,
+    };
+
+    // Cache stats for 5 minutes
+    await this.redisService.set(cacheKey, stats, 300);
+
+    return stats;
   }
 
   async searchUsers(query: string, limit: number = 50): Promise<UserSearchResult[]> {
@@ -272,9 +333,121 @@ export class UserService {
       postCount: 0,
       commentCount: 0,
       likesReceived: 0,
+      followersCount: 0,
+      followingCount: 0,
       lastActive: new Date()
     });
 
     return await this.userProfileRepository.save(userProfile);
+  }
+
+  async getNotificationSettings(userId: string) {
+    let settings = await this.userSettingsRepository.findOne({ where: { userId } });
+    
+    if (!settings) {
+      settings = await this.createUserSettings(userId);
+    }
+
+    return {
+      likes: settings.notifyLikes,
+      comments: settings.notifyComments,
+      replies: settings.notifyReplies,
+      follows: settings.notifyFollows,
+      messages: settings.notifyMessages,
+      emailNotifications: settings.emailNotifications
+    };
+  }
+
+  async updateNotificationSettings(userId: string, data: any) {
+    let settings = await this.userSettingsRepository.findOne({ where: { userId } });
+    
+    if (!settings) {
+      settings = await this.createUserSettings(userId);
+    }
+
+    if (data.likes !== undefined) settings.notifyLikes = data.likes;
+    if (data.comments !== undefined) settings.notifyComments = data.comments;
+    if (data.replies !== undefined) settings.notifyReplies = data.replies;
+    if (data.follows !== undefined) settings.notifyFollows = data.follows;
+    if (data.messages !== undefined) settings.notifyMessages = data.messages;
+    if (data.emailNotifications !== undefined) settings.emailNotifications = data.emailNotifications;
+
+    await this.userSettingsRepository.save(settings);
+    return this.getNotificationSettings(userId);
+  }
+
+  async getPrivacySettings(userId: string) {
+    let settings = await this.userSettingsRepository.findOne({ where: { userId } });
+    
+    if (!settings) {
+      settings = await this.createUserSettings(userId);
+    }
+
+    return {
+      privateAccount: settings.privateAccount,
+      showActivityStatus: settings.showActivityStatus,
+      allowTagging: settings.allowTagging,
+      allowMentions: settings.allowMentions
+    };
+  }
+
+  async updatePrivacySettings(userId: string, data: any) {
+    let settings = await this.userSettingsRepository.findOne({ where: { userId } });
+    
+    if (!settings) {
+      settings = await this.createUserSettings(userId);
+    }
+
+    if (data.privateAccount !== undefined) settings.privateAccount = data.privateAccount;
+    if (data.showActivityStatus !== undefined) settings.showActivityStatus = data.showActivityStatus;
+    if (data.allowTagging !== undefined) settings.allowTagging = data.allowTagging;
+    if (data.allowMentions !== undefined) settings.allowMentions = data.allowMentions;
+
+    await this.userSettingsRepository.save(settings);
+    return this.getPrivacySettings(userId);
+  }
+
+  async getAppearanceSettings(userId: string) {
+    let settings = await this.userSettingsRepository.findOne({ where: { userId } });
+    
+    if (!settings) {
+      settings = await this.createUserSettings(userId);
+    }
+
+    return {
+      theme: settings.theme
+    };
+  }
+
+  async updateAppearanceSettings(userId: string, data: any) {
+    let settings = await this.userSettingsRepository.findOne({ where: { userId } });
+    
+    if (!settings) {
+      settings = await this.createUserSettings(userId);
+    }
+
+    if (data.theme) settings.theme = data.theme;
+
+    await this.userSettingsRepository.save(settings);
+    return this.getAppearanceSettings(userId);
+  }
+
+  private async createUserSettings(userId: string): Promise<UserSettings> {
+    const newSettings = this.userSettingsRepository.create({
+      userId: userId,
+      notifyLikes: true,
+      notifyComments: true,
+      notifyReplies: true,
+      notifyFollows: true,
+      notifyMessages: true,
+      emailNotifications: false,
+      privateAccount: false,
+      showActivityStatus: true,
+      allowTagging: true,
+      allowMentions: true,
+      theme: 'light'
+    });
+
+    return await this.userSettingsRepository.save(newSettings);
   }
 }
