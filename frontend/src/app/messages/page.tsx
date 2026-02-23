@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { InstagramLayout } from '@/components/layout/InstagramLayout'
 import { useAuthStore } from '@/store/authStore'
@@ -8,7 +8,9 @@ import { ConversationList } from '@/components/messages/ConversationList'
 import { ChatWindow } from '@/components/messages/ChatWindow'
 import { MessageSquare } from 'lucide-react'
 
-export default function MessagesPage() {
+export const dynamic = 'force-dynamic'
+
+function MessagesContent() {
   const { user, isAuthenticated } = useAuthStore()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -72,5 +74,13 @@ export default function MessagesPage() {
         </div>
       </div>
     </InstagramLayout>
+  )
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <MessagesContent />
+    </Suspense>
   )
 }

@@ -7,6 +7,8 @@ import { useAuthStore } from '@/store/authStore'
 import { motion } from 'framer-motion'
 import api from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 export default function CreatePostPage() {
   const router = useRouter()
   const { user } = useAuthStore()

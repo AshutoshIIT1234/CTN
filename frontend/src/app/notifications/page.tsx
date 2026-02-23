@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import { InstagramLayout } from '@/components/layout/InstagramLayout'
 
+export const dynamic = 'force-dynamic'
+
 interface Notification {
   id: string
   type: 'LIKE' | 'COMMENT' | 'REPLY' | 'FOLLOW' | 'MENTION'

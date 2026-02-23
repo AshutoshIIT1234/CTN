@@ -1,13 +1,15 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, Brain, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/lib/api'
 
-export default function VerifyEmailPage() {
+export const dynamic = 'force-dynamic'
+
+function VerifyEmailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
@@ -262,5 +264,14 @@ export default function VerifyEmailPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }

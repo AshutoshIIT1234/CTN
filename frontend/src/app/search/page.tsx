@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Search, User, MapPin, ArrowLeft, Hash, TrendingUp } from 'lucide-react'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { useAuthStore, UserRole } from '@/store/authStore'
@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useDebounce } from '@/hooks/useDebounce'
 import api from '@/lib/api'
+
+export const dynamic = 'force-dynamic'
 
 interface UserSearchResult {
   id: string
@@ -21,7 +23,7 @@ interface UserSearchResult {
   }
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const { user, isAuthenticated } = useAuthStore()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -330,5 +332,13 @@ export default function SearchPage() {
         )}
       </div>
     </MainLayout>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <SearchContent />
+    </Suspense>
   )
 }
