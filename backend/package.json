@@ -11,6 +11,7 @@
     "seed": "ts-node src/database/seeds/seed.ts",
     "seed:mongodb": "ts-node src/database/seeds/mongodb-posts.seed.ts",
     "seed:all": "npm run seed && npm run seed:mongodb",
+    "seed:real-users": "ts-node scripts/seed-real-users.ts",
     "make-admin": "ts-node scripts/make-admin.ts",
     "test": "jest --maxWorkers=50% --cache",
     "test:fast": "jest --config jest.fast.config.js",
