@@ -136,7 +136,7 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', duration: 0.3 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl mx-4 sm:mx-0 bg-white rounded-2xl shadow-2xl z-50 max-h-[90vh] flex flex-col lg:max-h-[85vh]"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] sm:w-[90%] md:w-[85%] lg:w-[700px] xl:w-[750px] max-w-3xl bg-white rounded-2xl shadow-2xl z-50 max-h-[95vh] sm:max-h-[90vh] lg:max-h-[88vh] flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 sm:px-6 py-3" style={{ borderBottom: '1px solid #E5E7EB' }}>
@@ -151,7 +151,7 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated }: CreatePostMo
             </div>
 
             {/* Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
               {/* User Info */}
               <div className="flex items-center gap-3 mb-4">
                 <div 
