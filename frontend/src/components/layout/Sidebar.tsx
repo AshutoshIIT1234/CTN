@@ -31,6 +31,7 @@ export function Sidebar() {
     { icon: Building2, label: 'College', href: '/college', auth: true },
     { icon: BookOpen, label: 'Resources', href: '/resources', auth: true },
     { icon: Search, label: 'Explore', href: '/search', auth: false },
+    { icon: MessageSquare, label: 'Messages', href: '/messages', auth: true },
     { icon: Bell, label: 'Notifications', href: '/notifications', auth: true },
     { icon: TrendingUp, label: 'Trending', href: '/trending', auth: false },
     { icon: User, label: 'Profile', href: '/profile', auth: true },
