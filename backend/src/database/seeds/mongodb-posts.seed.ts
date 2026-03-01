@@ -1,12 +1,17 @@
 import { MongoClient } from 'mongodb';
 import { getDummyPostsData } from './dummy-posts.seed';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
 // This is a standalone MongoDB seeder for posts
 // Run this separately after the main PostgreSQL seeding
 
 async function seedMongoDBPosts() {
   const mongoUri = process.env.MONGODB_URI;
-  
+
   if (!mongoUri) {
     console.error('MONGODB_URI environment variable is not set');
     process.exit(1);
@@ -58,7 +63,7 @@ async function seedMongoDBPosts() {
     for (let i = 0; i < postTemplates.length; i++) {
       const template = postTemplates[i];
       const randomUser = dummyUsers[i % dummyUsers.length];
-      
+
       // For college posts, try to use a college user
       let selectedUser = randomUser;
       if (template.panelType === 'COLLEGE') {
@@ -104,10 +109,10 @@ async function seedMongoDBPosts() {
 
     for (const post of insertedPosts) {
       const numComments = Math.floor(Math.random() * 5) + 1; // 1-5 comments per post
-      
+
       for (let j = 0; j < numComments; j++) {
         const randomUser = dummyUsers[Math.floor(Math.random() * dummyUsers.length)];
-        
+
         const comments = [
           "This is a fascinating perspective! I hadn't considered this angle before.",
           "I respectfully disagree. Here's why I think differently...",

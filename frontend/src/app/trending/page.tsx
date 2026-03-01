@@ -28,52 +28,49 @@ export default function TrendingPage() {
   return (
     <InstagramLayout>
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+      <div className="px-6 py-8">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-14 h-14 bg-gradient-to-tr from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-xl shadow-orange-500/20">
             <Flame className="w-7 h-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Trending Discussions
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              High-Velocity Intel
             </h1>
-            <p className="text-sm text-gray-600">
-              Most popular discussions right now
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-1">
+              Analyzing Network Saturation & Engagement
             </p>
           </div>
         </div>
 
         {/* Time Range Filter */}
-        <div className="flex gap-2">
+        <div className="flex gap-3 mb-10 overflow-x-auto pb-2 scrollbar-hide">
           <button
             onClick={() => setTimeRange('today')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              timeRange === 'today'
-                ? 'bg-royal-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${timeRange === 'today'
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl'
+                : 'bg-white dark:bg-dark-800 border border-slate-100 dark:border-dark-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-dark-700'
+              }`}
           >
-            Today
+            Temporal: 24h
           </button>
           <button
             onClick={() => setTimeRange('week')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              timeRange === 'week'
-                ? 'bg-royal-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${timeRange === 'week'
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl'
+                : 'bg-white dark:bg-dark-800 border border-slate-100 dark:border-dark-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-dark-700'
+              }`}
           >
-            This Week
+            Temporal: 7d
           </button>
           <button
             onClick={() => setTimeRange('month')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              timeRange === 'month'
-                ? 'bg-royal-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${timeRange === 'month'
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl'
+                : 'bg-white dark:bg-dark-800 border border-slate-100 dark:border-dark-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-dark-700'
+              }`}
           >
-            This Month
+            Temporal: 30d
           </button>
         </div>
       </div>
@@ -99,25 +96,30 @@ export default function TrendingPage() {
 
             {/* Load More */}
             {data.pagination && data.pagination.currentPage < data.pagination.totalPages && (
-              <div className="text-center py-6">
+              <div className="text-center py-12">
                 <button
                   onClick={() => setPage(p => p + 1)}
-                  className="px-6 py-2 bg-white border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="px-8 py-3 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-800 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-dark-800/80 transition-all shadow-xl shadow-slate-200/40 dark:shadow-none hover:-translate-y-1 active:translate-y-0"
                 >
-                  Load More
+                  Deeper Extraction
                 </button>
               </div>
             )}
           </>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
-            <TrendingUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              No trending posts yet
-            </h3>
-            <p className="text-gray-600">
-              Check back later for trending discussions
-            </p>
+          <div className="py-32 text-center space-y-6">
+            <div className="w-24 h-24 bg-slate-50 dark:bg-dark-800 rounded-[32px] flex items-center justify-center mx-auto relative overflow-hidden">
+              <TrendingUp className="w-10 h-10 text-slate-200 dark:text-slate-700" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/5 to-transparent" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                Stagnation Detected
+              </h3>
+              <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest text-xs max-w-xs mx-auto">
+                No discussions have reached critical velocity for the selected temporal window.
+              </p>
+            </div>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
-import { Grid, Bookmark, Tag } from 'lucide-react'
+import { Grid, Bookmark, Tag, Sparkles } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 type TabType = 'posts' | 'saved' | 'tagged'
 
@@ -12,16 +13,16 @@ interface ContentTabsProps {
 
 export function ContentTabs({ activeTab, onTabChange, showSaved = true }: ContentTabsProps) {
   const allTabs = [
-    { id: 'posts' as TabType, label: 'POSTS', icon: Grid },
-    { id: 'saved' as TabType, label: 'SAVED', icon: Bookmark },
-    { id: 'tagged' as TabType, label: 'TAGGED', icon: Tag },
+    { id: 'posts' as TabType, label: 'Intellectual Theses', icon: Grid },
+    { id: 'saved' as TabType, label: 'Archived Logic', icon: Bookmark },
+    { id: 'tagged' as TabType, label: 'Tagged Mentions', icon: Tag },
   ]
 
   const tabs = showSaved ? allTabs : allTabs.filter(tab => tab.id !== 'saved')
 
   return (
-    <div className="border-t border-gray-200">
-      <div className="flex justify-center gap-16">
+    <div className="border-t border-slate-50 dark:border-dark-800">
+      <div className="flex justify-center gap-1 md:gap-8">
         {tabs.map((tab) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
@@ -30,14 +31,29 @@ export function ContentTabs({ activeTab, onTabChange, showSaved = true }: Conten
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex items-center gap-1.5 py-3.5 px-1 border-t -mt-px font-semibold text-xs tracking-[0.1em] transition-all duration-200 ${
-                isActive
-                  ? 'border-gray-900 text-gray-900'
-                  : 'border-transparent text-gray-400 hover:text-gray-600'
-              }`}
+              className="relative py-6 px-4 group flex items-center gap-2.5 outline-none transition-all"
             >
-              <Icon className={`w-3 h-3 ${isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
-              <span>{tab.label}</span>
+              <div
+                className={`p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-blue-50 dark:bg-dark-800 text-blue-600' : 'text-slate-400 group-hover:text-slate-600'
+                  }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+              </div>
+
+              <span
+                className={`text-[11px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-400 group-hover:text-slate-600'
+                  }`}
+              >
+                {tab.label}
+              </span>
+
+              {isActive && (
+                <motion.div
+                  layoutId="activeProfileTab"
+                  className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-b-full shadow-lg shadow-blue-200/50"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                />
+              )}
             </button>
           )
         })}
@@ -45,3 +61,4 @@ export function ContentTabs({ activeTab, onTabChange, showSaved = true }: Conten
     </div>
   )
 }
+

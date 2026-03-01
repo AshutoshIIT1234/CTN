@@ -92,11 +92,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Post feed caching
-  async setPostFeed(feedType: 'national' | 'college', collegeId: string | null, page: number, feed: any, ttl: number = 300): Promise<void> {
+  async setPostFeed(feedType: string, collegeId: string | null, page: number, feed: any, ttl: number = 300): Promise<void> {
     try {
       if (!this.isAvailable) return;
-      const key = feedType === 'national' 
-        ? `feed:national:${page}` 
+      const key = feedType.startsWith('national')
+        ? `feed:${feedType}:${page}`
         : `feed:college:${collegeId}:${page}`;
       await this.client.setEx(key, ttl, JSON.stringify(feed));
     } catch (error) {
@@ -104,11 +104,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async getPostFeed(feedType: 'national' | 'college', collegeId: string | null, page: number): Promise<any | null> {
+  async getPostFeed(feedType: string, collegeId: string | null, page: number): Promise<any | null> {
     try {
       if (!this.isAvailable) return null;
-      const key = feedType === 'national' 
-        ? `feed:national:${page}` 
+      const key = feedType.startsWith('national')
+        ? `feed:${feedType}:${page}`
         : `feed:college:${collegeId}:${page}`;
       const data = await this.client.get(key);
       return data ? JSON.parse(data) : null;
@@ -118,11 +118,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async invalidatePostFeeds(feedType?: 'national' | 'college', collegeId?: string): Promise<void> {
+  async invalidatePostFeeds(feedType?: string, collegeId?: string): Promise<void> {
     try {
       if (!this.isAvailable) return;
-      if (feedType === 'national') {
-        const keys = await this.client.keys('feed:national:*');
+      if (feedType && feedType.startsWith('national')) {
+        const keys = await this.client.keys('feed:national*');
         if (keys.length > 0) {
           await this.client.del(keys);
         }
@@ -202,8 +202,25 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   async invalidateUserProfile(userId: string): Promise<void> {
     try {
       if (!this.isAvailable) return;
-      const key = `user:profile:${userId}`;
-      await this.client.del(key);
+
+      // Invalidate all related profile keys
+      const patterns = [
+        `profile:${userId}:*`,       // Profile views for different users (requestingUserId)
+        `profile:stats:${userId}`,    // Profile statistics
+        `user:profile:${userId}`,     // Basic user profile cache
+        `user:session:${userId}`      // User session
+      ];
+
+      for (const pattern of patterns) {
+        if (pattern.includes('*')) {
+          const keys = await this.client.keys(pattern);
+          if (keys.length > 0) {
+            await this.client.del(keys);
+          }
+        } else {
+          await this.client.del(pattern);
+        }
+      }
     } catch (error) {
       console.warn('Redis invalidateUserProfile failed:', error.message);
     }

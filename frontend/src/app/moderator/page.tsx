@@ -3,13 +3,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { 
-  Upload, 
-  FileText, 
-  AlertTriangle, 
-  Eye, 
-  EyeOff, 
-  Flag, 
+import {
+  Upload,
+  FileText,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Flag,
   Trash2,
   Plus,
   BookOpen,
@@ -40,6 +40,17 @@ interface Resource {
     username: string
   }
 }
+
+interface CollegeUser {
+  id: string
+  email: string
+  username: string
+  displayName: string
+  role: UserRole
+  createdAt: string
+}
+
+
 
 interface CollegePost {
   id: string
@@ -78,7 +89,7 @@ export default function ModeratorDashboard() {
   const router = useRouter()
   const { user, college } = useAuthStore()
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<'upload' | 'moderation' | 'my-uploads'>('upload')
+  const [activeTab, setActiveTab] = useState<'upload' | 'moderation' | 'my-uploads' | 'users'>('upload')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadingFile, setUploadingFile] = useState(false)
 
@@ -107,6 +118,18 @@ export default function ModeratorDashboard() {
       return response.data.resources as Resource[]
     },
     enabled: !!user && user.role === UserRole.MODERATOR
+  })
+
+  // Fetch college users for moderation
+  const { data: collegeUsers, isLoading: usersLoading } = useQuery({
+    queryKey: ['college-users', college?.id],
+    queryFn: async () => {
+      if (!college?.id) return []
+      // Attempting to fetch college users
+      const response = await api.get(`/moderators/college/${college.id}/users`).catch(() => null)
+      return response?.data?.users as CollegeUser[] || []
+    },
+    enabled: !!college?.id && !!user && user.role === UserRole.MODERATOR
   })
 
   // Fetch college posts for moderation
@@ -214,8 +237,8 @@ export default function ModeratorDashboard() {
 
   const handleUploadSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!uploadForm.resourceType || !uploadForm.department || !uploadForm.batch || 
-        !uploadForm.fileName || !uploadForm.fileUrl) {
+    if (!uploadForm.resourceType || !uploadForm.department || !uploadForm.batch ||
+      !uploadForm.fileName || !uploadForm.fileUrl) {
       return
     }
     uploadMutation.mutate(uploadForm)
@@ -257,39 +280,46 @@ export default function ModeratorDashboard() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-1 mb-8 bg-gray-100 dark:bg-dark-800 p-1 rounded-xl w-fit">
+        <div className="flex overflow-x-auto scrollbar-hide gap-1 mb-8 bg-gray-100 dark:bg-dark-800 p-1 rounded-xl w-full md:w-fit whitespace-nowrap">
           <button
             onClick={() => setActiveTab('upload')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all ${
-              activeTab === 'upload'
-                ? 'bg-white dark:bg-dark-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${activeTab === 'upload'
+              ? 'bg-white dark:bg-dark-700 text-primary-600 dark:text-primary-400 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
           >
             <Upload className="w-5 h-5 inline mr-2" />
             Upload Resources
           </button>
           <button
             onClick={() => setActiveTab('moderation')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all ${
-              activeTab === 'moderation'
-                ? 'bg-white dark:bg-dark-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${activeTab === 'moderation'
+              ? 'bg-white dark:bg-dark-700 text-primary-600 dark:text-primary-400 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
           >
             <Flag className="w-5 h-5 inline mr-2" />
             Moderate Posts
           </button>
           <button
             onClick={() => setActiveTab('my-uploads')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all ${
-              activeTab === 'my-uploads'
-                ? 'bg-white dark:bg-dark-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${activeTab === 'my-uploads'
+              ? 'bg-white dark:bg-dark-700 text-primary-600 dark:text-primary-400 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
           >
             <FileText className="w-5 h-5 inline mr-2" />
             My Uploads
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${activeTab === 'users'
+              ? 'bg-white dark:bg-dark-700 text-primary-600 dark:text-primary-400 shadow-sm'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+          >
+            <Users className="w-5 h-5 inline mr-2" />
+            Manage Users
           </button>
         </div>
 
@@ -301,11 +331,11 @@ export default function ModeratorDashboard() {
           transition={{ duration: 0.3 }}
         >
           {activeTab === 'upload' && (
-            <div className="bg-white dark:bg-dark-900 rounded-2xl shadow-luxury border border-gray-200 dark:border-dark-800 p-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            <div className="bg-white dark:bg-dark-900 rounded-2xl shadow-luxury border border-gray-200 dark:border-dark-800 p-4 sm:p-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">
                 Upload New Resource
               </h2>
-              
+
               <form onSubmit={handleUploadSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Resource Type */}
@@ -466,11 +496,11 @@ export default function ModeratorDashboard() {
 
           {activeTab === 'moderation' && (
             <div className="space-y-6">
-              <div className="bg-white dark:bg-dark-900 rounded-2xl shadow-luxury border border-gray-200 dark:border-dark-800 p-8">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              <div className="bg-white dark:bg-dark-900 rounded-2xl shadow-luxury border border-gray-200 dark:border-dark-800 p-4 sm:p-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   College Posts Moderation
                 </h2>
-                
+
                 {postsLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
@@ -480,18 +510,17 @@ export default function ModeratorDashboard() {
                     {collegePosts.map((post) => (
                       <div
                         key={post.id}
-                        className={`p-6 rounded-xl border transition-all ${
-                          post.isFlagged
-                            ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20'
-                            : post.isHidden
+                        className={`p-6 rounded-xl border transition-all ${post.isFlagged
+                          ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20'
+                          : post.isHidden
                             ? 'border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 opacity-75'
                             : 'border-gray-200 dark:border-dark-700 bg-gray-50 dark:bg-dark-800'
-                        }`}
+                          }`}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                          <div className="flex-1 w-full overflow-hidden">
+                            <div className="flex flex-wrap items-center gap-3 mb-3">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shrink-0">
                                 <span className="text-white text-sm font-semibold">
                                   {post.author.username[0].toUpperCase()}
                                 </span>
@@ -515,14 +544,14 @@ export default function ModeratorDashboard() {
                                 </span>
                               )}
                             </div>
-                            
+
                             <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                               {post.title}
                             </h3>
                             <p className="text-gray-700 dark:text-gray-300 mb-4">
                               {post.content}
                             </p>
-                            
+
                             {post.flagReason && (
                               <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
                                 <p className="text-sm text-red-700 dark:text-red-400">
@@ -530,14 +559,14 @@ export default function ModeratorDashboard() {
                                 </p>
                               </div>
                             )}
-                            
+
                             <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                               <span>{post._count.likes} likes</span>
                               <span>{post._count.comments} comments</span>
                             </div>
                           </div>
-                          
-                          <div className="flex items-center gap-2 ml-4">
+
+                          <div className="flex items-center gap-2 sm:ml-4 self-end sm:self-auto">
                             {!post.isFlagged && (
                               <button
                                 onClick={() => {
@@ -550,7 +579,7 @@ export default function ModeratorDashboard() {
                                 <Flag className="w-5 h-5" />
                               </button>
                             )}
-                            
+
                             {!post.isHidden ? (
                               <button
                                 onClick={() => handleHidePost(post.id)}
@@ -586,11 +615,11 @@ export default function ModeratorDashboard() {
           )}
 
           {activeTab === 'my-uploads' && (
-            <div className="bg-white dark:bg-dark-900 rounded-2xl shadow-luxury border border-gray-200 dark:border-dark-800 p-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            <div className="bg-white dark:bg-dark-900 rounded-2xl shadow-luxury border border-gray-200 dark:border-dark-800 p-4 sm:p-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">
                 My Uploaded Resources
               </h2>
-              
+
               {resourcesLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
@@ -616,7 +645,7 @@ export default function ModeratorDashboard() {
                             </p>
                           </div>
                         </div>
-                        
+
                         <button
                           onClick={() => handleDeleteResource(resource.id)}
                           className="btn-ghost text-red-600 dark:text-red-400 p-2"
@@ -625,7 +654,7 @@ export default function ModeratorDashboard() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      
+
                       <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4" />
@@ -640,7 +669,7 @@ export default function ModeratorDashboard() {
                           <span>Uploaded {new Date(resource.uploadDate).toLocaleDateString()}</span>
                         </div>
                       </div>
-                      
+
                       {resource.description && (
                         <p className="mt-4 text-sm text-gray-700 dark:text-gray-300">
                           {resource.description}
@@ -662,6 +691,62 @@ export default function ModeratorDashboard() {
                     <Plus className="w-5 h-5 mr-2" />
                     Upload Your First Resource
                   </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'users' && (
+            <div className="bg-white dark:bg-dark-900 rounded-2xl shadow-luxury border border-gray-200 dark:border-dark-800 p-4 sm:p-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                College Users Management
+              </h2>
+
+              {usersLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : collegeUsers && collegeUsers.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-50 dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700">
+                      <tr>
+                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">User</th>
+                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Role</th>
+                        <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Joined</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-dark-700">
+                      {collegeUsers.map(usr => (
+                        <tr key={usr.id} className="hover:bg-gray-50 dark:hover:bg-dark-800">
+                          <td className="px-6 py-4 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center font-bold text-primary-600">
+                              {usr.username[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-white">{usr.displayName || usr.username}</div>
+                              <div className="text-sm text-gray-500">{usr.email}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-xs font-medium text-gray-800 dark:text-gray-300">
+                              {usr.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {new Date(usr.createdAt).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400">
+                    No users found or endpoint not fully implemented.
+                  </p>
                 </div>
               )}
             </div>

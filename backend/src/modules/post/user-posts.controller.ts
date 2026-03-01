@@ -11,7 +11,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('users/:userId')
 export class UserPostsController {
-  constructor(private postService: PostService) {}
+  constructor(private postService: PostService) { }
 
   @Get('posts')
   async getUserPosts(
@@ -71,5 +71,20 @@ export class UserPostsController {
     }
 
     return await this.postService.getSavedPosts(userId, parseInt(page), 20);
+  }
+
+  @Get('tagged')
+  async getTaggedPosts(
+    @Param('userId') userId: string,
+    @Query('page') page: string = '1',
+    @Request() req,
+  ) {
+    const currentUserId = req.user?.sub;
+    return await this.postService.getTaggedPosts(
+      userId,
+      parseInt(page),
+      20,
+      currentUserId,
+    );
   }
 }

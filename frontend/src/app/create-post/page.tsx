@@ -2,16 +2,19 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Image as ImageIcon, Upload, Trash2, Send } from 'lucide-react'
+import { ArrowLeft, Image as ImageIcon, Upload, Trash2, Send, Sparkles } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { motion } from 'framer-motion'
 import api from '@/lib/api'
+import { uploadMultipleToCloudinary, validateFile } from '@/lib/cloudinary'
+import { useQueryClient } from '@tanstack/react-query'
 
 export const dynamic = 'force-dynamic'
 
 export default function CreatePostPage() {
   const router = useRouter()
   const { user } = useAuthStore()
+  const queryClient = useQueryClient()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [panelType, setPanelType] = useState<'NATIONAL' | 'COLLEGE'>('NATIONAL')
@@ -28,8 +31,8 @@ export default function CreatePostPage() {
 
   // Check if user can post to college panel
   const canPostToCollege = user && (
-    user.role === 'COLLEGE_USER' || 
-    user.role === 'MODERATOR' || 
+    user.role === 'COLLEGE_USER' ||
+    user.role === 'MODERATOR' ||
     user.role === 'ADMIN'
   )
 
@@ -45,27 +48,16 @@ export default function CreatePostPage() {
 
     setUploadingImage(true)
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          throw new Error(`${file.name} is too large. Maximum size is 5MB.`)
-        }
+      const filesToUpload = Array.from(files)
+      for (const file of filesToUpload) {
+        const validation = validateFile(file, 'image')
+        if (!validation.valid) throw new Error(validation.error)
+      }
 
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-          throw new Error(`${file.name} is not an image file.`)
-        }
-
-        // Convert to base64 data URL
-        return new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result as string)
-          reader.onerror = reject
-          reader.readAsDataURL(file)
-        })
-      })
-
-      const uploadedUrls = await Promise.all(uploadPromises)
+      const uploadedUrls = await uploadMultipleToCloudinary(
+        filesToUpload,
+        'post-media'
+      )
       setImages(prev => [...prev, ...uploadedUrls])
     } catch (error: any) {
       alert(error.message || 'Failed to upload images')
@@ -82,7 +74,20 @@ export default function CreatePostPage() {
   }
 
   const handleSubmit = async () => {
-    if (!content.trim()) {
+    const trimmedTitle = title.trim()
+    const trimmedContent = content.trim()
+
+    if (!trimmedTitle) {
+      alert('Please enter a title for your post')
+      return
+    }
+
+    if (trimmedTitle.length < 3) {
+      alert('Title must be at least 3 characters long.')
+      return
+    }
+
+    if (!trimmedContent) {
       alert('Please enter some content for your post')
       return
     }
@@ -95,12 +100,18 @@ export default function CreatePostPage() {
     setLoading(true)
     try {
       await api.post('/posts', {
-        title: title.trim() || undefined,
-        content: content.trim(),
+        title: trimmedTitle,
+        content: trimmedContent,
         panelType,
         imageUrls: images.length > 0 ? images : undefined
       })
-      
+
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['national-feed'] })
+      if (user?.collegeId) {
+        queryClient.invalidateQueries({ queryKey: ['college-feed'] })
+      }
+
       // Navigate to appropriate feed
       if (panelType === 'COLLEGE') {
         router.push('/college')
@@ -116,30 +127,30 @@ export default function CreatePostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-950">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-white dark:bg-dark-900 border-b border-gray-200 dark:border-dark-800 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-2 text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               <span className="font-medium">Back</span>
             </button>
-            <h1 className="text-xl font-bold text-gray-900">Create Post</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Create Thought</h1>
             <button
               onClick={handleSubmit}
               disabled={!content.trim() || loading || uploadingImage}
-              className="flex items-center gap-2 px-6 py-2 bg-royal-600 text-white font-semibold rounded-lg hover:bg-royal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
-                'Posting...'
+                'Broadcasting...'
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  Post
+                  Broadcast
                 </>
               )}
             </button>
@@ -149,19 +160,19 @@ export default function CreatePostPage() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-dark-900 rounded-2xl shadow-sm border border-gray-200 dark:border-dark-800 p-6">
           {/* User Info */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-400 flex items-center justify-center">
               <span className="text-white text-lg font-semibold">
                 {user.username[0].toUpperCase()}
               </span>
             </div>
             <div>
-              <div className="text-base font-semibold text-gray-900">
+              <div className="text-base font-semibold text-gray-900 dark:text-white">
                 {user.username}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-slate-400">
                 {user.email}
               </div>
             </div>
@@ -169,30 +180,28 @@ export default function CreatePostPage() {
 
           {/* Panel Type Selector */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
               Post to:
             </label>
             <div className="flex gap-3">
               <button
                 onClick={() => setPanelType('NATIONAL')}
-                className={`flex-1 px-6 py-3 rounded-xl text-base font-semibold transition-all ${
-                  panelType === 'NATIONAL'
-                    ? 'bg-royal-600 text-white shadow-lg shadow-royal-200'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`flex-1 px-6 py-3 rounded-xl text-base font-semibold transition-all ${panelType === 'NATIONAL'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/40'
+                    : 'bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-dark-700'
+                  }`}
               >
                 🌍 National Portal
               </button>
               <button
                 onClick={() => setPanelType('COLLEGE')}
                 disabled={!canPostToCollege}
-                className={`flex-1 px-6 py-3 rounded-xl text-base font-semibold transition-all ${
-                  panelType === 'COLLEGE'
-                    ? 'bg-royal-600 text-white shadow-lg shadow-royal-200'
+                className={`flex-1 px-6 py-3 rounded-xl text-base font-semibold transition-all ${panelType === 'COLLEGE'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/40'
                     : canPostToCollege
-                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    : 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                }`}
+                      ? 'bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-dark-700'
+                      : 'bg-gray-50 dark:bg-dark-800/50 text-gray-400 cursor-not-allowed'
+                  }`}
               >
                 🏛️ College Portal
                 {!canPostToCollege && ' 🔒'}
@@ -205,7 +214,7 @@ export default function CreatePostPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800"
+              className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm text-blue-800 dark:text-blue-300"
             >
               📢 This post will be visible only to members of your college
             </motion.div>
@@ -215,7 +224,7 @@ export default function CreatePostPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800"
+              className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-sm text-green-800 dark:text-green-300"
             >
               🌐 This post will be visible to everyone on the national portal
             </motion.div>
@@ -223,15 +232,15 @@ export default function CreatePostPage() {
 
           {/* Title Input */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Title (optional)
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+              Title
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Give your post a title..."
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-royal-500 focus:border-transparent"
+              placeholder="Give your thought a title..."
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 dark:text-white placeholder:text-slate-400"
               maxLength={200}
             />
             <div className="text-right text-xs text-gray-500 mt-1">
@@ -241,14 +250,14 @@ export default function CreatePostPage() {
 
           {/* Content Textarea */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
               Content
             </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What's on your mind?"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-royal-500 focus:border-transparent resize-none"
+              placeholder="Formulate your logic here..."
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-900 dark:text-white placeholder:text-slate-400"
               rows={8}
               maxLength={5000}
             />
@@ -259,10 +268,10 @@ export default function CreatePostPage() {
 
           {/* Image Upload Section */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Images (optional)
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+              Media (optional)
             </label>
-            
+
             {/* Upload Button */}
             <input
               ref={fileInputRef}
@@ -275,7 +284,7 @@ export default function CreatePostPage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingImage || images.length >= 5}
-              className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl hover:border-royal-400 hover:bg-royal-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-gray-600"
+              className="w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-dark-700 rounded-xl hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-gray-600 dark:text-slate-400"
             >
               {uploadingImage ? (
                 <>
@@ -286,8 +295,8 @@ export default function CreatePostPage() {
                 <>
                   <ImageIcon className="w-5 h-5" />
                   <span>
-                    {images.length >= 5 
-                      ? 'Maximum 5 images reached' 
+                    {images.length >= 5
+                      ? 'Maximum 5 images reached'
                       : `Add images (${images.length}/5)`}
                   </span>
                 </>
@@ -306,7 +315,7 @@ export default function CreatePostPage() {
                     />
                     <button
                       onClick={() => removeImage(index)}
-                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full opacity-100 transition-opacity shadow-lg"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -317,15 +326,15 @@ export default function CreatePostPage() {
           </div>
 
           {/* Tips */}
-          <div className="p-4 bg-gray-50 rounded-xl">
-            <h3 className="text-sm font-semibold text-gray-900 mb-2">
-              💡 Tips for a great post:
+          <div className="p-4 bg-gray-50 dark:bg-dark-800 rounded-xl">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              💡 Guidelines for Broadcast:
             </h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Be clear and concise in your message</li>
-              <li>• Add images to make your post more engaging</li>
-              <li>• Choose the right portal (National or College)</li>
-              <li>• Be respectful and follow community guidelines</li>
+            <ul className="text-sm text-gray-600 dark:text-slate-400 space-y-1">
+              <li>• Maintain intellectual integrity in your thesis</li>
+              <li>• Add supporting media for visual clarity</li>
+              <li>• Choose the appropriate portal for dissemination</li>
+              <li>• Follow the global network standards</li>
             </ul>
           </div>
         </div>

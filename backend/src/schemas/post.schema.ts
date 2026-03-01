@@ -47,6 +47,9 @@ export class Post {
   @Prop({ type: [String], default: [] })
   likedBy: string[];
 
+  @Prop({ type: [String], default: [] })
+  mentions: string[];
+
   @Prop({ default: false })
   isDeleted: boolean;
 
@@ -78,3 +81,4 @@ export const PostSchema = SchemaFactory.createForClass(Post);
 PostSchema.index({ panelType: 1, createdAt: -1 });
 PostSchema.index({ collegeId: 1, createdAt: -1 });
 PostSchema.index({ authorId: 1 });
+PostSchema.index({ mentions: 1 });

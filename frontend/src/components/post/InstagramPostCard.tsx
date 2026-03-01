@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal } from 'lucide-react'
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Crown, ShieldCheck } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useAuthStore } from '@/store/authStore'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -18,8 +18,10 @@ interface InstagramPostCardProps {
 export function InstagramPostCard({ post, onUpdate, onLoginRequired }: InstagramPostCardProps) {
   const { user } = useAuthStore()
   const [isLiking, setIsLiking] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [liked, setLiked] = useState(post.isLiked)
+  const [saved, setSaved] = useState(post.isSaved)
   const [likeCount, setLikeCount] = useState(post.likes)
   const [showLikeAnimation, setShowLikeAnimation] = useState(false)
 
@@ -31,7 +33,9 @@ export function InstagramPostCard({ post, onUpdate, onLoginRequired }: Instagram
 
     if (isLiking) return
 
-    // Optimistic update
+    const previousLiked = liked
+    const previousLikeCount = likeCount
+
     setLiked(!liked)
     setLikeCount(liked ? likeCount - 1 : likeCount + 1)
 
@@ -40,12 +44,38 @@ export function InstagramPostCard({ post, onUpdate, onLoginRequired }: Instagram
       await api.post(`/posts/${post.id}/like`)
       onUpdate()
     } catch (error) {
-      // Revert on error
-      setLiked(liked)
-      setLikeCount(post.likes)
+      setLiked(previousLiked)
+      setLikeCount(previousLikeCount)
       console.error('Failed to like post:', error)
     } finally {
       setIsLiking(false)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!user) {
+      onLoginRequired?.()
+      return
+    }
+
+    if (isSaving) return
+
+    const previousSaved = saved
+    setSaved(!saved)
+
+    setIsSaving(true)
+    try {
+      if (saved) {
+        await api.delete(`/posts/${post.id}/save`)
+      } else {
+        await api.post(`/posts/${post.id}/save`)
+      }
+      onUpdate()
+    } catch (error) {
+      setSaved(previousSaved)
+      console.error('Failed to save post:', error)
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -68,7 +98,7 @@ export function InstagramPostCard({ post, onUpdate, onLoginRequired }: Instagram
     if (navigator.share) {
       try {
         await navigator.share({
-          title: post.title || 'Check out this discussion',
+          title: post.title || 'Check out this thought on CTN',
           text: post.content,
           url: window.location.origin + `/posts/${post.id}`
         })
@@ -79,256 +109,186 @@ export function InstagramPostCard({ post, onUpdate, onLoginRequired }: Instagram
   }
 
   return (
-    <article 
-      className="bg-white mb-4 rounded-lg transition-all duration-200 hover:-translate-y-0.5" 
-      style={{ 
-        border: '1px solid #E5E7EB',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)'
-      }}
+    <motion.article
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white dark:bg-dark-900 mb-6 rounded-[32px] border border-slate-100 dark:border-dark-800 shadow-xl shadow-slate-100/50 dark:shadow-none overflow-hidden relative group"
     >
-
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-3">
-        <div className="flex items-center gap-3">
-          {/* Avatar */}
-          <Link href={`/profile/${post.authorId}`}>
-            <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:opacity-90 transition-opacity duration-200"
-              style={{ 
-                background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
-                border: '1px solid #E5E7EB'
-              }}
-            >
-              <span className="text-white text-xs font-semibold">
-                {post.authorUsername[0].toUpperCase()}
-              </span>
+      <div className="flex items-center justify-between px-6 py-5">
+        <div className="flex items-center gap-4">
+          {/* Avatar Container */}
+          <Link href={`/profile/${post.authorId}`} className="relative group/avatar">
+            <div className="w-11 h-11 rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-blue-600 to-indigo-600 group-hover/avatar:rotate-6 transition-transform duration-300">
+              {post.authorProfilePictureUrl ? (
+                <img src={post.authorProfilePictureUrl} className="w-full h-full rounded-[14px] object-cover border-2 border-white" alt="" />
+              ) : (
+                <div className="w-full h-full rounded-[14px] bg-slate-50 flex items-center justify-center text-blue-600 font-black border-2 border-white text-sm">
+                  {post.authorUsername[0].toUpperCase()}
+                </div>
+              )}
             </div>
+            {post.isAuthorPremium && (
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-lg flex items-center justify-center border-2 border-white shadow-sm">
+                <Crown className="w-2.5 h-2.5 text-white fill-white" />
+              </div>
+            )}
           </Link>
 
-          {/* User Info */}
-          <div className="flex items-center gap-2">
-            <Link 
-              href={`/profile/${post.authorId}`} 
-              className="text-sm font-semibold hover:opacity-60 transition-opacity duration-200"
-              style={{ color: '#111827' }}
-            >
-              {post.authorUsername}
-            </Link>
-            {post.panelType === 'COLLEGE' && (
-              <span className="text-xs" style={{ color: '#6B7280' }}>
-                • {post.collegeName || 'College'}
+          {/* Identity & Metadata */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <Link
+                href={`/profile/${post.authorId}`}
+                className="text-[15px] font-black text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                {post.authorUsername}
+              </Link>
+              {post.isAuthorVerified && (
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-500 fill-blue-50" />
+              )}
+              {post.panelType === 'COLLEGE' && (
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-dark-800 px-2 py-0.5 rounded-full">
+                  Institutional
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[11px] font-bold text-slate-400">
+                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
               </span>
-            )}
+              {post.collegeName && (
+                <>
+                  <span className="text-slate-200">|</span>
+                  <span className="text-[11px] font-black text-indigo-500/80 uppercase tracking-tight">
+                    {post.collegeName}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* More Options */}
-        <button className="p-2 hover:opacity-60 transition-opacity duration-200">
-          <MoreHorizontal className="w-6 h-6" style={{ color: '#111827' }} />
+        <button className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-slate-50 dark:hover:bg-dark-800 transition-all group">
+          <MoreHorizontal className="w-5 h-5 text-slate-400 group-hover:text-slate-600" />
         </button>
       </div>
 
-      {/* Content */}
+      {/* Content Body */}
       <div
-        className="relative cursor-pointer select-none"
+        className="px-6 pb-2"
         onDoubleClick={handleDoubleClick}
       >
-        {/* Post Images */}
-        {post.imageUrls && post.imageUrls.length > 0 && (
-          <div className="relative bg-black">
-            {post.imageUrls.length === 1 ? (
-              <img
-                src={post.imageUrls[0]}
-                alt="Post image"
-                className="w-full max-h-[600px] object-contain"
-              />
-            ) : (
-              <div className="grid grid-cols-2 gap-0.5">
-                {post.imageUrls.slice(0, 4).map((imageUrl: string, index: number) => (
-                  <div
-                    key={index}
-                    className={`relative aspect-square bg-gray-900 ${post.imageUrls.length === 3 && index === 0 ? 'col-span-2' : ''
-                      }`}
-                  >
-                    <img
-                      src={imageUrl}
-                      alt={`Post image ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                    {index === 3 && post.imageUrls.length > 4 && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                        <span className="text-white text-2xl font-bold">
-                          +{post.imageUrls.length - 4}
-                        </span>
-                      </div>
-                    )}
+        {post.title && (
+          <h2 className="text-xl font-black text-slate-900 dark:text-white mb-3 tracking-tight leading-snug">
+            {post.title}
+          </h2>
+        )}
+        <div className="relative">
+          <p className="text-slate-600 dark:text-slate-300 text-base leading-relaxed whitespace-pre-wrap">
+            {post.content}
+          </p>
+
+          {/* Post Images if any */}
+          {post.imageUrls && post.imageUrls.length > 0 && (
+            <div className="mt-4 rounded-[24px] overflow-hidden border border-slate-100 dark:border-dark-800 bg-slate-50">
+              <div className={`grid gap-1 ${post.imageUrls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {post.imageUrls.slice(0, 4).map((url: string, i: number) => (
+                  <div key={i} className={`relative aspect-video bg-white overflow-hidden ${post.imageUrls.length === 3 && i === 0 ? 'col-span-2' : ''}`}>
+                    <img src={url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
-        {/* Double-click Like Animation */}
         <AnimatePresence>
           {showLikeAnimation && (
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1.2, opacity: 1 }}
+              animate={{ scale: 1.5, opacity: 1 }}
               exit={{ scale: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
               className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
             >
-              <Heart className="w-24 h-24 text-red-500 fill-red-500 drop-shadow-2xl" />
+              <Heart className="w-32 h-32 text-red-500 fill-red-500 blur-[2px] opacity-20" />
+              <Heart className="absolute w-24 h-24 text-red-500 fill-red-500 drop-shadow-2xl" />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Action Buttons */}
-      <div className="px-3 pt-2">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-4">
-            {/* Like */}
+      {/* Interactions Area */}
+      <div className="px-6 py-5 flex items-center justify-between border-t border-slate-50 dark:border-dark-800 mt-4 bg-slate-50/30 dark:bg-dark-950/20 backdrop-blur-sm">
+        <div className="flex items-center gap-6">
+          {/* Like Interaction */}
+          <div className="flex items-center gap-2 group/btn">
             <motion.button
               onClick={handleLike}
-              disabled={isLiking}
-              whileTap={{ scale: 0.85 }}
-              className="hover:opacity-60 transition-opacity duration-200"
+              whileTap={{ scale: 0.8 }}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${liked ? 'bg-red-50 text-red-500' : 'bg-white dark:bg-dark-900 text-slate-400 group-hover/btn:bg-red-50 group-hover/btn:text-red-500'
+                } shadow-sm border border-transparent hover:border-red-100`}
             >
-              <Heart
-                className="w-7 h-7 transition-colors duration-200"
-                style={{
-                  color: liked ? '#EF4444' : '#111827',
-                  fill: liked ? '#EF4444' : 'none',
-                  strokeWidth: 2
-                }}
-              />
+              <Heart className={`w-5 h-5 ${liked ? 'fill-red-500' : ''}`} strokeWidth={liked ? 0 : 2} />
             </motion.button>
-
-            {/* Comment */}
-            <motion.button
-              onClick={handleComment}
-              whileTap={{ scale: 0.85 }}
-              className="hover:opacity-60 transition-opacity duration-200"
-            >
-              <MessageCircle className="w-7 h-7" style={{ color: '#111827', strokeWidth: 2 }} />
-            </motion.button>
-
-            {/* Share */}
-            <motion.button
-              onClick={handleShare}
-              whileTap={{ scale: 0.85 }}
-              className="hover:opacity-60 transition-opacity duration-200"
-            >
-              <Share2 className="w-7 h-7" style={{ color: '#111827', strokeWidth: 2 }} />
-            </motion.button>
+            <span className={`text-sm font-black tracking-tight ${liked ? 'text-red-500' : 'text-slate-400'}`}>
+              {likeCount > 0 ? likeCount.toLocaleString() : 'Thought'}
+            </span>
           </div>
 
-          {/* Bookmark */}
+          {/* Comment Interaction */}
+          <div className="flex items-center gap-2 group/btn cursor-pointer" onClick={handleComment}>
+            <motion.div
+              whileTap={{ scale: 0.8 }}
+              className="w-10 h-10 rounded-2xl bg-white dark:bg-dark-900 flex items-center justify-center text-slate-400 group-hover/btn:bg-blue-50 group-hover/btn:text-blue-600 shadow-sm border border-transparent hover:border-blue-100 transition-all font-bold"
+            >
+              <MessageCircle className="w-5 h-5" />
+            </motion.div>
+            <span className="text-sm font-black text-slate-400 group-hover/btn:text-blue-600 tracking-tight">
+              {post.commentCount || 'Discuss'}
+            </span>
+          </div>
+
+          {/* Share Interaction */}
           <motion.button
-            whileTap={{ scale: 0.85 }}
-            className="hover:opacity-60 transition-opacity duration-200"
+            onClick={handleShare}
+            whileTap={{ scale: 0.8 }}
+            className="w-10 h-10 rounded-2xl bg-white dark:bg-dark-900 flex items-center justify-center text-slate-400 hover:bg-green-50 hover:text-green-600 shadow-sm border border-transparent hover:border-green-100 transition-all"
           >
-            <Bookmark className="w-6 h-6" style={{ color: '#111827', strokeWidth: 2 }} />
+            <Share2 className="w-5 h-5" />
           </motion.button>
         </div>
 
-        {/* Like Count */}
-        {likeCount > 0 && (
-          <div className="text-sm font-semibold mb-2" style={{ color: '#111827' }}>
-            {likeCount.toLocaleString()} {likeCount === 1 ? 'like' : 'likes'}
-          </div>
-        )}
-
-        {/* Caption */}
-        <div className="mb-2">
-          {post.title && (
-            <p className="text-sm mb-1">
-              <Link 
-                href={`/profile/${post.authorId}`} 
-                className="font-semibold hover:opacity-60 transition-opacity duration-200"
-                style={{ color: '#111827' }}
-              >
-                {post.authorUsername}
-              </Link>
-              <span className="font-semibold ml-2" style={{ color: '#111827' }}>{post.title}</span>
-            </p>
-          )}
-          <p className="text-sm" style={{ lineHeight: '1.6' }}>
-            <Link 
-              href={`/profile/${post.authorId}`} 
-              className="font-semibold hover:opacity-60 transition-opacity duration-200"
-              style={{ color: '#111827' }}
-            >
-              {post.authorUsername}
-            </Link>
-            <span className="ml-2 whitespace-pre-wrap" style={{ color: '#111827' }}>{post.content}</span>
-          </p>
-        </div>
-
-        {/* Comments Preview */}
-        {post.commentCount > 0 && (
-          <button
-            onClick={handleComment}
-            className="text-sm transition-colors duration-200 mb-1"
-            style={{ color: '#6B7280' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#111827'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
-          >
-            View all {post.commentCount} comments
-          </button>
-        )}
-
-        {/* Timestamp */}
-        <div className="text-xs uppercase mb-3" style={{ color: '#9CA3AF', fontWeight: 300 }}>
-          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-        </div>
+        {/* Bookmark Interaction */}
+        <motion.button
+          onClick={handleSave}
+          whileTap={{ scale: 0.8 }}
+          className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all ${saved
+              ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400'
+              : 'bg-white dark:bg-dark-900 text-slate-400 dark:text-slate-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-500 dark:hover:text-amber-400'
+            } shadow-sm border border-transparent hover:border-amber-100 dark:hover:border-amber-500/20`}
+        >
+          <Bookmark className={`w-5 h-5 ${saved ? 'fill-amber-600 dark:fill-amber-400' : ''}`} strokeWidth={saved ? 0 : 2} />
+        </motion.button>
       </div>
 
-      {/* Add Comment */}
-      <div className="px-3 py-2.5" style={{ borderTop: '1px solid #E5E7EB' }}>
-        {user ? (
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Add a comment..."
-              className="flex-1 text-sm outline-none"
-              style={{ color: '#111827' }}
-              onFocus={handleComment}
-            />
-            <button 
-              className="text-sm font-semibold transition-colors duration-200 disabled:opacity-40"
-              style={{ color: '#3B82F6' }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#2563EB'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#3B82F6'}
-            >
-              Post
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={onLoginRequired}
-            className="text-sm transition-colors duration-200 w-full text-left"
-            style={{ color: '#6B7280' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#111827'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
+      {/* Comments Drawer/Section */}
+      <AnimatePresence>
+        {showComments && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden bg-white/50 dark:bg-dark-900/50"
           >
-            Login to comment...
-          </button>
+            <div className="h-[1px] bg-slate-100 dark:bg-dark-800" />
+            <div className="p-6">
+              <NestedComments postId={post.id} onLoginRequired={onLoginRequired} />
+            </div>
+          </motion.div>
         )}
-      </div>
-
-      {/* Comments Section */}
-      {showComments && (
-        <NestedComments postId={post.id} onLoginRequired={onLoginRequired} />
-      )}
-    </article>
+      </AnimatePresence>
+    </motion.article>
   )
 }
+

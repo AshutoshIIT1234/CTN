@@ -78,18 +78,18 @@ export default function NotificationsPage() {
   return (
     <InstagramLayout>
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-royal-500 to-primary-500 rounded-lg flex items-center justify-center">
+      <div className="px-6 py-8">
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20">
               <Bell className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Notifications
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                Intellectual Feed
               </h1>
-              <p className="text-sm text-gray-600">
-                Stay updated with your activity
+              <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
+                Network Status & Interactions
               </p>
             </div>
           </div>
@@ -97,41 +97,38 @@ export default function NotificationsPage() {
           {data?.notifications && data.notifications.length > 0 && (
             <button
               onClick={handleMarkAllAsRead}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-royal-600 hover:bg-royal-50 rounded-lg transition-colors"
+              className="px-6 py-3 text-xs font-black text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-all uppercase tracking-widest border border-blue-100 dark:border-blue-900/30 shadow-sm"
             >
-              <Check className="w-4 h-4" />
-              Mark all as read
+              Clear Backlog
             </button>
           )}
         </div>
 
         {/* Filter */}
-        <div className="flex gap-2">
+        <div className="flex gap-3 mb-8">
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              filter === 'all'
-                ? 'bg-royal-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${filter === 'all'
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl'
+                : 'bg-white dark:bg-dark-800 border border-slate-100 dark:border-dark-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-dark-700'
+              }`}
           >
-            All
+            Universal
           </button>
           <button
             onClick={() => setFilter('unread')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              filter === 'unread'
-                ? 'bg-royal-600 text-white'
-                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-            }`}
+            className={`px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${filter === 'unread'
+                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl'
+                : 'bg-white dark:bg-dark-800 border border-slate-100 dark:border-dark-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-dark-700'
+              }`}
           >
-            Unread
+            Pending
           </button>
         </div>
       </div>
 
       {/* Notifications List */}
-      <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-200">
+      <div className="space-y-1">
         {isLoading ? (
           <div className="p-8 text-center text-gray-500">
             Loading notifications...
@@ -140,9 +137,10 @@ export default function NotificationsPage() {
           data.notifications.map((notification: Notification) => (
             <div
               key={notification.id}
-              className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                !notification.read ? 'bg-royal-50/30' : ''
-              }`}
+              className={`p-5 rounded-3xl transition-all cursor-pointer relative group/item border border-transparent ${!notification.read
+                  ? 'bg-blue-50/50 dark:bg-blue-500/5 border-blue-100 dark:border-blue-900/20'
+                  : 'hover:bg-slate-50 dark:hover:bg-dark-800'
+                }`}
               onClick={() => {
                 if (!notification.read) {
                   handleMarkAsRead(notification.id)
@@ -154,21 +152,21 @@ export default function NotificationsPage() {
             >
               <div className="flex gap-3">
                 {/* Actor Avatar */}
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-sm font-semibold">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-100 to-slate-200 dark:from-dark-800 dark:to-dark-700 flex items-center justify-center flex-shrink-0 border-2 border-white dark:border-dark-900 shadow-sm overflow-hidden p-0.5">
+                  <div className="w-full h-full rounded-[14px] bg-white dark:bg-dark-900 flex items-center justify-center text-slate-500 dark:text-slate-400 font-black text-sm">
                     {notification.actorUsername[0].toUpperCase()}
-                  </span>
+                  </div>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2">
                     <div className="flex-1">
-                      <p className="text-sm text-gray-900">
-                        <span className="font-semibold">{notification.actorUsername}</span>{' '}
+                      <p className="text-[14px] text-slate-700 dark:text-slate-300 leading-snug">
+                        <span className="font-black text-slate-900 dark:text-white mr-1.5">{notification.actorUsername}</span>
                         {notification.message}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-2">
                         {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                       </p>
                     </div>
@@ -181,20 +179,25 @@ export default function NotificationsPage() {
 
                 {/* Unread Indicator */}
                 {!notification.read && (
-                  <div className="w-2 h-2 bg-royal-600 rounded-full flex-shrink-0 mt-2" />
+                  <div className="w-2.5 h-2.5 bg-blue-600 rounded-full flex-shrink-0 mt-3 shadow-lg shadow-blue-500/50" />
                 )}
               </div>
             </div>
           ))
         ) : (
-          <div className="p-12 text-center">
-            <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No notifications yet
-            </h3>
-            <p className="text-gray-600">
-              When you get notifications, they'll show up here
-            </p>
+          <div className="py-32 text-center space-y-6">
+            <div className="w-24 h-24 bg-slate-50 dark:bg-dark-800 rounded-[32px] flex items-center justify-center mx-auto relative overflow-hidden">
+              <Bell className="w-10 h-10 text-slate-200 dark:text-slate-700" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/5 to-transparent" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                Zero Interference
+              </h3>
+              <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest text-xs max-w-xs mx-auto">
+                No new signals detected in your sector of the network.
+              </p>
+            </div>
           </div>
         )}
       </div>

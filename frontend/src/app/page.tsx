@@ -10,6 +10,8 @@ import { FilterPills, FilterType } from '@/components/feed/FilterPills'
 import { LoginModal } from '@/components/auth/LoginModal'
 import { PostSkeleton } from '@/components/post/PostSkeleton'
 import { CreatePostModal } from '@/components/post/CreatePostModal'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Sparkles, MessageSquare, ArrowDown, LogIn } from 'lucide-react'
 
 export default function Home() {
   const { user } = useAuthStore()
@@ -20,9 +22,9 @@ export default function Home() {
 
   // Fetch national posts
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['national-feed', page],
+    queryKey: ['national-feed', page, activeFilter],
     queryFn: async () => {
-      const response = await api.get(`/posts/national?page=${page}&limit=10`)
+      const response = await api.get(`/posts/national?page=${page}&limit=10&filter=${activeFilter}`)
       return response.data
     },
   })
@@ -34,78 +36,99 @@ export default function Home() {
   return (
     <InstagramLayout>
       {/* Filter Pills */}
-      <FilterPills 
+      <FilterPills
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
       />
 
       {/* Posts Feed */}
-      <div className="px-4 py-4">
+      <div className="px-6 py-8">
         {isLoading ? (
           <PostSkeleton count={3} />
         ) : (data?.posts && data.posts.length > 0) ? (
-          <>
-            {data.posts.map((post: any) => (
-              <InstagramPostCard
-                key={post.id || post._id}
-                post={post}
-                onUpdate={refetch}
-                onLoginRequired={handleLoginRequired}
-              />
-            ))}
+          <div className="space-y-6">
+            <AnimatePresence mode="popLayout">
+              {data.posts.map((post: any, index: number) => (
+                <motion.div
+                  key={post.id || post._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <InstagramPostCard
+                    post={post}
+                    onUpdate={refetch}
+                    onLoginRequired={handleLoginRequired}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
             {/* Load More */}
             {data.pagination && data.pagination.currentPage < data.pagination.totalPages && (
-              <div className="text-center py-8">
+              <div className="text-center py-12">
                 <button
                   onClick={() => setPage(p => p + 1)}
-                  className="px-6 py-2 text-sm font-semibold text-[#0095F6] hover:text-[#1877F2] transition-colors"
+                  className="group relative px-8 py-3 bg-white dark:bg-dark-900 border border-slate-200 dark:border-dark-800 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-dark-800/80 transition-all shadow-xl shadow-slate-200/40 dark:shadow-none hover:-translate-y-1 active:translate-y-0"
                 >
-                  Load More Posts
+                  <span className="flex items-center gap-3">
+                    Uncover More Intel
+                    <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
+                  </span>
                 </button>
               </div>
             )}
-          </>
+          </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-royal-500 to-primary-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center py-32 text-center"
+          >
+            <div className="relative mb-8">
+              <div className="w-24 h-24 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-blue-500/20">
+                <MessageSquare className="w-10 h-10 text-white" />
+              </div>
+              <div className="absolute -top-3 -right-3 bg-amber-400 p-2 rounded-2xl shadow-lg">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
-              No discussions yet
+
+            <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+              Intellectual Silence
             </h3>
-            <p className="text-gray-500 mb-6 max-w-sm">
-              Be the first to start a meaningful conversation
+            <p className="text-slate-400 font-medium mb-10 max-w-sm leading-relaxed">
+              The grid is currently quiet. Be the catalyst that starts a global discourse.
             </p>
+
             {user ? (
-              <button 
+              <button
                 onClick={() => setCreatePostModalOpen(true)}
-                className="px-8 py-3 bg-[#0095F6] hover:bg-[#1877F2] text-white rounded-lg font-semibold transition-colors"
+                className="px-10 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-[20px] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 transition-all flex items-center gap-3"
               >
-                Create First Post
+                <Sparkles className="w-4 h-4" />
+                Initialize Thesis
               </button>
             ) : (
               <button
                 onClick={handleLoginRequired}
-                className="px-8 py-3 bg-[#0095F6] hover:bg-[#1877F2] text-white rounded-lg font-semibold transition-colors"
+                className="px-10 py-4 bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 text-slate-900 dark:text-white rounded-[20px] font-black text-sm uppercase tracking-widest shadow-xl shadow-slate-200/40 dark:shadow-none hover:bg-slate-50 dark:hover:bg-dark-800/80 transition-all flex items-center gap-3"
               >
-                Login to Post
+                <LogIn className="w-4 h-4" />
+                Access Network
               </button>
             )}
-          </div>
+          </motion.div>
         )}
       </div>
 
-      {/* Login Modal */}
+      {/* Modals */}
       <LoginModal
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
-        message="Join CTN to participate in discussions and connect with brilliant minds"
+        message="Authorize your profile to engage with the network's elite thinkers"
       />
 
-      {/* Create Post Modal */}
       <CreatePostModal
         isOpen={createPostModalOpen}
         onClose={() => setCreatePostModalOpen(false)}
@@ -114,3 +137,4 @@ export default function Home() {
     </InstagramLayout>
   )
 }
+

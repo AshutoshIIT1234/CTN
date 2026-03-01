@@ -13,6 +13,7 @@ import { Comment, CommentDocument } from '@/schemas/comment.schema';
 import { Like, LikeDocument } from '@/schemas/like.schema';
 import { Report, ReportDocument } from '@/schemas/report.schema';
 import { SavedPost, SavedPostDocument } from '@/schemas/saved-post.schema';
+import { NotificationType } from '@/schemas/notification.schema';
 import { User } from '@/entities/user.entity';
 import { UserProfile } from '@/entities/user-profile.entity';
 import { College } from '@/entities/college.entity';
@@ -20,6 +21,7 @@ import { Moderator } from '@/entities/moderator.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { RedisService } from '../../services/redis.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class PostService {
@@ -34,7 +36,8 @@ export class PostService {
     @InjectRepository(College) private collegeRepository: Repository<College>,
     @InjectRepository(Moderator) private moderatorRepository: Repository<Moderator>,
     private redisService: RedisService,
-  ) {}
+    private notificationService: NotificationService,
+  ) { }
 
   // National Panel Posts
   async createNationalPost(userId: string, createPostDto: CreatePostDto) {
@@ -56,6 +59,7 @@ export class PostService {
       title: createPostDto.title || '',
       content: createPostDto.content,
       imageUrls: createPostDto.imageUrls || [],
+      mentions: this.extractMentions(createPostDto.content),
       likes: 0,
       commentCount: 0,
       reportCount: 0,
@@ -70,8 +74,9 @@ export class PostService {
       1,
     );
 
-    // Invalidate national feed cache
+    // Invalidate national feed cache and user profile
     await this.redisService.invalidatePostFeeds('national');
+    await this.redisService.invalidateUserProfile(user.id);
 
     return this.formatPost(savedPost, userId);
   }
@@ -102,6 +107,7 @@ export class PostService {
       title: createPostDto.title || '',
       content: createPostDto.content,
       imageUrls: createPostDto.imageUrls || [],
+      mentions: this.extractMentions(createPostDto.content),
       likes: 0,
       commentCount: 0,
       reportCount: 0,
@@ -116,8 +122,9 @@ export class PostService {
       1,
     );
 
-    // Invalidate college feed cache
+    // Invalidate college feed cache and user profile
     await this.redisService.invalidatePostFeeds('college', user.college.id);
+    await this.redisService.invalidateUserProfile(user.id);
 
     return this.formatPost(savedPost, userId);
   }
@@ -168,10 +175,10 @@ export class PostService {
     const skip = (page - 1) * limit;
 
     // Build query - hide hidden posts from regular users, but show to moderators
-    let query: any = { 
-      panelType: 'COLLEGE', 
+    let query: any = {
+      panelType: 'COLLEGE',
       collegeId: collegeId,
-      isDeleted: false 
+      isDeleted: false
     };
 
     // Check if user is a moderator for this college
@@ -249,9 +256,9 @@ export class PostService {
     return this.getCollegeFeed(user.college.id, page, limit, userId);
   }
 
-  async getNationalFeed(page: number = 1, limit: number = 20, userId?: string) {
+  async getNationalFeed(page: number = 1, limit: number = 20, userId?: string, filter: string = 'latest') {
     // Try to get from cache first
-    const cachedFeed = await this.redisService.getPostFeed('national', null, page);
+    const cachedFeed = await this.redisService.getPostFeed(`national_${filter}`, null, page);
     if (cachedFeed && userId) {
       // Re-format posts with current user's like status
       const formattedPosts = await Promise.all(
@@ -265,9 +272,17 @@ export class PostService {
 
     const skip = (page - 1) * limit;
 
+    // Define sort criteria based on filter
+    let sortCriteria: any = { createdAt: -1 };
+    if (filter === 'trending') {
+      sortCriteria = { likes: -1, createdAt: -1 };
+    } else if (filter === 'debate') {
+      sortCriteria = { commentCount: -1, createdAt: -1 };
+    }
+
     const posts = await this.postModel
       .find({ panelType: 'NATIONAL', isDeleted: false })
-      .sort({ createdAt: -1 })
+      .sort(sortCriteria)
       .skip(skip)
       .limit(limit)
       .exec();
@@ -292,7 +307,7 @@ export class PostService {
     };
 
     // Cache the result for 5 minutes
-    await this.redisService.setPostFeed('national', null, page, result, 300);
+    await this.redisService.setPostFeed(`national_${filter}`, null, page, result, 300);
 
     return result;
   }
@@ -309,6 +324,136 @@ export class PostService {
     }
 
     return this.formatPost(post, userId);
+  }
+
+  async getUserPosts(authorId: string, page: number = 1, limit: number = 20, userId?: string) {
+    const skip = (page - 1) * limit;
+    const query = { authorId, isDeleted: false };
+
+    const posts = await this.postModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const total = await this.postModel.countDocuments(query);
+
+    const formattedPosts = await Promise.all(
+      posts.map((post) => this.formatPost(post, userId)),
+    );
+
+    return {
+      posts: formattedPosts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + posts.length < total,
+      },
+    };
+  }
+
+  async getUserMediaPosts(authorId: string, page: number = 1, limit: number = 20, userId?: string) {
+    const skip = (page - 1) * limit;
+    const query = {
+      authorId,
+      isDeleted: false,
+      imageUrls: { $exists: true, $ne: [] }
+    };
+
+    const posts = await this.postModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const total = await this.postModel.countDocuments(query);
+
+    const formattedPosts = await Promise.all(
+      posts.map((post) => this.formatPost(post, userId)),
+    );
+
+    return {
+      posts: formattedPosts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + posts.length < total,
+      },
+    };
+  }
+
+  async getUserReplies(authorId: string, page: number = 1, limit: number = 20, userId?: string) {
+    const skip = (page - 1) * limit;
+
+    const comments = await this.commentModel
+      .find({ authorId, isDeleted: false })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const total = await this.commentModel.countDocuments({ authorId, isDeleted: false });
+
+    const formattedComments = await Promise.all(
+      comments.map((comment) => this.formatComment(comment, userId)),
+    );
+
+    return {
+      comments: formattedComments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + comments.length < total,
+      },
+    };
+  }
+
+  async getTaggedPosts(userId: string, page: number = 1, limit: number = 20, currentUserId?: string) {
+    const skip = (page - 1) * limit;
+
+    // Fetch the user to get their username for mention lookup
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      return { posts: [], pagination: { page, limit, total: 0, totalPages: 0, hasMore: false } };
+    }
+
+    // Use the indexed mentions field for efficient lookup
+    const query = {
+      mentions: user.username.toLowerCase(),
+      isDeleted: false
+    };
+
+    const posts = await this.postModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const total = await this.postModel.countDocuments(query);
+
+    const formattedPosts = await Promise.all(
+      posts.map((post) => this.formatPost(post, currentUserId)),
+    );
+
+    return {
+      posts: formattedPosts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + posts.length < total,
+      },
+    };
   }
 
   // Comments
@@ -356,6 +501,21 @@ export class PostService {
       'commentCount',
       1,
     );
+    await this.redisService.invalidateUserProfile(user.id);
+
+    // Trigger notification for the post author
+    if (post.authorId !== userId) {
+      await this.notificationService.createNotification({
+        userId: post.authorId,
+        type: NotificationType.COMMENT,
+        actorId: user.id,
+        actorName: user.displayName || user.username,
+        actorUsername: user.username,
+        postId: postId,
+        message: 'commented on your post',
+      });
+    }
+
 
     return this.formatComment(savedComment, userId);
   }
@@ -379,7 +539,6 @@ export class PostService {
   }
 
   // Likes
-  // Like/Unlike invalidation
   async likePost(userId: string, postId: string) {
     if (!Types.ObjectId.isValid(postId)) {
       throw new BadRequestException('Invalid post ID');
@@ -404,6 +563,14 @@ export class PostService {
         $pull: { likedBy: userId },
       });
 
+      // Update author profile likesReceived
+      await this.userProfileRepository.decrement(
+        { userId: post.authorId },
+        'likesReceived',
+        1,
+      );
+      await this.redisService.invalidateUserProfile(post.authorId);
+
       // Invalidate feed caches
       await this.redisService.invalidatePostFeeds('national');
       if (post.collegeId) {
@@ -423,6 +590,30 @@ export class PostService {
         $inc: { likes: 1 },
         $push: { likedBy: userId },
       });
+
+      // Update author profile likesReceived
+      await this.userProfileRepository.increment(
+        { userId: post.authorId },
+        'likesReceived',
+        1,
+      );
+      await this.redisService.invalidateUserProfile(post.authorId);
+
+      // Trigger notification
+      if (post.authorId !== userId) {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (user) {
+          await this.notificationService.createNotification({
+            userId: post.authorId,
+            type: NotificationType.LIKE,
+            actorId: userId,
+            actorName: user.displayName || user.username,
+            actorUsername: user.username,
+            postId: postId,
+            message: 'liked your post',
+          });
+        }
+      }
 
       // Invalidate feed caches
       await this.redisService.invalidatePostFeeds('national');
@@ -457,6 +648,15 @@ export class PostService {
         $inc: { likes: -1 },
         $pull: { likedBy: userId },
       });
+
+      // Update author profile likesReceived
+      await this.userProfileRepository.decrement(
+        { userId: comment.authorId },
+        'likesReceived',
+        1,
+      );
+      await this.redisService.invalidateUserProfile(comment.authorId);
+
       return { liked: false };
     } else {
       // Like
@@ -470,6 +670,31 @@ export class PostService {
         $inc: { likes: 1 },
         $push: { likedBy: userId },
       });
+
+      // Update author profile likesReceived
+      await this.userProfileRepository.increment(
+        { userId: comment.authorId },
+        'likesReceived',
+        1,
+      );
+      await this.redisService.invalidateUserProfile(comment.authorId);
+
+      // Trigger notification for comment author
+      if (comment.authorId !== userId) {
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (user) {
+          await this.notificationService.createNotification({
+            userId: comment.authorId,
+            type: NotificationType.LIKE,
+            actorId: userId,
+            actorName: user.displayName || user.username,
+            actorUsername: user.username,
+            postId: comment.postId.toString(),
+            message: 'liked your comment',
+          });
+        }
+      }
+
       return { liked: true };
     }
   }
@@ -662,6 +887,16 @@ export class PostService {
 
   // Admin Post Management Methods
 
+  async getCollegeModerationStats(collegeId: string) {
+    const [total, flagged, hidden] = await Promise.all([
+      this.postModel.countDocuments({ panelType: 'COLLEGE', collegeId, isDeleted: false }),
+      this.postModel.countDocuments({ panelType: 'COLLEGE', collegeId, isFlagged: true, isDeleted: false }),
+      this.postModel.countDocuments({ panelType: 'COLLEGE', collegeId, isHidden: true, isDeleted: false }),
+    ]);
+
+    return { total, flagged, hidden };
+  }
+
   /**
    * Admin: Create post in any panel (national or college)
    */
@@ -704,6 +939,7 @@ export class PostService {
       title: createPostDto.title || '',
       content: createPostDto.content,
       imageUrls: createPostDto.imageUrls || [],
+      mentions: this.extractMentions(createPostDto.content),
       likes: 0,
       commentCount: 0,
       reportCount: 0,
@@ -717,6 +953,7 @@ export class PostService {
       'postCount',
       1,
     );
+    await this.redisService.invalidateUserProfile(admin.id);
 
     return this.formatPost(savedPost, adminUserId);
   }
@@ -751,6 +988,7 @@ export class PostService {
       'postCount',
       1,
     );
+    await this.redisService.invalidateUserProfile(post.authorId);
 
     // Invalidate feed caches
     await this.redisService.invalidatePostFeeds('national');
@@ -868,9 +1106,9 @@ export class PostService {
       flagReason: isFlagged ? reason : null,
     });
 
-    return { 
+    return {
       message: isFlagged ? 'Post flagged successfully' : 'Post unflagged successfully',
-      isFlagged 
+      isFlagged
     };
   }
 
@@ -900,17 +1138,27 @@ export class PostService {
       hiddenAt: isHidden ? new Date() : null,
     });
 
-    return { 
+    return {
       message: isHidden ? 'Post hidden successfully' : 'Post unhidden successfully',
-      isHidden 
+      isHidden
     };
   }
 
   // Helper methods
+  private extractMentions(content: string): string[] {
+    const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+    const matches = content.match(mentionRegex);
+    if (!matches) return [];
+
+    // Remove @ and convert to lowercase for consistent storage, then filter unique
+    return [...new Set(matches.map(m => m.substring(1).toLowerCase()))];
+  }
+
   private async formatPost(post: PostDocument, userId?: string) {
-    const isLiked = userId
-      ? post.likedBy?.includes(userId) || false
-      : false;
+    const [isLiked, isSaved] = await Promise.all([
+      userId ? post.likedBy?.includes(userId) : false,
+      userId ? this.isSaved(userId, post._id.toString()) : false,
+    ]);
 
     return {
       id: post._id.toString(),
@@ -926,7 +1174,8 @@ export class PostService {
       likes: post.likes,
       commentCount: post.commentCount,
       reportCount: post.reportCount,
-      isLiked,
+      isLiked: !!isLiked,
+      isSaved: !!isSaved,
       isFlagged: post.isFlagged || false,
       isHidden: post.isHidden || false,
       flagReason: post.flagReason,
@@ -995,7 +1244,7 @@ export class PostService {
     });
 
     if (!savedPost) {
-      throw new BadRequestException('Post not saved');
+      throw new NotFoundException('Saved post not found');
     }
 
     await this.savedPostModel.deleteOne({ _id: savedPost._id });
@@ -1004,28 +1253,36 @@ export class PostService {
   async getSavedPosts(userId: string, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
-    const savedPosts = await this.savedPostModel
+    const savedRecords = await this.savedPostModel
       .find({ userId })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .exec();
 
-    const postIds = savedPosts.map((sp) => sp.postId);
+    const total = await this.savedPostModel.countDocuments({ userId });
 
+    const postIds = savedRecords.map((record) => record.postId);
     const posts = await this.postModel
       .find({ _id: { $in: postIds }, isDeleted: false })
-      .sort({ createdAt: -1 })
       .exec();
 
+    // Map back to original order and format
     const formattedPosts = await Promise.all(
-      posts.map((post) => this.formatPost(post, userId)),
+      savedRecords.map(async (record) => {
+        const post = posts.find((p) => p._id.toString() === record.postId.toString());
+        return post ? this.formatPost(post, userId) : null;
+      }),
     );
 
     return {
-      posts: formattedPosts,
-      page,
-      hasMore: posts.length === limit,
+      posts: formattedPosts.filter((p) => p !== null),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -1040,82 +1297,5 @@ export class PostService {
     });
 
     return !!savedPost;
-  }
-
-  async getUserPosts(userId: string, page: number = 1, limit: number = 20, currentUserId?: string) {
-    const skip = (page - 1) * limit;
-
-    const posts = await this.postModel
-      .find({ authorId: userId, isDeleted: false })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
-
-    const formattedPosts = await Promise.all(
-      posts.map((post) => this.formatPost(post, currentUserId)),
-    );
-
-    return {
-      posts: formattedPosts,
-      page,
-      hasMore: posts.length === limit,
-    };
-  }
-
-  async getUserMediaPosts(userId: string, page: number = 1, limit: number = 20, currentUserId?: string) {
-    const skip = (page - 1) * limit;
-
-    const posts = await this.postModel
-      .find({
-        authorId: userId,
-        isDeleted: false,
-        imageUrls: { $exists: true, $ne: [] },
-      })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
-
-    const formattedPosts = await Promise.all(
-      posts.map((post) => this.formatPost(post, currentUserId)),
-    );
-
-    return {
-      posts: formattedPosts,
-      page,
-      hasMore: posts.length === limit,
-    };
-  }
-
-  async getUserReplies(userId: string, page: number = 1, limit: number = 20, currentUserId?: string) {
-    const skip = (page - 1) * limit;
-
-    const comments = await this.commentModel
-      .find({ authorId: userId })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
-
-    const formattedComments = await Promise.all(
-      comments.map(async (comment) => {
-        const post = await this.postModel.findById(comment.postId);
-        return {
-          ...await this.formatComment(comment, currentUserId),
-          post: post ? {
-            id: post._id.toString(),
-            title: post.title,
-            content: post.content.substring(0, 100),
-          } : null,
-        };
-      }),
-    );
-
-    return {
-      replies: formattedComments,
-      page,
-      hasMore: comments.length === limit,
-    };
   }
 }

@@ -34,15 +34,16 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
   const [loading, setLoading] = useState(false)
 
   // Fetch comments
-  useEffect(() => {
-    const fetchComments = async () => {
-      try {
-        const response = await api.get(`/posts/${postId}/comments`)
-        setComments(response.data)
-      } catch (error) {
-        console.error('Failed to fetch comments:', error)
-      }
+  const fetchComments = async () => {
+    try {
+      const response = await api.get(`/posts/${postId}/comments`)
+      setComments(response.data)
+    } catch (error) {
+      console.error('Failed to fetch comments:', error)
     }
+  }
+
+  useEffect(() => {
     fetchComments()
   }, [postId])
 
@@ -76,13 +77,13 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
 
     setLoading(true)
     try {
-      const response = await api.post(`/posts/${postId}/comments/${commentId}/reply`, {
-        content: replyText.trim()
+      const response = await api.post(`/posts/${postId}/comments`, {
+        content: replyText.trim(),
+        parentCommentId: commentId
       })
-      
-      // Update comments with new reply
-      const updateComments = (comments: Comment[]): Comment[] => {
-        return comments.map(comment => {
+
+      const updateComments = (prevComments: Comment[]): Comment[] => {
+        return prevComments.map(comment => {
           if (comment.id === commentId) {
             return {
               ...comment,
@@ -98,7 +99,7 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
           return comment
         })
       }
-      
+
       setComments(updateComments(comments))
       setReplyText('')
       setReplyingTo(null)
@@ -119,15 +120,14 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
         onLoginRequired?.()
         return
       }
-      
+
       // Optimistic update
       setLiked(!liked)
       setLikeCount(liked ? likeCount - 1 : likeCount + 1)
-      
+
       try {
         await api.post(`/posts/${postId}/comments/${comment.id}/like`)
       } catch (error) {
-        // Revert on error
         setLiked(liked)
         setLikeCount(comment.likes)
         console.error('Failed to like comment:', error)
@@ -135,80 +135,74 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
     }
 
     return (
-      <div className={`${depth > 0 ? 'ml-12 mt-3' : 'mt-4'}`}>
-        <div className="flex gap-3">
-          {/* Avatar */}
-          <Link href={`/profile/${comment.authorId}`}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity">
-              <span className="text-white text-xs font-semibold">
-                {comment.authorUsername[0].toUpperCase()}
-              </span>
+      <div className={`${depth > 0 ? 'ml-12 mt-4' : 'mt-6'}`}>
+        <div className="flex gap-4">
+          <Link href={`/profile/${comment.authorId}`} className="relative group/avatar shrink-0">
+            <div className="w-10 h-10 rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-slate-100 to-slate-200 dark:from-dark-800 dark:to-dark-700 shadow-sm transition-all group-hover/avatar:scale-110">
+              <div className="w-full h-full rounded-[14px] bg-white dark:bg-dark-900 flex items-center justify-center text-slate-900 dark:text-white font-black text-xs uppercase">
+                {comment.authorUsername[0]}
+              </div>
             </div>
           </Link>
 
-          {/* Comment Content */}
-          <div className="flex-1">
-            <div className="bg-gray-50 rounded-2xl px-4 py-2">
-              <div className="flex items-center gap-2 mb-1">
-                <Link href={`/profile/${comment.authorId}`} className="text-sm font-semibold text-gray-900 hover:opacity-60 transition-opacity">
-                  {comment.authorUsername}
-                </Link>
-                <span className="text-xs text-gray-500">
-                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                </span>
+          <div className="flex-1 space-y-2">
+            <div className="bg-slate-50 dark:bg-dark-950/40 p-5 rounded-[24px] border border-slate-100 dark:border-dark-800 transition-all hover:bg-white dark:hover:bg-dark-900 shadow-sm">
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-[13px] text-slate-900 dark:text-white tracking-tight">{comment.authorName || comment.authorUsername}</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Signal • {formatDistanceToNow(new Date(comment.createdAt))} ago</span>
+                </div>
+                <button
+                  onClick={handleLikeComment}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${liked ? 'bg-red-500/10 text-red-500 shadow-lg shadow-red-500/10' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                    }`}
+                >
+                  <Heart className={`w-3.5 h-3.5 ${liked ? 'fill-current' : ''}`} />
+                  <span className="text-[11px] font-black">{likeCount}</span>
+                </button>
               </div>
-              <p className="text-sm text-gray-900">{comment.content}</p>
+              <p className="text-[14px] leading-relaxed text-slate-700 dark:text-slate-300 font-medium">{comment.content}</p>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-4 mt-1 px-2">
-              <button
-                onClick={handleLikeComment}
-                className="flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-red-500 transition-colors"
-              >
-                <Heart className={`w-3 h-3 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
-                {likeCount > 0 && <span>{likeCount}</span>}
-              </button>
-
+            <div className="flex items-center gap-4 px-2">
               <button
                 onClick={() => {
                   if (!user) {
                     onLoginRequired?.()
                     return
                   }
-                  setReplyingTo(comment.id)
+                  setReplyingTo(replyingTo === comment.id ? null : comment.id)
                 }}
-                className="flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-royal-600 transition-colors"
+                className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors"
               >
-                <Reply className="w-3 h-3" />
-                Reply
+                <Reply className="w-3.5 h-3.5" />
+                Contribute
               </button>
 
               {comment.replies && comment.replies.length > 0 && (
                 <button
                   onClick={() => setShowReplies(!showReplies)}
-                  className="text-xs font-semibold text-gray-600 hover:text-gray-900"
+                  className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  {showReplies ? 'Hide' : 'Show'} {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
+                  {showReplies ? 'Hide' : 'Expand'} {comment.replies.length} Signals
                 </button>
               )}
             </div>
 
-            {/* Reply Input */}
             <AnimatePresence>
               {replyingTo === comment.id && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="mt-2 flex gap-2"
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="mt-4 flex gap-3 p-4 bg-white dark:bg-dark-900 rounded-[24px] border border-blue-500/20 shadow-xl shadow-blue-500/5"
                 >
                   <input
                     type="text"
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Write a reply..."
-                    className="flex-1 text-sm px-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-royal-500"
+                    placeholder="Transmit thought..."
+                    className="flex-1 text-sm px-6 py-3 bg-slate-50 dark:bg-dark-950 border-2 border-transparent focus:border-blue-500/30 rounded-xl focus:outline-none transition-all text-slate-900 dark:text-white font-bold"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
@@ -219,27 +213,17 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
                   />
                   <button
                     onClick={() => handleReply(comment.id)}
-                    disabled={loading}
-                    className="px-4 py-2 bg-royal-600 text-white text-sm font-semibold rounded-full hover:bg-royal-700 transition-colors disabled:opacity-50"
+                    disabled={loading || !replyText.trim()}
+                    className="px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-30"
                   >
-                    Reply
-                  </button>
-                  <button
-                    onClick={() => {
-                      setReplyingTo(null)
-                      setReplyText('')
-                    }}
-                    className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900"
-                  >
-                    Cancel
+                    Post
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Nested Replies */}
             {showReplies && comment.replies && comment.replies.length > 0 && (
-              <div className="mt-2">
+              <div className="pt-2">
                 {comment.replies.map((reply) => (
                   <CommentItem key={reply.id} comment={reply} depth={depth + 1} />
                 ))}
@@ -252,22 +236,21 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
   }
 
   return (
-    <div className="border-t border-gray-200 px-4 py-4">
-      {/* Add Comment */}
+    <div className="border-t border-slate-50 dark:border-dark-800 px-2 py-10">
       {user && (
-        <div className="flex gap-3 mb-4">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-xs font-semibold">
-              {user.username[0].toUpperCase()}
-            </span>
+        <div className="flex gap-4 mb-10 bg-slate-50/50 dark:bg-dark-900/50 p-6 rounded-[32px] border border-slate-100 dark:border-dark-800">
+          <div className="w-10 h-10 rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-blue-600 to-indigo-600 shrink-0">
+            <div className="w-full h-full rounded-[14px] bg-white dark:bg-dark-900 flex items-center justify-center text-slate-900 dark:text-white font-black text-xs uppercase">
+              {user.username[0]}
+            </div>
           </div>
-          <div className="flex-1 flex gap-2">
+          <div className="flex-1 flex gap-3">
             <input
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-              className="flex-1 text-sm px-4 py-2 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-royal-500"
+              placeholder="Contribute to the discourse..."
+              className="flex-1 text-[15px] px-6 py-4 bg-white dark:bg-dark-800 border-2 border-transparent focus:border-blue-500/30 rounded-2xl focus:outline-none transition-all text-slate-900 dark:text-white font-bold"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
@@ -277,8 +260,8 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
             />
             <button
               onClick={handleAddComment}
-              disabled={loading}
-              className="px-4 py-2 bg-royal-600 text-white text-sm font-semibold rounded-full hover:bg-royal-700 transition-colors disabled:opacity-50"
+              disabled={loading || !newComment.trim()}
+              className="px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[11px] font-black uppercase tracking-widest rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-slate-200/20 disabled:opacity-30"
             >
               Post
             </button>
@@ -286,20 +269,12 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
         </div>
       )}
 
-      {!user && (
-        <button
-          onClick={onLoginRequired}
-          className="w-full text-sm text-gray-500 hover:text-gray-700 py-3 text-center"
-        >
-          Login to comment...
-        </button>
-      )}
-
-      {/* Comments List */}
       <div>
         {comments.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 text-sm">
-            No comments yet. Be the first to comment!
+          <div className="py-24 text-center">
+            <div className="text-4xl mb-6 grayscale opacity-20">💭</div>
+            <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-2">No Active Discussion</h3>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Be the primary node to initiate this thread</p>
           </div>
         ) : (
           comments.map((comment) => (

@@ -24,14 +24,13 @@ export class MessageService {
 
     // Create message
     const message = await this.messageModel.create({
-      senderId: new Types.ObjectId(senderId),
-      receiverId: new Types.ObjectId(receiverId),
+      senderId,
+      receiverId,
       content,
     })
 
     // Update or create conversation
-    const participants = [senderId, receiverId].sort()
-    const participantIds = participants.map(id => new Types.ObjectId(id))
+    const participantIds = [senderId, receiverId].sort()
 
     await this.conversationModel.findOneAndUpdate(
       { participants: participantIds },
@@ -57,7 +56,7 @@ export class MessageService {
   async getConversations(userId: string) {
     const conversations = await this.conversationModel
       .find({
-        participants: new Types.ObjectId(userId),
+        participants: userId,
       })
       .sort({ lastMessageAt: -1 })
       .populate('participants', 'username displayName profilePictureUrl')
@@ -83,8 +82,8 @@ export class MessageService {
     const messages = await this.messageModel
       .find({
         $or: [
-          { senderId: new Types.ObjectId(userId), receiverId: new Types.ObjectId(otherUserId) },
-          { senderId: new Types.ObjectId(otherUserId), receiverId: new Types.ObjectId(userId) },
+          { senderId: userId, receiverId: otherUserId },
+          { senderId: otherUserId, receiverId: userId },
         ],
       })
       .sort({ createdAt: -1 })
@@ -96,8 +95,8 @@ export class MessageService {
 
     const total = await this.messageModel.countDocuments({
       $or: [
-        { senderId: new Types.ObjectId(userId), receiverId: new Types.ObjectId(otherUserId) },
-        { senderId: new Types.ObjectId(otherUserId), receiverId: new Types.ObjectId(userId) },
+        { senderId: userId, receiverId: otherUserId },
+        { senderId: otherUserId, receiverId: userId },
       ],
     })
 
@@ -116,8 +115,8 @@ export class MessageService {
     // Mark all messages from otherUser as read
     await this.messageModel.updateMany(
       {
-        senderId: new Types.ObjectId(otherUserId),
-        receiverId: new Types.ObjectId(userId),
+        senderId: otherUserId,
+        receiverId: userId,
         isRead: false,
       },
       {
@@ -129,8 +128,7 @@ export class MessageService {
     )
 
     // Reset unread count in conversation
-    const participants = [userId, otherUserId].sort()
-    const participantIds = participants.map(id => new Types.ObjectId(id))
+    const participantIds = [userId, otherUserId].sort()
 
     await this.conversationModel.findOneAndUpdate(
       { participants: participantIds },
@@ -147,7 +145,7 @@ export class MessageService {
   async getUnreadCount(userId: string) {
     const conversations = await this.conversationModel
       .find({
-        participants: new Types.ObjectId(userId),
+        participants: userId,
       })
       .lean()
 

@@ -85,7 +85,7 @@ export default function UserProfilePage() {
   const { data: postsData, isLoading: postsLoading, refetch: refetchPosts } = useQuery({
     queryKey: ['user-posts', userId],
     queryFn: async () => {
-      const response = await api.get(`/posts/user/${userId}?page=1&limit=20`)
+      const response = await api.get(`/users/${userId}/posts?page=1&limit=20`)
       return response.data
     },
     enabled: !!userId && activeTab === 'posts'
@@ -101,7 +101,17 @@ export default function UserProfilePage() {
     enabled: !!userId && activeTab === 'saved' && isOwnProfile
   })
 
-  const handleSaveProfile = async (data: { 
+  // Fetch tagged posts
+  const { data: taggedPostsData, isLoading: taggedPostsLoading } = useQuery({
+    queryKey: ['tagged-posts', userId],
+    queryFn: async () => {
+      const response = await api.get(`/users/${userId}/tagged?page=1`)
+      return response.data
+    },
+    enabled: !!userId && (activeTab === 'tagged' || !activeTab)
+  })
+
+  const handleSaveProfile = async (data: {
     displayName: string
     bio: string
     profilePictureUrl?: string
@@ -129,6 +139,27 @@ export default function UserProfilePage() {
     } catch (error: any) {
       console.error('Failed to upload profile picture:', error)
       setError(error.response?.data?.message || 'Failed to upload profile picture')
+    }
+  }
+
+  const handleCoverPhotoUpload = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await api.post(`/users/${userId}/cover-photo`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      setProfile(prev => prev ? {
+        ...prev,
+        coverPhotoUrl: response.data.url
+      } : null)
+    } catch (error: any) {
+      console.error('Failed to upload cover photo:', error)
+      setError(error.response?.data?.message || 'Failed to upload cover photo')
     }
   }
 
@@ -171,8 +202,8 @@ export default function UserProfilePage() {
   if (isLoading) {
     return (
       <InstagramLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-900 border-t-transparent"></div>
+        <div className="flex items-center justify-center min-h-screen bg-white dark:bg-dark-950">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
         </div>
       </InstagramLayout>
     )
@@ -181,8 +212,8 @@ export default function UserProfilePage() {
   if (error || !profile) {
     return (
       <InstagramLayout>
-        <div className="flex flex-col items-center justify-center py-12">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">
+        <div className="flex flex-col items-center justify-center py-12 bg-white dark:bg-dark-950 min-h-screen">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
             {error || 'Profile not found'}
           </h3>
           <button
@@ -198,13 +229,14 @@ export default function UserProfilePage() {
 
   return (
     <InstagramLayout>
-      <div className="bg-white min-h-screen">
+      <div className="bg-white dark:bg-dark-950 min-h-screen">
         {/* Profile Header */}
         <ProfileHeader
           profile={profile}
           isOwnProfile={isOwnProfile}
           onEditClick={() => setIsEditModalOpen(true)}
           onProfilePictureUpload={handleProfilePictureUpload}
+          onCoverPhotoUpload={handleCoverPhotoUpload}
           onStatsClick={handleStatsClick}
           onFollowClick={handleFollow}
         />
@@ -218,7 +250,7 @@ export default function UserProfilePage() {
           />
 
           {/* Tab Content */}
-          <div className="min-h-[400px] bg-white">
+          <div className="min-h-[400px] bg-white dark:bg-dark-950">
             {activeTab === 'posts' && (
               <PostGrid
                 posts={postsData?.posts || []}
@@ -234,24 +266,19 @@ export default function UserProfilePage() {
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="w-20 h-20 border-2 border-gray-900 rounded-full flex items-center justify-center mb-6">
-                    <Bookmark className="w-10 h-10 text-gray-900 stroke-1" />
+                  <div className="w-20 h-20 border-2 border-slate-900 dark:border-white rounded-full flex items-center justify-center mb-6">
+                    <Bookmark className="w-10 h-10 text-slate-900 dark:text-white stroke-1" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Only {profile.displayName || profile.username} can see what they've saved</h3>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Only {profile.displayName || profile.username} can see what they've saved</h3>
                 </div>
               )
             )}
 
             {activeTab === 'tagged' && (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 border-2 border-gray-900 rounded-full flex items-center justify-center mb-6">
-                  <Tag className="w-10 h-10 text-gray-900" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">Photos of you</h3>
-                <p className="text-gray-500 max-w-sm text-base">
-                  When people tag you in photos, they'll appear here.
-                </p>
-              </div>
+              <PostGrid
+                posts={taggedPostsData?.posts || []}
+                loading={taggedPostsLoading}
+              />
             )}
           </div>
         </div>

@@ -31,7 +31,7 @@ import { Follower } from './entities/follower.entity';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../.env',
+      envFilePath: ['.env', '../.env', 'backend/.env'],
     }),
 
     // PostgreSQL Connection (Neon DB)

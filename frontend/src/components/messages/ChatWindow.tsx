@@ -77,8 +77,8 @@ export function ChatWindow({ otherUserId, onBack }: ChatWindowProps) {
 
   if (!otherUser) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-royal-600 animate-spin" />
+      <div className="flex-1 flex items-center justify-center bg-white dark:bg-dark-900">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
       </div>
     )
   }
@@ -86,46 +86,50 @@ export function ChatWindow({ otherUserId, onBack }: ChatWindowProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-700" />
-        </button>
+      <div className="p-5 border-b border-slate-50 dark:border-dark-800 flex items-center justify-between bg-white dark:bg-dark-900 sticky top-0 z-20">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onBack}
+            className="md:hidden p-2.5 hover:bg-slate-100 dark:hover:bg-dark-800 rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-slate-900 dark:text-white" />
+          </button>
 
-        <div
-          className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => router.push(`/profile/${otherUser.id}`)}
-        >
-          {otherUser.profilePictureUrl ? (
-            <img
-              src={otherUser.profilePictureUrl}
-              alt={otherUser.username}
-              className="w-10 h-10 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center">
-              <span className="text-white font-semibold">
-                {otherUser.username[0].toUpperCase()}
-              </span>
+          <div
+            className="flex items-center gap-4 cursor-pointer group"
+            onClick={() => router.push(`/profile/${otherUser.id}`)}
+          >
+            {otherUser.profilePictureUrl ? (
+              <div className="w-12 h-12 rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/10">
+                <img
+                  src={otherUser.profilePictureUrl}
+                  alt={otherUser.username}
+                  className="w-full h-full rounded-[14px] object-cover border-2 border-white dark:border-dark-900"
+                />
+              </div>
+            ) : (
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg border-2 border-white dark:border-dark-900">
+                <span className="text-white font-black text-lg">
+                  {otherUser.username[0].toUpperCase()}
+                </span>
+              </div>
+            )}
+
+            <div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {otherUser.displayName || otherUser.username}
+              </h2>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">@{otherUser.username}</p>
             </div>
-          )}
-
-          <div>
-            <h2 className="font-semibold text-gray-900">
-              {otherUser.displayName || otherUser.username}
-            </h2>
-            <p className="text-sm text-gray-500">@{otherUser.username}</p>
           </div>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/30 dark:bg-dark-950/20">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-8 h-8 text-royal-600 animate-spin" />
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
           </div>
         ) : messagesData?.messages && messagesData.messages.length > 0 ? (
           <>
@@ -136,16 +140,16 @@ export function ChatWindow({ otherUserId, onBack }: ChatWindowProps) {
                   key={msg._id}
                   className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
+                  <div className={`max-w-[75%] space-y-1.5 ${isOwn ? 'order-2' : 'order-1'}`}>
                     <div
-                      className={`px-4 py-2 rounded-2xl ${isOwn
-                          ? 'bg-gradient-to-r from-royal-600 to-primary-600 text-white'
-                          : 'bg-white border border-gray-200 text-gray-900'
+                      className={`px-5 py-3 rounded-[24px] shadow-sm ${isOwn
+                        ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-tr-none'
+                        : 'bg-white dark:bg-dark-800 border border-slate-100 dark:border-dark-700 text-slate-900 dark:text-white rounded-tl-none'
                         }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                      <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                     </div>
-                    <p className={`text-xs text-gray-500 mt-1 ${isOwn ? 'text-right' : 'text-left'}`}>
+                    <p className={`text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ${isOwn ? 'text-right' : 'text-left'}`}>
                       {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
                     </p>
                   </div>
@@ -155,39 +159,44 @@ export function ChatWindow({ otherUserId, onBack }: ChatWindowProps) {
             <div ref={messagesEndRef} />
           </>
         ) : (
-          <div className="flex items-center justify-center h-full text-center">
-            <div>
-              <p className="text-gray-500">No messages yet</p>
-              <p className="text-gray-400 text-sm mt-1">Start the conversation!</p>
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+            <div className="w-20 h-20 bg-slate-50 dark:bg-dark-800 rounded-3xl flex items-center justify-center opacity-50">
+              <span className="text-3xl">📭</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Transmission Empty</h3>
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Initiate data transfer below</p>
             </div>
           </div>
         )}
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSend} className="p-4 border-t border-gray-200 bg-white">
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-royal-500 focus:border-transparent transition-all"
-            disabled={sendMessageMutation.isPending}
-          />
+      <div className="p-6 border-t border-slate-50 dark:border-dark-800 bg-white dark:bg-dark-900">
+        <form onSubmit={handleSend} className="flex items-center gap-4">
+          <div className="flex-1 relative group">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Transmit signal..."
+              className="w-full px-6 py-4 bg-slate-50 dark:bg-dark-800 border-2 border-transparent focus:border-blue-500/30 focus:ring-4 focus:ring-blue-500/10 rounded-2xl focus:outline-none transition-all text-[15px] font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              disabled={sendMessageMutation.isPending}
+            />
+          </div>
           <button
             type="submit"
             disabled={!message.trim() || sendMessageMutation.isPending}
-            className="p-3 bg-gradient-to-r from-royal-600 to-primary-600 text-white rounded-xl hover:from-royal-700 hover:to-primary-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+            className="p-4 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-blue-500/20 disabled:shadow-none flex-shrink-0"
           >
             {sendMessageMutation.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin" />
             ) : (
-              <Send className="w-5 h-5" />
+              <Send className="w-6 h-6" />
             )}
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   )
 }

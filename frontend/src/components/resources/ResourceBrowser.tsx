@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  FolderOpen, 
-  FileText, 
-  Lock, 
+import {
+  ChevronDown,
+  ChevronRight,
+  FolderOpen,
+  FileText,
+  Lock,
   Unlock,
   Download,
   Eye,
@@ -101,8 +101,11 @@ export function ResourceBrowser({ defaultCollegeId }: ResourceBrowserProps) {
   }
 
   const handleFileAction = async (file: ResourceFile, action: 'view' | 'download') => {
-    if (file.isLocked && !file.isUnlocked) {
-      // Show payment modal for locked files
+    // Premium users or admins have access to everything
+    const hasFullAccess = user?.isPremium || user?.role === 'ADMIN'
+
+    if (file.isLocked && !file.isUnlocked && !hasFullAccess) {
+      // Show payment modal for locked files if not premium/admin
       setPaymentModalFile(file)
       return
     }
@@ -116,7 +119,7 @@ export function ResourceBrowser({ defaultCollegeId }: ResourceBrowserProps) {
         const response = await api.get(`/resources/download/${file.id}`, {
           responseType: 'blob'
         })
-        
+
         // Create download link
         const url = window.URL.createObjectURL(new Blob([response.data]))
         const link = document.createElement('a')
@@ -188,8 +191,9 @@ export function ResourceBrowser({ defaultCollegeId }: ResourceBrowserProps) {
                 {hierarchy.college.name}
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {isOwnCollege ? 'Your College - Free Access' : 
-                 isAdmin ? 'Admin Access - Free' : 'Cross-College Access - Payment Required'}
+                {user?.isPremium ? 'Premium Access - Everything Unlocked' :
+                  isOwnCollege ? 'Your College - Free Access' :
+                    isAdmin ? 'Admin Access - Free' : 'Cross-College Access - Payment/Premium Required'}
               </p>
             </div>
           </div>
@@ -236,7 +240,7 @@ export function ResourceBrowser({ defaultCollegeId }: ResourceBrowserProps) {
                       {resourceType.type.replace('_', ' ')}
                     </span>
                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                      ({resourceType.departments.reduce((acc, dept) => 
+                      ({resourceType.departments.reduce((acc, dept) =>
                         acc + dept.batches.reduce((batchAcc, batch) => batchAcc + batch.files.length, 0), 0
                       )} files)
                     </span>
@@ -258,8 +262,8 @@ export function ResourceBrowser({ defaultCollegeId }: ResourceBrowserProps) {
                               {/* Department Header */}
                               <button
                                 onClick={() => toggleExpanded(
-                                  expandedDepartments, 
-                                  setExpandedDepartments, 
+                                  expandedDepartments,
+                                  setExpandedDepartments,
                                   `${resourceType.type}-${department.name}`
                                 )}
                                 className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-dark-800 transition-colors text-left"
@@ -294,8 +298,8 @@ export function ResourceBrowser({ defaultCollegeId }: ResourceBrowserProps) {
                                           {/* Batch Header */}
                                           <button
                                             onClick={() => toggleExpanded(
-                                              expandedBatches, 
-                                              setExpandedBatches, 
+                                              expandedBatches,
+                                              setExpandedBatches,
                                               `${resourceType.type}-${department.name}-${batch.name}`
                                             )}
                                             className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-dark-800 transition-colors text-left"
@@ -337,10 +341,10 @@ export function ResourceBrowser({ defaultCollegeId }: ResourceBrowserProps) {
                                                             <p className="font-medium text-gray-900 dark:text-white truncate">
                                                               {file.name}
                                                             </p>
-                                                            {file.isLocked && !file.isUnlocked && (
+                                                            {(file.isLocked && !file.isUnlocked && !user?.isPremium) && (
                                                               <Lock className="w-4 h-4 text-red-500 flex-shrink-0" />
                                                             )}
-                                                            {file.isUnlocked && (
+                                                            {(file.isUnlocked || user?.isPremium) && (
                                                               <Unlock className="w-4 h-4 text-green-500 flex-shrink-0" />
                                                             )}
                                                           </div>
@@ -352,7 +356,7 @@ export function ResourceBrowser({ defaultCollegeId }: ResourceBrowserProps) {
                                                           </p>
                                                         </div>
                                                       </div>
-                                                      
+
                                                       <div className="flex items-center gap-2 flex-shrink-0">
                                                         <button
                                                           onClick={() => handleFileAction(file, 'view')}

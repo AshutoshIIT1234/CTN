@@ -30,16 +30,16 @@ function MessagesContent() {
 
   return (
     <InstagramLayout showRightPanel={false}>
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 120px)' }}>
+      <div className="bg-white dark:bg-dark-900 border border-slate-50 dark:border-dark-800 rounded-[32px] shadow-xl shadow-slate-200/40 dark:shadow-none overflow-hidden mt-6 mx-4" style={{ height: 'calc(100vh - 140px)' }}>
         <div className="flex h-full">
           {/* Conversations List */}
-          <div className={`${selectedUserId ? 'hidden md:block' : 'block'} w-full md:w-96 border-r border-gray-200 flex flex-col`}>
-            <div className="p-6 border-b border-gray-200">
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-royal-500 to-primary-500 rounded-xl flex items-center justify-center">
+          <div className={`${selectedUserId ? 'hidden md:block' : 'block'} w-full md:w-96 border-r border-slate-50 dark:border-dark-800 flex flex-col bg-slate-50/10 dark:bg-dark-900/10`}>
+            <div className="p-8 border-b border-slate-50 dark:border-dark-800">
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-4 tracking-tighter">
+                <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                   <MessageSquare className="w-6 h-6 text-white" />
                 </div>
-                Messages
+                Nodes
               </h1>
             </div>
             <ConversationList
@@ -49,24 +49,27 @@ function MessagesContent() {
           </div>
 
           {/* Chat Window */}
-          <div className={`${selectedUserId ? 'block' : 'hidden md:block'} flex-1 flex flex-col`}>
+          <div className={`${selectedUserId ? 'block' : 'hidden md:block'} flex-1 flex flex-col relative overflow-hidden bg-white dark:bg-dark-900`}>
             {selectedUserId ? (
               <ChatWindow
                 otherUserId={selectedUserId}
                 onBack={() => setSelectedUserId(null)}
               />
             ) : (
-              <div className="flex-1 flex items-center justify-center text-center p-8">
-                <div>
-                  <div className="w-20 h-20 bg-gradient-to-br from-royal-500 to-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageSquare className="w-10 h-10 text-white" />
+              <div className="flex-1 flex items-center justify-center p-12 text-center bg-slate-50/30 dark:bg-dark-950/20">
+                <div className="space-y-6">
+                  <div className="w-24 h-24 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/20 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    <MessageSquare className="w-10 h-10 text-white relative z-10" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    Your Messages
-                  </h3>
-                  <p className="text-gray-600">
-                    Select a conversation to start messaging
-                  </p>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                      Signal Interface
+                    </h3>
+                    <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest text-xs max-w-xs mx-auto">
+                      Select a peer to initialize an encrypted signal thread.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

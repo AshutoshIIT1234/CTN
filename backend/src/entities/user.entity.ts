@@ -68,6 +68,12 @@ export class User {
   @Column({ nullable: true, type: 'timestamp' })
   emailVerificationExpires: Date;
 
+  @Column({ default: false })
+  isPremium: boolean;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  premiumExpiresAt: Date;
+
   @OneToOne(() => UserProfile, (profile) => profile.user, { cascade: true })
   profile: UserProfile;
 

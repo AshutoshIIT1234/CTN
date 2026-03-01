@@ -1,10 +1,11 @@
 'use client'
 
-import { Settings, MoreHorizontal, Camera } from 'lucide-react'
+import { Settings, MoreHorizontal, Camera, Crown, ShieldCheck, MapPin, GraduationCap, Calendar } from 'lucide-react'
 import { UserRole } from '@/store/authStore'
 import { useRouter } from 'next/navigation'
 import { ProfileActions } from './ProfileActions'
 import { motion } from 'framer-motion'
+import { format } from 'date-fns'
 
 interface UserProfile {
   id: string
@@ -20,6 +21,8 @@ interface UserProfile {
   }
   bio?: string
   profilePictureUrl?: string
+  coverPhotoUrl?: string
+  isPremium?: boolean
   joinDate: Date
   stats: {
     postCount: number
@@ -35,6 +38,7 @@ interface ProfileHeaderProps {
   isOwnProfile: boolean
   onEditClick: () => void
   onProfilePictureUpload: (file: File) => Promise<void>
+  onCoverPhotoUpload: (file: File) => Promise<void>
   onStatsClick: (type: 'followers' | 'following') => void
   onFollowClick?: () => void
 }
@@ -44,69 +48,106 @@ export function ProfileHeader({
   isOwnProfile,
   onEditClick,
   onProfilePictureUpload,
+  onCoverPhotoUpload,
   onStatsClick,
   onFollowClick
 }: ProfileHeaderProps) {
   const router = useRouter()
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
       await onProfilePictureUpload(file)
     }
   }
 
-  return (
-    <div className="border-b border-gray-200 bg-white">
-      <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-12">
-        <div className="flex flex-col md:flex-row gap-8 md:gap-16">
+  const handleCoverFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      await onCoverPhotoUpload(file)
+    }
+  }
 
-          {/* Profile Picture Column */}
-          <div className="flex justify-center md:justify-start flex-shrink-0">
-            <motion.div 
-              className="relative group"
+  return (
+    <div className="bg-white dark:bg-dark-950 overflow-hidden">
+      {/* Cover/Header Area */}
+      <div className="h-56 md:h-80 bg-slate-100 dark:bg-dark-900 relative overflow-hidden group/cover">
+        {profile.coverPhotoUrl ? (
+          <img src={profile.coverPhotoUrl} className="w-full h-full object-cover" alt="" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 relative overflow-hidden">
+            <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]" />
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.2) 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+          </div>
+        )}
+
+        {isOwnProfile && (
+          <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity cursor-pointer z-20">
+            <div className="p-4 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 hover:scale-110 transition-transform">
+              <Camera className="w-8 h-8 text-white" />
+            </div>
+            <span className="text-white text-[12px] font-black uppercase tracking-[0.3em] mt-4">Update Neural Banner</span>
+            <input type="file" accept="image/*" onChange={handleCoverFileChange} className="hidden" />
+          </label>
+        )}
+      </div>
+
+      <div className="max-w-5xl mx-auto px-6 md:px-12 -mt-20 md:-mt-24 relative z-10 pb-12">
+        <div className="flex flex-col md:flex-row items-end md:items-start gap-8 md:gap-12">
+
+          {/* Avatar Area */}
+          <div className="relative group mx-auto md:mx-0">
+            <motion.div
               whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
+              className="w-32 h-32 md:w-44 md:h-44 rounded-[40px] p-1 bg-white dark:bg-dark-950 shadow-2xl relative overflow-hidden"
             >
-              <div className="w-[77px] h-[77px] md:w-[150px] md:h-[150px] rounded-full overflow-hidden ring-1 ring-gray-200 shadow-lg">
+              <div className="w-full h-full rounded-[36px] overflow-hidden bg-slate-50 dark:bg-dark-800 flex items-center justify-center relative">
                 {profile.profilePictureUrl ? (
-                  <img
-                    src={profile.profilePictureUrl}
-                    alt={profile.username}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={profile.profilePictureUrl} className="w-full h-full object-cover" alt="" />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-400 via-pink-400 to-orange-400 flex items-center justify-center">
-                    <span className="text-white text-3xl md:text-6xl font-bold drop-shadow-lg">
-                      {profile.username[0].toUpperCase()}
-                    </span>
-                  </div>
+                  <span className="text-4xl md:text-6xl font-black text-blue-600/20">
+                    {profile.username[0].toUpperCase()}
+                  </span>
+                )}
+
+                {isOwnProfile && (
+                  <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <Camera className="w-8 h-8 text-white" />
+                    <span className="text-white text-[10px] font-black uppercase tracking-widest mt-1">Update</span>
+                    <input type="file" accept="image/*" onChange={handleProfileFileChange} className="hidden" />
+                  </label>
                 )}
               </div>
-
-              {isOwnProfile && (
-                <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-all duration-200">
-                  <Camera className="w-6 h-6 md:w-8 md:h-8 text-white mb-1" />
-                  <span className="text-white text-xs font-semibold">Change</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </label>
-              )}
             </motion.div>
+
+            {profile.isPremium && (
+              <div className="absolute -top-2 -right-2 w-10 h-10 bg-amber-400 rounded-2xl flex items-center justify-center border-4 border-white dark:border-dark-900 shadow-xl">
+                <Crown className="w-5 h-5 text-white fill-white" />
+              </div>
+            )}
           </div>
 
-          {/* Info Column */}
-          <div className="flex-grow min-w-0">
+          {/* User Meta Area */}
+          <div className="flex-1 md:mt-24 text-center md:text-left">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+              <div className="flex flex-col">
+                <div className="flex items-center justify-center md:justify-start gap-3">
+                  <h1 className="text-2xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {profile.displayName || profile.username}
+                  </h1>
+                  <ShieldCheck className="w-6 h-6 text-blue-500 fill-blue-500/10" />
+                </div>
+                <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
+                  <span className="text-slate-400 font-bold text-sm">@{profile.username}</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-200" />
+                  <div className="flex items-center gap-1 text-slate-400 text-[11px] font-black uppercase tracking-widest">
+                    <Calendar className="w-3 h-3" />
+                    <span>Joined {format(new Date(profile.joinDate), 'MMM yyyy')}</span>
+                  </div>
+                </div>
+              </div>
 
-            {/* Top Row: Username + Buttons */}
-            <div className="flex flex-col md:flex-row items-center md:items-center gap-4 md:gap-8 mb-6">
-              <h1 className="text-xl md:text-3xl font-light text-gray-900 tracking-tight">{profile.username}</h1>
-
-              <div className="flex items-center gap-2 w-full md:w-auto justify-center md:justify-start">
+              <div className="flex items-center justify-center md:justify-start gap-3 mt-4 md:mt-0 md:ml-auto">
                 <ProfileActions
                   isOwnProfile={isOwnProfile}
                   isFollowing={profile.isFollowing}
@@ -114,76 +155,71 @@ export function ProfileHeader({
                   onFollowClick={onFollowClick}
                   targetUserId={profile.id}
                 />
-                
+                <button className="w-11 h-11 rounded-2xl bg-slate-50 dark:bg-dark-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all border border-transparent hover:border-slate-100">
+                  <MoreHorizontal className="w-6 h-6" />
+                </button>
                 {isOwnProfile && (
-                  <motion.button
+                  <button
                     onClick={() => router.push('/settings')}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                    aria-label="Settings"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all border border-blue-100 dark:border-blue-500/20"
                   >
-                    <Settings className="w-6 h-6 text-gray-700" />
-                  </motion.button>
-                )}
-                
-                {!isOwnProfile && (
-                  <motion.button
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                    aria-label="More options"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <MoreHorizontal className="w-6 h-6 text-gray-700" />
-                  </motion.button>
+                    <Settings className="w-6 h-6" />
+                  </button>
                 )}
               </div>
             </div>
 
-            {/* Middle Row: Stats */}
-            <div className="flex justify-center md:justify-start gap-8 md:gap-12 mb-6">
-              <div className="text-center md:text-left">
-                <div className="text-lg md:text-xl font-semibold text-gray-900">{profile.stats.postCount.toLocaleString()}</div>
-                <div className="text-sm text-gray-500">posts</div>
-              </div>
-              <motion.button
-                className="text-center md:text-left"
-                onClick={() => onStatsClick('followers')}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <div className="text-lg md:text-xl font-semibold text-gray-900">{profile.stats.followersCount.toLocaleString()}</div>
-                <div className="text-sm text-gray-500">followers</div>
-              </motion.button>
-              <motion.button
-                className="text-center md:text-left"
-                onClick={() => onStatsClick('following')}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <div className="text-lg md:text-xl font-semibold text-gray-900">{profile.stats.followingCount.toLocaleString()}</div>
-                <div className="text-sm text-gray-500">following</div>
-              </motion.button>
-            </div>
-
-            {/* Bottom Row: Bio */}
-            <div className="text-sm text-center md:text-left max-w-full md:max-w-lg">
-              {profile.displayName && (
-                <div className="font-semibold text-gray-900 mb-2 text-base">{profile.displayName}</div>
-              )}
-
-              {profile.college && (
-                <div className="text-gray-600 mb-3 flex items-center justify-center md:justify-start gap-2">
-                  <span className="text-lg">🏛️</span>
-                  <span className="font-medium">{profile.college.name}</span>
-                </div>
-              )}
-
+            {/* Bio & Links */}
+            <div className="max-w-2xl mb-8 space-y-4">
               {profile.bio && (
-                <div className="whitespace-pre-wrap text-gray-900 leading-relaxed">{profile.bio}</div>
+                <p className="text-slate-600 dark:text-slate-300 text-base leading-relaxed whitespace-pre-wrap font-medium">
+                  {profile.bio}
+                </p>
               )}
+
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-6">
+                {profile.college && (
+                  <div className="flex items-center gap-2 group cursor-default">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-dark-800 flex items-center justify-center text-indigo-600">
+                      <GraduationCap className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-black text-slate-500 uppercase tracking-tight group-hover:text-indigo-600 transition-colors">
+                      {profile.college.name}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 group cursor-default">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-dark-800 flex items-center justify-center text-blue-600">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-black text-slate-500 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
+                    National Think Tank
+                  </span>
+                </div>
+              </div>
             </div>
 
+            {/* Stats Bar */}
+            <div className="flex items-center justify-center md:justify-start gap-12 border-t border-slate-50 dark:border-slate-900 pt-8">
+              <div className="text-center md:text-left">
+                <div className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">{profile.stats.postCount.toLocaleString()}</div>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Theses Published</div>
+              </div>
+              <button
+                onClick={() => onStatsClick('followers')}
+                className="text-center md:text-left hover:opacity-70 transition-opacity"
+              >
+                <div className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">{profile.stats.followersCount.toLocaleString()}</div>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Thinkers Connected</div>
+              </button>
+              <button
+                onClick={() => onStatsClick('following')}
+                className="text-center md:text-left hover:opacity-70 transition-opacity"
+              >
+                <div className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">{profile.stats.followingCount.toLocaleString()}</div>
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Ideologies Followed</div>
+              </button>
+            </div>
           </div>
         </div>
       </div>

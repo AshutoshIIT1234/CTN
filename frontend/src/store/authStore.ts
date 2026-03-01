@@ -16,8 +16,11 @@ export interface User {
   displayName?: string
   role: UserRole
   collegeId?: string
+  college?: College
   profilePictureUrl?: string
   bio?: string
+  isPremium: boolean
+  premiumExpiresAt?: Date
   createdAt: Date
 }
 
@@ -49,12 +52,12 @@ export const useAuthStore = create<AuthState>()(
       college: null,
       isAuthenticated: false,
       isLoading: true,
-      
+
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setToken: (token) => set({ token }),
       setCollege: (college) => set({ college }),
       setLoading: (isLoading) => set({ isLoading }),
-      
+
       logout: () => set({
         user: null,
         token: null,

@@ -3,8 +3,8 @@ import { Document, Types } from 'mongoose'
 
 @Schema({ timestamps: true })
 export class Conversation extends Document {
-  @Prop({ type: [Types.ObjectId], ref: 'User', required: true })
-  participants: Types.ObjectId[]
+  @Prop({ type: [String], required: true })
+  participants: string[]
 
   @Prop({ type: Types.ObjectId, ref: 'Message' })
   lastMessageId?: Types.ObjectId
