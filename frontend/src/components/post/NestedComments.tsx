@@ -126,7 +126,7 @@ export function NestedComments({ postId, onLoginRequired }: NestedCommentsProps)
       setLikeCount(liked ? likeCount - 1 : likeCount + 1)
 
       try {
-        await api.post(`/posts/${postId}/comments/${comment.id}/like`)
+        await api.post(`/posts/comments/${comment.id}/like`)
       } catch (error) {
         setLiked(liked)
         setLikeCount(comment.likes)

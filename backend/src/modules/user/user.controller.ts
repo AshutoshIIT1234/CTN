@@ -17,19 +17,23 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserService, ProfileUpdateData } from './user.service';
 import { UploadService } from '../upload/upload.service';
+import { isUUID } from 'class-validator';
 
 @Controller('users')
 export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly uploadService: UploadService,
-  ) {}
+  ) { }
 
   @Get(':userId/profile')
   async getUserProfile(
     @Param('userId') userId: string,
     @Request() req: any
   ) {
+    if (!isUUID(userId)) {
+      throw new BadRequestException('Invalid user id');
+    }
     const requestingUserId = req.user?.sub || req.user?.id;
     const profile = await this.userService.getUserProfile(userId, requestingUserId);
     return profile;
@@ -42,6 +46,9 @@ export class UserController {
     @Body() updateData: ProfileUpdateData,
     @Request() req: any
   ) {
+    if (!isUUID(userId)) {
+      throw new BadRequestException('Invalid user id');
+    }
     // Only allow users to update their own profile
     if (req.user.sub !== userId) {
       throw new ForbiddenException('You can only update your own profile');
@@ -59,6 +66,9 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
     @Request() req: any
   ) {
+    if (!isUUID(userId)) {
+      throw new BadRequestException('Invalid user id');
+    }
     // Only allow users to upload their own profile photo
     if (req.user.sub !== userId) {
       throw new ForbiddenException('You can only update your own profile photo');
@@ -87,6 +97,9 @@ export class UserController {
     @UploadedFile() file: Express.Multer.File,
     @Request() req: any
   ) {
+    if (!isUUID(userId)) {
+      throw new BadRequestException('Invalid user id');
+    }
     // Only allow users to upload their own cover photo
     if (req.user.sub !== userId) {
       throw new ForbiddenException('You can only update your own cover photo');
@@ -107,8 +120,17 @@ export class UserController {
 
   @Get(':userId/stats')
   async getProfileStats(@Param('userId') userId: string) {
+    if (!isUUID(userId)) {
+      throw new BadRequestException('Invalid user id');
+    }
     const stats = await this.userService.getProfileStats(userId);
     return stats;
+  }
+
+  @Get('suggested')
+  async getSuggestedUsers() {
+    const users = await this.userService.getSuggestedUsers();
+    return { users };
   }
 
   @Get('search')

@@ -227,12 +227,22 @@ export default function UserProfilePage() {
     )
   }
 
+  const profileForDisplay = {
+    ...profile,
+    stats: {
+      ...profile.stats,
+      postCount: typeof postsData?.pagination?.total === 'number'
+        ? postsData.pagination.total
+        : profile.stats.postCount
+    }
+  }
+
   return (
     <InstagramLayout>
       <div className="bg-white dark:bg-dark-950 min-h-screen">
         {/* Profile Header */}
         <ProfileHeader
-          profile={profile}
+          profile={profileForDisplay}
           isOwnProfile={isOwnProfile}
           onEditClick={() => setIsEditModalOpen(true)}
           onProfilePictureUpload={handleProfilePictureUpload}

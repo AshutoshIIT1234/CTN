@@ -1,16 +1,16 @@
-import { IsOptional, IsString, IsEnum, IsNumberString, IsUUID } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { IsOptional, IsString, IsEnum, IsInt, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
 import { UserRole } from '../../../entities/user.entity';
 
 export class GetUsersQueryDto {
   @IsOptional()
-  @IsNumberString()
-  @Transform(({ value }) => parseInt(value))
+  @Type(() => Number)
+  @IsInt()
   page?: number;
 
   @IsOptional()
-  @IsNumberString()
-  @Transform(({ value }) => parseInt(value))
+  @Type(() => Number)
+  @IsInt()
   limit?: number;
 
   @IsOptional()

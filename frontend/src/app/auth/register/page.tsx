@@ -46,9 +46,36 @@ export default function RegisterPage() {
     const fetchColleges = async () => {
       try {
         const response = await api.get('/colleges')
-        setColleges(response.data)
+        const collegesData: College[] = response.data || []
+        const indianColleges = collegesData.filter(c =>
+          c.name.includes('IIT') ||
+          c.name.includes('IIM') ||
+          c.name.includes('AIIMS')
+        )
+        if (indianColleges.length > 0) {
+          setColleges(indianColleges)
+        } else {
+          const fallback: College[] = [
+            { id: 'iitd', name: 'Indian Institute of Technology, Delhi', emailDomain: 'iitd.ac.in', logoUrl: '' },
+             { id: 'iitp', name: 'Indian Institute of Technology, Patna', emailDomain: 'iitp.ac.in', logoUrl: '' },
+            { id: 'iitb', name: 'Indian Institute of Technology, Bombay', emailDomain: 'iitb.ac.in', logoUrl: '' },
+            { id: 'iitr', name: 'Indian Institute of Technology, Roorkee', emailDomain: 'iitr.ac.in', logoUrl: '' },
+            { id: 'iima', name: 'Indian Institute of Management, Ahmedabad', emailDomain: 'iima.ac.in', logoUrl: '' },
+            { id: 'iimk', name: 'Indian Institute of Management, Kozhikode', emailDomain: 'iimk.ac.in', logoUrl: '' },
+            { id: 'aiims-delhi', name: 'All India Institute of Medical Sciences, Delhi', emailDomain: 'aiims.edu', logoUrl: '' }
+          ]
+          setColleges(fallback)
+        }
       } catch (err) {
-        console.error('Failed to fetch colleges', err)
+        const fallback: College[] = [
+          { id: 'iitd', name: 'Indian Institute of Technology, Delhi', emailDomain: 'iitd.ac.in', logoUrl: '' },
+          { id: 'iitb', name: 'Indian Institute of Technology, Bombay', emailDomain: 'iitb.ac.in', logoUrl: '' },
+          { id: 'iitr', name: 'Indian Institute of Technology, Roorkee', emailDomain: 'iitr.ac.in', logoUrl: '' },
+          { id: 'iima', name: 'Indian Institute of Management, Ahmedabad', emailDomain: 'iima.ac.in', logoUrl: '' },
+          { id: 'iimk', name: 'Indian Institute of Management, Kozhikode', emailDomain: 'iimk.ac.in', logoUrl: '' },
+          { id: 'aiims-delhi', name: 'All India Institute of Medical Sciences, Delhi', emailDomain: 'aiims.edu', logoUrl: '' }
+        ]
+        setColleges(fallback)
       }
     }
     fetchColleges()
@@ -58,12 +85,12 @@ export default function RegisterPage() {
     e.preventDefault()
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Key validation mismatch')
+      setError('Passwords do not match.')
       return
     }
 
     if (userType === 'COLLEGE' && !selectedCollege) {
-      setError('Please select your institution')
+      setError('Please select your college.')
       return
     }
 
@@ -85,7 +112,7 @@ export default function RegisterPage() {
         router.push('/')
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Identity established failure. Try again.')
+      setError(err.response?.data?.message || 'Registration failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -138,11 +165,11 @@ export default function RegisterPage() {
             </div>
             <div className="absolute inset-0 bg-blue-500 blur-2xl opacity-20 animate-pulse" />
           </motion.div>
-          <h1 className="mt-6 text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-            Establish Identity
+          <h1 className="mt-6 text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Create Account
           </h1>
-          <p className="mt-3 text-slate-500 dark:text-slate-400 font-black uppercase tracking-[0.3em] text-[10px]">
-            The Critical Thinking Network
+          <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">
+            Join the Critical Thinking Network
           </p>
         </div>
 
@@ -159,14 +186,14 @@ export default function RegisterPage() {
             className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[22px] relative z-10 transition-colors duration-300 ${userType === 'GENERAL' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}
           >
             <Globe className="w-4 h-4" />
-            <span className="text-sm font-black uppercase tracking-wider">Global Thinker</span>
+            <span className="text-sm font-semibold">General Member</span>
           </button>
           <button
             onClick={() => setUserType('COLLEGE')}
             className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[22px] relative z-10 transition-colors duration-300 ${userType === 'COLLEGE' ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`}
           >
             <GraduationCap className="w-4 h-4" />
-            <span className="text-sm font-black uppercase tracking-wider">Scholar</span>
+            <span className="text-sm font-semibold">College Student</span>
           </button>
         </div>
 
@@ -197,8 +224,8 @@ export default function RegisterPage() {
                   exit={{ opacity: 0, height: 0 }}
                   className="space-y-3 relative"
                 >
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-                    <Building2 className="w-3 h-3" /> Select Institution
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide ml-1 flex items-center gap-2">
+                    <Building2 className="w-3 h-3" /> College
                   </label>
                   <div className="relative">
                     <button
@@ -232,11 +259,18 @@ export default function RegisterPage() {
                               {searchQuery === '' && (
                                 <div className="px-4 py-3 mb-2 bg-blue-500/5 rounded-2xl border border-blue-500/10">
                                   <div className="flex items-center gap-2 mb-3">
-                                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Premier Institutions</span>
-                                  </div>
+                                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                        <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-wide">Top Institutions</span>
+                                      </div>
                                   <div className="grid grid-cols-1 gap-1">
-                                    {colleges.filter(c => c.name.includes('IIT') || c.name.includes('IIM') || c.name.includes('AIIMS') || c.name.includes('NIT') || c.name.includes('IIIT')).slice(0, 5).map(college => (
+                                    {colleges
+                                      .filter(c =>
+                                        c.name.includes('IIT') ||
+                                        c.name.includes('IIM') ||
+                                        c.name.includes('AIIMS')
+                                      )
+                                      .slice(0, 5)
+                                      .map(college => (
                                       <button
                                         key={college.id}
                                         type="button"
@@ -247,7 +281,7 @@ export default function RegisterPage() {
                                         }}
                                         className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-blue-600/20 text-slate-400 hover:text-white transition-all text-left group/item"
                                       >
-                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center font-black text-xs text-blue-400 group-hover/item:bg-blue-500 group-hover/item:text-white transition-all">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center font-bold text-xs text-blue-400 group-hover/item:bg-blue-500 group-hover/item:text-white transition-all">
                                           {college.name.includes('IIT') ? 'IIT' : college.name.includes('IIM') ? 'IIM' : college.name.includes('AIIMS') ? 'MED' : 'TECH'}
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -259,8 +293,8 @@ export default function RegisterPage() {
                                 </div>
                               )}
 
-                              <div className="px-4 py-2 text-[9px] font-black text-slate-600 uppercase tracking-widest">
-                                {searchQuery ? 'Search Results' : 'All Institutions'}
+                              <div className="px-4 py-2 text-[9px] font-semibold text-slate-600 uppercase tracking-wide">
+                                {searchQuery ? 'Search Results' : 'All Colleges'}
                               </div>
 
                               {filteredColleges.map((college) => (
@@ -295,8 +329,8 @@ export default function RegisterPage() {
                             </>
                           ) : (
                             <div className="p-12 text-center text-slate-500 space-y-4">
-                              <Building2 className="w-12 h-12 mx-auto opacity-20" />
-                              <div className="font-bold text-sm tracking-widest uppercase">No node found in registry</div>
+                            <Building2 className="w-12 h-12 mx-auto opacity-20" />
+                            <div className="font-semibold text-sm">No colleges found</div>
                             </div>
                           )}
                         </div>
@@ -310,8 +344,8 @@ export default function RegisterPage() {
                       className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-xl"
                     >
                       <Shield className="w-3.5 h-3.5 text-blue-500" />
-                      <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">
-                        Required Domain: @{selectedCollege.emailDomain}
+                      <span className="text-[10px] font-semibold text-blue-400">
+                        Use your college email: @{selectedCollege.emailDomain}
                       </span>
                     </motion.div>
                   )}
@@ -321,8 +355,8 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                  Public Alias
+                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide ml-1">
+                  Username
                 </label>
                 <div className="relative group">
                   <input
@@ -340,8 +374,8 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                  Email Node
+                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide ml-1">
+                  Email
                 </label>
                 <div className="relative group">
                   <input
@@ -361,8 +395,8 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                  Access Key
+                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide ml-1">
+                  Password
                 </label>
                 <div className="relative">
                   <input
@@ -386,8 +420,8 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                  Verify Key
+                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide ml-1">
+                  Confirm Password
                 </label>
                 <div className="relative">
                   <input
@@ -413,17 +447,17 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading || !isFormValid}
-                className={`w-full py-5 rounded-[24px] font-black text-sm uppercase tracking-[0.25em] transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn ${isLoading || !isFormValid
+                className={`w-full py-4 rounded-2xl font-semibold text-sm transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn ${isLoading || !isFormValid
                   ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer'
                   }`}
               >
                 {isLoading ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    <span>Decrypt Profile</span>
-                    <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1.5 transition-transform" />
+                    <span>Create Account</span>
+                    <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                   </>
                 )}
 
@@ -433,31 +467,23 @@ export default function RegisterPage() {
             </div>
           </form>
 
-          {/* Institutional Navigation */}
           <div className="mt-10 pt-8 border-t border-white/5">
-            <p className="text-center text-slate-500 text-sm font-bold">
-              Already a node member?{' '}
+            <p className="text-center text-slate-500 text-sm font-medium">
+              Already have an account?{' '}
               <Link
                 href="/auth/login"
-                className="text-blue-500 hover:text-blue-400 font-black ml-1 transition-colors uppercase tracking-widest text-xs"
+                className="text-blue-500 hover:text-blue-400 font-semibold ml-1 transition-colors"
               >
-                Enter HUB
+                Sign in
               </Link>
             </p>
           </div>
         </div>
 
-        {/* Global Footer */}
-        <div className="mt-10 flex flex-col items-center gap-4">
-          <div className="flex items-center gap-4 text-[9px] font-black text-slate-400 dark:text-slate-700 uppercase tracking-[0.3em]">
-            <span>Secured Node</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800" />
-            <span>Encrypted Ledger</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800" />
-            <span>Open Discourse</span>
-          </div>
-          <p className="text-slate-400 dark:text-[#1E293B] text-[10px] font-black tracking-widest">
-            &copy; MMXXIV CRITICAL THINKERS NETWORK
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <p className="text-slate-400 dark:text-slate-600 text-[11px]">
+            &copy; {new Date().getFullYear()} CTN &mdash; Critical Thinking Network
           </p>
         </div>
       </motion.div>

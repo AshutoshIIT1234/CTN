@@ -6,11 +6,12 @@ import { MainLayout } from './MainLayout'
 interface InstagramLayoutProps {
   children: ReactNode
   showRightPanel?: boolean
+  showMobileHeader?: boolean
 }
 
-export function InstagramLayout({ children, showRightPanel = true }: InstagramLayoutProps) {
+export function InstagramLayout({ children, showRightPanel = true, showMobileHeader = true }: InstagramLayoutProps) {
   return (
-    <MainLayout>
+    <MainLayout showMobileHeader={showMobileHeader}>
       {children}
     </MainLayout>
   )

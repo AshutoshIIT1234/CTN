@@ -312,6 +312,85 @@ export class PostService {
     return result;
   }
 
+  async getTrendingTopics() {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Try recent posts first (past 7 days), sorted by engagement
+    let posts = await this.postModel
+      .find({
+        isDeleted: false,
+        panelType: 'NATIONAL',
+        createdAt: { $gte: sevenDaysAgo },
+      })
+      .sort({ likes: -1, commentCount: -1 })
+      .limit(6)
+      .select('_id title content likes commentCount createdAt')
+      .exec();
+
+    // Fall back to all-time top posts when there is little recent activity
+    if (posts.length < 3) {
+      posts = await this.postModel
+        .find({ isDeleted: false, panelType: 'NATIONAL' })
+        .sort({ likes: -1, commentCount: -1 })
+        .limit(6)
+        .select('_id title content likes commentCount createdAt')
+        .exec();
+    }
+
+    return posts.map(post => ({
+      id: (post as any)._id.toString(),
+      name: (post.title || post.content).substring(0, 60).trim(),
+      postCount: post.likes + post.commentCount,
+    }));
+  }
+
+  async getNetworkStats(): Promise<{ totalPosts: number; totalToday: number }> {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [totalPosts, totalToday] = await Promise.all([
+      this.postModel.countDocuments({ isDeleted: false }),
+      this.postModel.countDocuments({
+        isDeleted: false,
+        createdAt: { $gte: todayStart },
+      }),
+    ]);
+
+    return { totalPosts, totalToday };
+  }
+
+  async getRecentDiscussions() {
+    const posts = await this.postModel
+      .find({ isDeleted: false })
+      .sort({ commentCount: -1, createdAt: -1 })
+      .limit(3)
+      .exec();
+
+    return posts.map(post => {
+      const now = new Date();
+      const diffMs = now.getTime() - post.createdAt.getTime();
+      const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      let timeStr = `${diffHrs}h`;
+      if (diffHrs === 0) timeStr = `${diffMins || 1}m`;
+      if (diffHrs > 24) timeStr = `${Math.floor(diffHrs / 24)}d`;
+
+      return {
+        title: post.title || post.content.substring(0, 50) + '...',
+        replies: post.commentCount,
+        time: timeStr
+      };
+    });
+  }
+
+  async getDomains() {
+    return [
+      'Philosophy', 'Ethics', 'Logic', 'Debate', 'Science',
+      'Psychology', 'Sociology', 'Politics', 'History', 'Literature'
+    ];
+  }
+
   async getPostById(postId: string, userId?: string) {
     if (!Types.ObjectId.isValid(postId)) {
       throw new BadRequestException('Invalid post ID');

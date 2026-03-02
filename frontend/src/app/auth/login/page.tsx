@@ -34,9 +34,16 @@ export default function LoginPage() {
 
       setUser(response.data.user)
       setToken(response.data.token)
-      router.push('/')
+
+      if (response.data.user.role === 'ADMIN') {
+        router.push('/admin')
+      } else if (response.data.user.role === 'MODERATOR') {
+        router.push('/moderator')
+      } else {
+        router.push('/')
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid credentials in the network.')
+      setError(err.response?.data?.message || 'Invalid email or password.')
     } finally {
       setIsLoading(false)
     }
@@ -74,11 +81,11 @@ export default function LoginPage() {
             </div>
             <div className="absolute inset-0 bg-blue-500 blur-2xl opacity-20 animate-pulse" />
           </motion.div>
-          <h1 className="mt-8 text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-            Auth Access
+          <h1 className="mt-6 text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+            Sign In
           </h1>
-          <p className="mt-3 text-slate-500 dark:text-slate-400 font-black uppercase tracking-[0.3em] text-[10px]">
-            Critical Thinking Network Portal
+          <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm">
+            Welcome back to CTN
           </p>
         </div>
 
@@ -102,8 +109,8 @@ export default function LoginPage() {
             </AnimatePresence>
 
             <div className="space-y-3">
-              <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                Security Identity
+              <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide ml-1">
+                Email
               </label>
               <div className="relative group/input">
                 <input
@@ -122,14 +129,14 @@ export default function LoginPage() {
 
             <div className="space-y-3">
               <div className="flex items-center justify-between px-2">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
-                  Access Key
+                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                  Password
                 </label>
                 <Link
                   href="#"
-                  className="text-[10px] font-black text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-widest"
+                  className="text-[10px] font-semibold text-blue-500 hover:text-blue-400 transition-colors"
                 >
-                  Recover Key
+                  Forgot password?
                 </Link>
               </div>
               <div className="relative group/input">
@@ -157,17 +164,17 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading || !formData.email || !formData.password}
-                className={`w-full py-5 rounded-[24px] font-black text-sm uppercase tracking-[0.25em] transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn ${isLoading || !formData.email || !formData.password
+                className={`w-full py-4 rounded-2xl font-semibold text-sm transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn ${isLoading || !formData.email || !formData.password
                   ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 active:translate-y-0'
                   }`}
               >
                 {isLoading ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    <span>Decrypt Access</span>
-                    <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1.5 transition-transform" />
+                    <span>Sign In</span>
+                    <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                   </>
                 )}
 
@@ -179,27 +186,22 @@ export default function LoginPage() {
 
           {/* Alternative Auth */}
           <div className="mt-12 pt-10 border-t border-white/5">
-            <p className="text-center text-slate-500 text-sm font-bold">
-              New to the Network?{' '}
+            <p className="text-center text-slate-500 text-sm font-medium">
+              Don&apos;t have an account?{' '}
               <Link
                 href="/auth/register"
-                className="text-blue-500 hover:text-blue-400 font-black ml-1 transition-colors uppercase tracking-widest text-xs"
+                className="text-blue-500 hover:text-blue-400 font-semibold ml-1 transition-colors"
               >
-                Establish Profile
+                Sign up
               </Link>
             </p>
           </div>
         </div>
 
         {/* Global Footer */}
-        <div className="mt-12 flex flex-col items-center gap-4">
-          <div className="flex items-center gap-4 text-[10px] font-black text-slate-400 dark:text-slate-700 uppercase tracking-[0.3em]">
-            <span>Encrypted Node</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800" />
-            <span>Institutional Access</span>
-          </div>
-          <p className="text-slate-400 dark:text-[#1E293B] text-[10px] font-black">
-            &copy; MMXXIV CRITICAL THINKERS NETWORK. ALL RIGHTS RESERVED.
+        <div className="mt-8 text-center">
+          <p className="text-slate-400 dark:text-slate-600 text-[11px]">
+            &copy; {new Date().getFullYear()} CTN &mdash; Critical Thinking Network
           </p>
         </div>
       </motion.div>

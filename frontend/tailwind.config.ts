@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss'
+import plugin from 'tailwindcss/plugin'
 
 const config: Config = {
   content: [
@@ -8,6 +9,31 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      /* ── Dynamic Viewport Height (100dvh) ─────────────── */
+      height: {
+        'screen-dvh': '100dvh',
+        'screen-svh': '100svh',
+        'screen-lvh': '100lvh',
+      },
+      minHeight: {
+        'screen-dvh': '100dvh',
+        'screen-svh': '100svh',
+        'screen-lvh': '100lvh',
+      },
+      maxHeight: {
+        'screen-dvh': '100dvh',
+        'screen-svh': '100svh',
+        'screen-lvh': '100lvh',
+      },
+      /* ── Safe-area spacing tokens ─────────────────────── */
+      spacing: {
+        'safe-top': 'env(safe-area-inset-top, 0px)',
+        'safe-bottom': 'env(safe-area-inset-bottom, 0px)',
+        'safe-left': 'env(safe-area-inset-left, 0px)',
+        'safe-right': 'env(safe-area-inset-right, 0px)',
+        /* Bottom nav height + safe-area for page padding  */
+        'nav-bottom': 'calc(80px + env(safe-area-inset-bottom, 0px))',
+      },
       colors: {
         // CTN Premium Intellectual Color System
         primary: {
@@ -133,9 +159,112 @@ const config: Config = {
         md: `calc(var(--radius) - 2px)`,
         sm: `calc(var(--radius) - 4px)`,
       },
+      /* ── Screens: add xs for very small phones ─────────── */
+      screens: {
+        xs: '375px',
+      },
+      /* ── Line-clamp (for truncated text in cards) ──────── */
+      lineClamp: {
+        1: '1',
+        2: '2',
+        3: '3',
+        4: '4',
+        5: '5',
+        6: '6',
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    /* ── Safe-area inset utilities ──────────────────────── */
+    plugin(function ({ addUtilities, theme }) {
+      addUtilities({
+        /* Padding helpers */
+        '.pt-safe': { paddingTop: 'env(safe-area-inset-top, 0px)' },
+        '.pb-safe': { paddingBottom: 'env(safe-area-inset-bottom, 0px)' },
+        '.pl-safe': { paddingLeft: 'env(safe-area-inset-left, 0px)' },
+        '.pr-safe': { paddingRight: 'env(safe-area-inset-right, 0px)' },
+        '.px-safe': {
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingRight: 'env(safe-area-inset-right, 0px)',
+        },
+        '.py-safe': {
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        },
+        /* Margin helpers */
+        '.mt-safe': { marginTop: 'env(safe-area-inset-top, 0px)' },
+        '.mb-safe': { marginBottom: 'env(safe-area-inset-bottom, 0px)' },
+        /* Bottom-nav page padding (nav height + safe-area) */
+        '.pb-nav': {
+          paddingBottom:
+            'calc(80px + env(safe-area-inset-bottom, 0px) + 0.5rem)',
+        },
+        '.mb-nav': {
+          marginBottom:
+            'calc(80px + env(safe-area-inset-bottom, 0px))',
+        },
+        /* Minimum tap-target size (Apple HIG: 44×44 pt) */
+        '.tap-target': {
+          minWidth: '44px',
+          minHeight: '44px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        /* Prevent blue flash on tap */
+        '.no-tap-highlight': {
+          WebkitTapHighlightColor: 'transparent',
+        },
+        /* Momentum scroll in container */
+        '.scroll-momentum': {
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+        },
+        /* Prevent text selection on UI controls */
+        '.no-select': {
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+        },
+        /* Full dynamic viewport height */
+        '.h-dvh': { height: '100dvh' },
+        '.min-h-dvh': { minHeight: '100dvh' },
+        '.max-h-dvh': { maxHeight: '100dvh' },
+        /* Scrollbar hide */
+        '.hide-scrollbar': {
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+        },
+        '.hide-scrollbar::-webkit-scrollbar': {
+          display: 'none',
+        },
+        /* Safe full-height for iOS bottom bar */
+        '.h-screen-safe': {
+          height:
+            'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))',
+        },
+      })
+    }),
+
+    /* ── Line-clamp utility (Tailwind v3 built-in, but explicit for v2 compat) */
+    plugin(function ({ addUtilities }) {
+      const lineClampUtils: Record<string, Record<string, string>> = {}
+      for (let i = 1; i <= 6; i++) {
+        lineClampUtils[`.line-clamp-${i}`] = {
+          overflow: 'hidden',
+          display: '-webkit-box',
+          '-webkit-box-orient': 'vertical',
+          '-webkit-line-clamp': String(i),
+        }
+      }
+      lineClampUtils['.line-clamp-none'] = {
+        overflow: 'visible',
+        display: 'block',
+        '-webkit-box-orient': 'horizontal',
+        '-webkit-line-clamp': 'unset',
+      }
+      addUtilities(lineClampUtils)
+    }),
+  ],
   darkMode: 'class',
 }
 

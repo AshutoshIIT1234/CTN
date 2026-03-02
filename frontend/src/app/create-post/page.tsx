@@ -139,7 +139,7 @@ export default function CreatePostPage() {
               <ArrowLeft className="w-5 h-5" />
               <span className="font-medium">Back</span>
             </button>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Create Thought</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Create Post</h1>
             <button
               onClick={handleSubmit}
               disabled={!content.trim() || loading || uploadingImage}

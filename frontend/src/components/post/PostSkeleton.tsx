@@ -2,86 +2,58 @@ export interface PostSkeletonProps {
   count?: number
 }
 
-export function PostSkeleton({ count = 3 }: PostSkeletonProps) {
+function SkeletonCard() {
   return (
-    <>
-      {Array.from({ length: count }).map((_, index) => (
-        <div
-          key={index}
-          className="bg-white mb-4 rounded-lg animate-pulse"
-          style={{ border: '1px solid #E5E7EB' }}
-        >
-          {/* Header */}
-          <div className="flex items-center gap-3 px-3 py-3">
-            <div 
-              className="w-8 h-8 rounded-full"
-              style={{ backgroundColor: '#E5E7EB' }}
-            />
-            <div className="flex-1 space-y-2">
-              <div 
-                className="h-3 rounded"
-                style={{ backgroundColor: '#E5E7EB', width: '120px' }}
-              />
-              <div 
-                className="h-2 rounded"
-                style={{ backgroundColor: '#E5E7EB', width: '80px' }}
-              />
-            </div>
-          </div>
+    <div className="feed-card mb-3 md:mb-6 md:rounded-[32px] overflow-hidden">
+      {/* ── Header ─────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 md:px-6 pt-4 pb-3">
+        <div className="flex items-center gap-3">
+          {/* Avatar */}
+          <div className="w-10 h-10 md:w-11 md:h-11 rounded-[14px] skeleton flex-shrink-0" />
 
-          {/* Image placeholder */}
-          <div 
-            className="w-full"
-            style={{ 
-              backgroundColor: '#E5E7EB',
-              height: '400px'
-            }}
-          />
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-4 px-3 pt-2">
-            <div 
-              className="w-7 h-7 rounded"
-              style={{ backgroundColor: '#E5E7EB' }}
-            />
-            <div 
-              className="w-7 h-7 rounded"
-              style={{ backgroundColor: '#E5E7EB' }}
-            />
-            <div 
-              className="w-7 h-7 rounded"
-              style={{ backgroundColor: '#E5E7EB' }}
-            />
-          </div>
-
-          {/* Content */}
-          <div className="px-3 py-3 space-y-2">
-            <div 
-              className="h-3 rounded"
-              style={{ backgroundColor: '#E5E7EB', width: '60%' }}
-            />
-            <div 
-              className="h-3 rounded"
-              style={{ backgroundColor: '#E5E7EB', width: '90%' }}
-            />
-            <div 
-              className="h-3 rounded"
-              style={{ backgroundColor: '#E5E7EB', width: '75%' }}
-            />
-          </div>
-
-          {/* Comment input */}
-          <div 
-            className="px-3 py-2.5"
-            style={{ borderTop: '1px solid #E5E7EB' }}
-          >
-            <div 
-              className="h-4 rounded"
-              style={{ backgroundColor: '#E5E7EB', width: '150px' }}
-            />
+          {/* Name + meta */}
+          <div className="space-y-2">
+            <div className="h-3.5 w-28 rounded-lg skeleton" />
+            <div className="h-2.5 w-20 rounded-lg skeleton" />
           </div>
         </div>
+
+        {/* More button */}
+        <div className="w-9 h-9 rounded-xl skeleton" />
+      </div>
+
+      {/* ── Title ──────────────────────────────────────── */}
+      <div className="px-4 md:px-6 mb-2 space-y-2">
+        <div className="h-4 w-3/4 rounded-lg skeleton" />
+      </div>
+
+      {/* ── Body lines ─────────────────────────────────── */}
+      <div className="px-4 md:px-6 pb-4 space-y-2.5">
+        <div className="h-3 w-full rounded-lg skeleton" />
+        <div className="h-3 w-[90%] rounded-lg skeleton" />
+        <div className="h-3 w-[75%] rounded-lg skeleton" />
+        <div className="h-3 w-[60%] rounded-lg skeleton" />
+      </div>
+
+      {/* ── Action row ─────────────────────────────────── */}
+      <div className="flex items-center justify-between px-3 md:px-6 py-3 border-t border-slate-50 dark:border-dark-800">
+        <div className="flex items-center gap-1">
+          <div className="w-10 h-9 rounded-xl skeleton" />
+          <div className="w-10 h-9 rounded-xl skeleton" />
+          <div className="w-10 h-9 rounded-xl skeleton" />
+        </div>
+        <div className="w-10 h-9 rounded-xl skeleton" />
+      </div>
+    </div>
+  )
+}
+
+export function PostSkeleton({ count = 3 }: PostSkeletonProps) {
+  return (
+    <div aria-busy="true" aria-label="Loading posts">
+      {Array.from({ length: count }).map((_, i) => (
+        <SkeletonCard key={i} />
       ))}
-    </>
+    </div>
   )
 }

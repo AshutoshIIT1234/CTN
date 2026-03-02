@@ -94,6 +94,26 @@ export class PostController {
     );
   }
 
+  @Get('trending/topics')
+  async getTrendingTopics() {
+    return await this.postService.getTrendingTopics();
+  }
+
+  @Get('trending/discussions')
+  async getRecentDiscussions() {
+    return await this.postService.getRecentDiscussions();
+  }
+
+  @Get('trending/domains')
+  async getDomains() {
+    return await this.postService.getDomains();
+  }
+
+  @Get('stats')
+  async getNetworkStats() {
+    return await this.postService.getNetworkStats();
+  }
+
   @Get(':id')
   async getPost(@Param('id') id: string, @Request() req) {
     const userId = req.user?.sub;

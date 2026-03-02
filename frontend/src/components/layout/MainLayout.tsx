@@ -1,7 +1,7 @@
 'use client'
 
-import { ReactNode, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { ReactNode, useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users,
@@ -11,20 +11,17 @@ import {
   Settings,
   LogOut,
   Sparkles,
-  Menu,
   X,
-  Shield,
+  Lock,
   Mail,
   Bookmark,
   User,
-  MoreHorizontal,
   TrendingUp,
-  Activity,
-  Zap,
-  Lock
+  Home,
+  ChevronRight,
+  Menu,
 } from 'lucide-react'
 import { useAuthStore, UserRole } from '@/store/authStore'
-import { TrendingSection } from '@/components/trending/TrendingSection'
 import { MobileBottomNav } from './MobileBottomNav'
 import { Sidebar } from './Sidebar'
 import { RightPanel } from './RightPanel'
@@ -32,12 +29,37 @@ import Link from 'next/link'
 
 interface MainLayoutProps {
   children: ReactNode
+  showMobileHeader?: boolean
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout({ children, showMobileHeader = true }: MainLayoutProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const { user, logout } = useAuthStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  /* Close drawer on route change */
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [pathname])
+
+  /* Lock body scroll while drawer is open */
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [isMobileMenuOpen])
+
+  useEffect(() => {
+    if (user?.role === UserRole.ADMIN && !pathname.startsWith('/admin')) {
+      router.replace('/admin')
+    } else if (user?.role === UserRole.MODERATOR && !pathname.startsWith('/moderator')) {
+      router.replace('/moderator')
+    }
+  }, [user, pathname, router])
 
   const handleLogout = () => {
     logout()
@@ -48,26 +70,32 @@ export function MainLayout({ children }: MainLayoutProps) {
     {
       name: 'National',
       href: '/',
-      icon: Sparkles,
+      icon: Home,
       show: true,
       enabled: true,
-      description: 'National discussion panel for critical discourse'
+      description: 'National discussion panel',
     },
     {
       name: 'College',
       href: '/college',
       icon: Users,
       show: true,
-      enabled: user?.role === UserRole.COLLEGE_USER || user?.role === UserRole.MODERATOR || user?.role === UserRole.ADMIN,
-      description: 'Private college-specific discussion space'
+      enabled:
+        user?.role === UserRole.COLLEGE_USER ||
+        user?.role === UserRole.MODERATOR ||
+        user?.role === UserRole.ADMIN,
+      description: 'Private college discussion space',
     },
     {
       name: 'Resources',
       href: '/resources',
       icon: BookOpen,
       show: true,
-      enabled: user?.role === UserRole.COLLEGE_USER || user?.role === UserRole.MODERATOR || user?.role === UserRole.ADMIN,
-      description: 'Hierarchical academic resource repository'
+      enabled:
+        user?.role === UserRole.COLLEGE_USER ||
+        user?.role === UserRole.MODERATOR ||
+        user?.role === UserRole.ADMIN,
+      description: 'Academic resource repository',
     },
     {
       name: 'Explore',
@@ -75,167 +103,407 @@ export function MainLayout({ children }: MainLayoutProps) {
       icon: Search,
       show: true,
       enabled: true,
-      description: 'Search and discover content'
+      description: 'Search and discover content',
     },
-    { name: 'Notifications', href: '/notifications', icon: Bell, show: !!user, enabled: !!user },
+    {
+      name: 'Messages',
+      href: '/messages',
+      icon: Mail,
+      show: !!user,
+      enabled: !!user,
+    },
+    {
+      name: 'Notifications',
+      href: '/notifications',
+      icon: Bell,
+      show: !!user,
+      enabled: !!user,
+    },
     {
       name: 'Trending',
       href: '/trending',
       icon: TrendingUp,
       show: true,
       enabled: true,
-      description: 'Trending topics and discussions'
+      description: 'Trending topics',
+    },
+    {
+      name: 'Bookmarks',
+      href: '/bookmarks',
+      icon: Bookmark,
+      show: !!user,
+      enabled: !!user,
     },
     {
       name: 'Profile',
-      href: '/profile',
+      href: user ? `/profile/${user.id}` : '/profile',
       icon: User,
       show: !!user,
       enabled: !!user,
-      description: 'Your personal profile and settings'
     },
-    { name: 'Settings', href: '/settings', icon: Settings, show: !!user, enabled: !!user },
+    {
+      name: 'Settings',
+      href: '/settings',
+      icon: Settings,
+      show: !!user,
+      enabled: !!user,
+    },
   ]
 
-  const mainNavigation = navigation.slice(0, 8)
+  const isNavActive = (href: string) => {
+    if (href === '/') return pathname === '/'
+    return pathname.startsWith(href)
+  }
+
+  /* ─── Desktop (≥1024px): Three-column ─────────────────────── */
+  /* ─── Tablet  (768-1023px): Slim icon sidebar ──────────────── */
+  /* ─── Mobile  (<768px): Full-screen with bottom nav ─────────── */
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-dark-950">
-      {/* Desktop: Flexible wide layout */}
-      <div className="hidden lg:grid lg:grid-cols-[280px_1fr_360px] lg:gap-8 lg:max-w-[1700px] lg:mx-auto px-6">
-        {/* Left Sidebar */}
-        <div className="sticky top-0 h-screen py-8 z-[50]">
-          <Sidebar />
-        </div>
 
-        {/* Main Content Area */}
-        <main className="min-h-screen bg-white dark:bg-dark-900 border-x border-slate-100 dark:border-dark-800 shadow-sm relative z-10 transition-all duration-500">
-          <div className="h-full">
-            {children}
+      {/* ══════════════════════════════════════════
+          DESKTOP LAYOUT  (lg+)
+      ══════════════════════════════════════════ */}
+      {(() => {
+        const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/moderator')
+        return (
+          <div className={`hidden lg:grid lg:gap-6 lg:max-w-[1600px] lg:mx-auto lg:px-4 xl:px-6 lg:items-start ${isAdminRoute ? 'lg:grid-cols-[280px_1fr]' : 'lg:grid-cols-[280px_1fr_340px]'}`}>
+            {/* Left Sidebar — sticky scroll alongside page content */}
+            <div className="sticky top-0 h-screen py-6 z-50 overflow-y-auto hide-scrollbar">
+              <Sidebar />
+            </div>
+
+            {/* Main Content — natural height, page body scrolls */}
+            <main className={`bg-white dark:bg-dark-900 shadow-sm relative z-10 ${isAdminRoute ? 'border-l border-slate-100 dark:border-dark-800' : 'border-x border-slate-100 dark:border-dark-800'}`} style={{ minHeight: '100vh' }}>
+              {children}
+            </main>
+
+            {/* Right Panel — hidden on admin/moderator routes */}
+            {!isAdminRoute && (
+              <div className="sticky top-0 h-screen py-6 overflow-y-auto hide-scrollbar">
+                <RightPanel />
+              </div>
+            )}
           </div>
-        </main>
+        )
+      })()}
 
-        {/* Right Sidebar */}
-        <div className="sticky top-0 h-screen py-8">
-          <RightPanel />
-        </div>
-      </div>
-
-      {/* Tablet: Two-column layout */}
-      <div className="hidden md:grid lg:hidden md:grid-cols-[100px_1fr] md:gap-6 md:max-w-[1000px] md:mx-auto">
-        <div className="w-[100px] px-3 py-6 fixed h-full bg-white dark:bg-dark-900 border-r border-slate-200 dark:border-dark-800 z-[50]">
-          <div className="flex flex-col items-center gap-6">
-            <Link href="/" className="p-3 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/20">
-              <Sparkles className="w-6 h-6 text-white" />
-            </Link>
-            {mainNavigation.filter(item => item.show && item.enabled).map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
-                title={item.name}
-              >
-                <item.icon className="w-6 h-6 text-slate-400 dark:text-slate-500 group-hover:text-blue-500 transition-colors" />
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <main className="ml-[100px] min-h-screen bg-white dark:bg-dark-900 border-x border-slate-200 dark:border-dark-800">
-          {children}
-        </main>
-      </div>
-
-      {/* Mobile: Single column with bottom nav */}
-      <div className="md:hidden">
-        <div className="sticky top-0 z-40 bg-white/80 dark:bg-dark-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-dark-800 px-4 py-3 flex items-center justify-between">
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 rounded-xl bg-slate-50 dark:bg-white/5">
-            <Menu className="w-6 h-6 text-slate-900 dark:text-white" />
-          </button>
-          <Link href="/" className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-white" />
+      {/* ══════════════════════════════════════════
+          TABLET LAYOUT  (md – lg)
+      ══════════════════════════════════════════ */}
+      <div className="hidden md:flex lg:hidden" style={{ minHeight: '100vh' }}>
+        {/* Icon-only sidebar */}
+        <aside
+          className="fixed top-0 left-0 h-full z-50 flex flex-col items-center gap-5 py-6 px-3"
+          style={{
+            width: 72,
+            background: 'rgba(255,255,255,0.92)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRight: '1px solid rgba(226,232,240,0.6)',
+          }}
+        >
+          {/* Logo */}
+          <Link
+            href="/"
+            className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20 mb-2"
+            style={{ background: 'linear-gradient(135deg,#3B82F6,#6366F1)' }}
+          >
+            <Sparkles className="w-5 h-5 text-white" />
           </Link>
-          {user ? (
-            <Link href="/profile" className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 font-bold">
-              {user.username[0].toUpperCase()}
-            </Link>
-          ) : (
-            <Link href="/auth/login" className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest">Join</Link>
-          )}
-        </div>
 
-        <main className="min-h-screen pb-24 bg-white dark:bg-dark-900">
+          {/* Nav Icons */}
+          {navigation
+            .filter((item) => item.show && item.enabled)
+            .map((item) => {
+              const active = isNavActive(item.href)
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  title={item.name}
+                  className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 relative group
+                    ${active
+                      ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600'
+                      : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-blue-500'
+                    }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {/* Tooltip */}
+                  <span className="absolute left-full ml-3 px-2.5 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity shadow-lg z-50">
+                    {item.name}
+                  </span>
+                </Link>
+              )
+            })}
+        </aside>
+
+        {/* Main Content offset by sidebar */}
+        <main
+          className="flex-1 min-h-screen bg-white dark:bg-dark-900"
+          style={{ marginLeft: 72 }}
+        >
+          {children}
+        </main>
+      </div>
+
+      {/* ══════════════════════════════════════════
+          MOBILE LAYOUT  (< md)
+      ══════════════════════════════════════════ */}
+      <div className="md:hidden flex flex-col" style={{ minHeight: '100dvh' }}>
+
+        {showMobileHeader && (
+          <header
+            className="sticky top-0 z-40 flex items-center justify-between px-4"
+            style={{
+              height: 56,
+              paddingTop: 'env(safe-area-inset-top, 0px)',
+              background: 'rgba(255,255,255,0.92)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              borderBottom: '1px solid rgba(226,232,240,0.5)',
+              boxShadow: '0 1px 12px rgba(15,23,42,0.06)',
+            }}
+          >
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-white"
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </motion.button>
+
+            <Link
+              href="/"
+              className="flex items-center gap-2 absolute left-1/2 -translate-x-1/2"
+            >
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20"
+                style={{ background: 'linear-gradient(135deg,#3B82F6,#6366F1)' }}
+              >
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-base font-black tracking-tighter text-slate-900 dark:text-white">
+                CTN
+              </span>
+            </Link>
+
+            {user ? (
+              <Link
+                href={`/profile/${user.id}`}
+                className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0"
+                aria-label="Profile"
+              >
+                {user.profilePictureUrl ? (
+                  <img
+                    src={user.profilePictureUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full flex items-center justify-center text-sm font-black text-white"
+                    style={{ background: 'linear-gradient(135deg,#3B82F6,#6366F1)' }}
+                  >
+                    {user.username[0].toUpperCase()}
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="h-8 px-3 bg-blue-600 text-white rounded-lg text-xs font-semibold flex items-center"
+                >
+                  Sign In
+              </Link>
+            )}
+          </header>
+        )}
+
+        {/* ── Page Content ──────────────────────── */}
+        <main className="flex-1 bg-white dark:bg-dark-900 pb-nav">
           {children}
         </main>
 
+        {/* ── Bottom Nav ────────────────────────── */}
         <MobileBottomNav />
       </div>
 
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence mode="wait">
+      {/* ══════════════════════════════════════════
+          MOBILE SIDE DRAWER
+      ══════════════════════════════════════════ */}
+      <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="md:hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
+          <>
+            {/* Backdrop */}
             <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden fixed inset-0 z-[90] bg-slate-900/60 backdrop-blur-sm"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            {/* Drawer panel */}
+            <motion.aside
+              key="drawer"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="w-80 h-full bg-white dark:bg-dark-900 p-8 shadow-2xl relative"
-              onClick={(e) => e.stopPropagation()}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              className="md:hidden fixed top-0 left-0 bottom-0 z-[100] w-[300px] flex flex-col bg-white dark:bg-dark-900 shadow-2xl overflow-hidden"
+              style={{
+                paddingTop: 'env(safe-area-inset-top, 0px)',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              }}
             >
-              <div className="flex items-center justify-between mb-12">
-                <Link href="/" className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center">
-                    <Sparkles className="w-6 h-6 text-white" />
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-dark-800">
+                <Link
+                  href="/"
+                  className="flex items-center gap-3"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <div
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20"
+                    style={{ background: 'linear-gradient(135deg,#3B82F6,#6366F1)' }}
+                  >
+                    <Sparkles className="w-5 h-5 text-white" />
                   </div>
-                  <span className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">CTN</span>
+                  <div>
+                    <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none block">
+                      CTN
+                    </span>
+                    <span className="text-[10px] font-semibold text-blue-500 tracking-widest">
+                      Critical Thinking Network
+                    </span>
+                  </div>
                 </Link>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10">
-                  <X className="w-6 h-6 text-slate-900 dark:text-white" />
-                </button>
+
+                <motion.button
+                  whileTap={{ scale: 0.88 }}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center"
+                  aria-label="Close menu"
+                >
+                  <X className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                </motion.button>
               </div>
 
-              <nav className="space-y-2">
-                {mainNavigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.enabled ? item.href : '#'}
-                    onClick={() => item.enabled && setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-5 px-6 py-4 rounded-[24px] transition-all ${item.enabled ? 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-900 dark:text-white' : 'opacity-40 grayscale'
-                      }`}
-                  >
-                    <item.icon className="w-6 h-6 text-slate-400" />
-                    <span className="font-bold text-lg leading-none">{item.name}</span>
-                    {!item.enabled && <Lock className="w-4 h-4 ml-auto text-slate-300" />}
-                  </Link>
-                ))}
-              </nav>
-
+              {/* User card inside drawer */}
               {user && (
-                <div className="absolute bottom-8 left-8 right-8 pt-8 border-t border-slate-100 dark:border-white/5">
-                  <div className="flex items-center gap-4 mb-8 px-2">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 font-black text-xl">
-                      {user.username[0].toUpperCase()}
+                <div className="px-4 py-3 border-b border-slate-50 dark:border-dark-800">
+                  <Link
+                    href={`/profile/${user.id}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-dark-800 active:opacity-70 transition-opacity"
+                  >
+                    <div
+                      className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center text-sm font-black text-white shadow"
+                      style={{ background: 'linear-gradient(135deg,#3B82F6,#6366F1)' }}
+                    >
+                      {user.profilePictureUrl ? (
+                        <img src={user.profilePictureUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        user.username[0].toUpperCase()
+                      )}
                     </div>
-                    <div>
-                      <p className="font-black text-slate-900 dark:text-white tracking-tight">{user.displayName || user.username}</p>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">@{user.username}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                          {user.displayName || user.username}
+                        </p>
+                        <p className="text-[11px] font-medium text-slate-400 truncate">
+                          @{user.username}
+                        </p>
                     </div>
-                  </div>
-                  <button onClick={handleLogout} className="w-full flex items-center gap-4 px-6 py-4 rounded-[24px] text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 font-black text-[11px] uppercase tracking-widest transition-all">
-                    <LogOut className="w-5 h-5" />
-                    Deauthorize
-                  </button>
+                    <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                  </Link>
                 </div>
               )}
-            </motion.div>
-          </motion.div>
+
+              {/* Nav Links */}
+              <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+                {navigation
+                  .filter((item) => item.show)
+                  .map((item) => {
+                    const active = isNavActive(item.href)
+                    const locked = !item.enabled
+
+                    return (
+                      <Link
+                        key={item.name}
+                        href={locked ? '#' : item.href}
+                        onClick={() => {
+                          if (!locked) setIsMobileMenuOpen(false)
+                        }}
+                        className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-150 relative
+                          ${active
+                            ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                            : locked
+                              ? 'text-slate-300 dark:text-slate-600'
+                              : 'text-slate-700 dark:text-slate-300 active:bg-slate-50 dark:active:bg-white/5'
+                          }`}
+                        style={{ touchAction: 'manipulation' }}
+                      >
+                        {/* Active bar */}
+                        {active && (
+                          <motion.span
+                            layoutId="drawerActiveBar"
+                            className="absolute left-0 w-1 h-6 bg-blue-600 rounded-r-full"
+                          />
+                        )}
+
+                        <item.icon
+                          className={`w-5 h-5 flex-shrink-0 ${
+                            active
+                              ? 'text-blue-600 dark:text-blue-400'
+                              : locked
+                                ? 'text-slate-300 dark:text-slate-600'
+                                : 'text-slate-400 dark:text-slate-500'
+                          }`}
+                        />
+
+                        <span className="text-sm font-semibold leading-none flex-1">
+                          {item.name}
+                        </span>
+
+                        {locked && (
+                          <Lock className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 ml-auto" />
+                        )}
+                      </Link>
+                    )
+                  })}
+              </nav>
+
+              {/* Drawer Footer — Logout */}
+              {user ? (
+                <div className="px-4 pb-4 border-t border-slate-100 dark:border-dark-800 pt-3">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors font-semibold text-sm"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span>Sign Out</span>
+                  </motion.button>
+                </div>
+              ) : (
+                <div className="px-4 pb-4 border-t border-slate-100 dark:border-dark-800 pt-3">
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-2xl bg-blue-600 text-white font-semibold text-sm shadow-lg shadow-blue-500/25"
+                  >
+                    Sign In
+                  </Link>
+                </div>
+              )}
+            </motion.aside>
+          </>
         )}
       </AnimatePresence>
     </div>

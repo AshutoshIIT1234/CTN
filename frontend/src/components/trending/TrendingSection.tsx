@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { TrendingUp, Hash, Users, BookOpen, MessageCircle, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
+import api from '@/lib/api'
 
 interface TrendingTopic {
   id: string
@@ -24,91 +25,45 @@ interface TrendingUser {
 }
 
 export function TrendingSection() {
-  const [trendingTopics] = useState<TrendingTopic[]>([
-    {
-      id: '1',
-      name: 'Critical Thinking',
-      category: 'Education',
-      postCount: 12500,
-      trend: 'up',
-      description: 'Discussions about analytical reasoning and logical thinking'
-    },
-    {
-      id: '2',
-      name: 'Academic Resources',
-      category: 'Education',
-      postCount: 8234,
-      trend: 'up',
-      description: 'Sharing and discovering educational materials'
-    },
-    {
-      id: '3',
-      name: 'College Discussion',
-      category: 'Education',
-      postCount: 5678,
-      trend: 'stable',
-      description: 'Campus life and academic experiences'
-    },
-    {
-      id: '4',
-      name: 'Philosophy',
-      category: 'Philosophy',
-      postCount: 4321,
-      trend: 'up',
-      description: 'Exploring fundamental questions about existence and knowledge'
-    },
-    {
-      id: '5',
-      name: 'AI in Education',
-      category: 'Technology',
-      postCount: 2987,
-      trend: 'up',
-      description: 'The impact of artificial intelligence on learning'
-    },
-    {
-      id: '6',
-      name: 'Ethics & Morality',
-      category: 'Philosophy',
-      postCount: 2456,
-      trend: 'stable',
-      description: 'Moral philosophy and ethical dilemmas'
+  const { data: trendingTopics = [] } = useQuery({
+    queryKey: ['trendingTopics'],
+    queryFn: async () => {
+      const response = await api.get('/posts/trending/topics')
+      return response.data
     }
-  ])
+  })
 
-  const [suggestedUsers] = useState<TrendingUser[]>([
-    {
-      id: '1',
-      username: 'eduhub',
-      displayName: 'Education Hub',
-      avatar: 'ED',
-      followerCount: 15420,
-      isVerified: true
-    },
-    {
-      id: '2',
-      username: 'philtoday',
-      displayName: 'Philosophy Today',
-      avatar: 'PH',
-      followerCount: 12350,
-      isVerified: true
-    },
-    {
-      id: '3',
-      username: 'criticalthink',
-      displayName: 'Critical Thinkers',
-      avatar: 'CT',
-      followerCount: 9876,
-      isVerified: false
-    },
-    {
-      id: '4',
-      username: 'academiclife',
-      displayName: 'Academic Life',
-      avatar: 'AL',
-      followerCount: 8765,
-      isVerified: false
+  const { data: suggestedUsersData = {} } = useQuery({
+    queryKey: ['suggestedUsers'],
+    queryFn: async () => {
+      const response = await api.get('/users/suggested')
+      return response.data
     }
-  ])
+  })
+  const suggestedUsers = (suggestedUsersData.users || []).map((user: any) => ({
+    id: user.id || user._id,
+    username: user.username,
+    displayName: user.displayName || user.username,
+    avatar: user.username?.[0]?.toUpperCase() || 'U',
+    followerCount: user.followerCount || 0,
+    isVerified: false
+  }))
+
+  const { data: domains = [] } = useQuery({
+    queryKey: ['trendingDomains'],
+    queryFn: async () => {
+      const response = await api.get('/posts/trending/domains')
+      return response.data
+    }
+  })
+
+  const { data: recentDiscussions = [] } = useQuery({
+    queryKey: ['recentDiscussions'],
+    queryFn: async () => {
+      const response = await api.get('/posts/trending/discussions')
+      return response.data
+    }
+  })
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
@@ -147,7 +102,7 @@ export function TrendingSection() {
         </div>
 
         <div className="space-y-3">
-          {trendingTopics.map((topic, index) => (
+          {trendingTopics.map((topic: TrendingTopic, index: number) => (
             <motion.div
               key={topic.id}
               initial={{ opacity: 0, x: -20 }}
@@ -207,7 +162,7 @@ export function TrendingSection() {
         </div>
 
         <div className="space-y-3">
-          {suggestedUsers.map((user, index) => (
+          {suggestedUsers.map((user: TrendingUser, index: number) => (
             <motion.div
               key={user.id}
               initial={{ opacity: 0, x: -20 }}
@@ -266,10 +221,7 @@ export function TrendingSection() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {[
-            'Philosophy', 'Ethics', 'Logic', 'Debate', 'Science',
-            'Psychology', 'Sociology', 'Politics', 'History', 'Literature'
-          ].map((topic, index) => (
+          {domains.map((topic: string, index: number) => (
             <motion.div
               key={topic}
               initial={{ opacity: 0, scale: 0.8 }}
@@ -302,23 +254,7 @@ export function TrendingSection() {
         </div>
 
         <div className="space-y-3">
-          {[
-            {
-              title: "The role of AI in critical thinking education",
-              replies: 42,
-              time: "2h"
-            },
-            {
-              title: "Should philosophy be mandatory in college?",
-              replies: 38,
-              time: "4h"
-            },
-            {
-              title: "Ethical implications of social media algorithms",
-              replies: 29,
-              time: "6h"
-            }
-          ].map((discussion, index) => (
+          {recentDiscussions.map((discussion: any, index: number) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, x: -20 }}

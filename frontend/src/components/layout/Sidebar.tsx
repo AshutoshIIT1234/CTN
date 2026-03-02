@@ -27,7 +27,12 @@ import {
   Moon,
   Monitor,
   Brain,
-  User
+  User,
+  UsersRound,
+  UserCheck,
+  LayoutDashboard,
+  Newspaper,
+  GraduationCap,
 } from 'lucide-react'
 import { useAuthStore, UserRole } from '@/store/authStore'
 import { CreatePostModal } from '../post/CreatePostModal'
@@ -70,8 +75,13 @@ export function Sidebar() {
   ]
 
   const adminMenuItems = [
-    { icon: Shield, label: 'Admin Hub', href: '/admin', roles: [UserRole.ADMIN] },
-    { icon: Crown, label: 'Moderator', href: '/moderator', roles: [UserRole.ADMIN, UserRole.MODERATOR] },
+    { icon: LayoutDashboard, label: 'Admin Hub',     href: '/admin',            roles: [UserRole.ADMIN]                        },
+    { icon: UsersRound,      label: 'Users',          href: '/admin/users',      roles: [UserRole.ADMIN]                        },
+    { icon: UserCheck,       label: 'Moderators',     href: '/admin/moderators', roles: [UserRole.ADMIN]                        },
+    { icon: GraduationCap,   label: 'Colleges',       href: '/admin/colleges',   roles: [UserRole.ADMIN]                        },
+    { icon: Newspaper,       label: 'Posts',          href: '/admin/posts',      roles: [UserRole.ADMIN]                        },
+    { icon: BookOpen,        label: 'Resources',      href: '/admin/resources',  roles: [UserRole.ADMIN]                        },
+    { icon: Shield,          label: 'Moderator Hub',  href: '/moderator',        roles: [UserRole.MODERATOR]                    },
   ]
 
   const handleLogout = () => {
@@ -97,26 +107,25 @@ export function Sidebar() {
   return (
     <aside className="w-[260px] h-screen sticky top-0 bg-white dark:bg-dark-900 flex flex-col px-5 py-6 border-r border-gray-100 dark:border-dark-800">
       <div className="flex flex-col h-full">
-        {/* Premium Logo Area */}
-        <Link href="/" className="flex items-center gap-3 px-3 mb-10 group">
-          <motion.div
-            whileHover={{ scale: 1.1, rotate: 10 }}
-            className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-100 group-hover:shadow-blue-200 transition-all duration-300"
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-3 px-3 mb-8 group">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20 flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}
           >
-            <Sparkles className="w-6 h-6 text-white" />
-          </motion.div>
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-black tracking-tighter text-[#1E293B] dark:text-white leading-none">
+            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">
               CTN
             </span>
-            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-0.5">Network</span>
+            <span className="text-[10px] font-semibold text-blue-500 tracking-widest mt-0.5">Critical Thinking Network</span>
           </div>
         </Link>
 
         {/* Navigation Menu */}
         <nav className="flex-1 space-y-1.5 overflow-y-auto hide-scrollbar">
-          {mainMenuItems.filter(item => {
+          {!(pathname.startsWith('/admin') || pathname.startsWith('/moderator')) && mainMenuItems.filter(item => {
             if (item.label === 'College' || item.label === 'Resources') {
               return user && (user.role === UserRole.COLLEGE_USER || user.role === UserRole.ADMIN || user.role === UserRole.MODERATOR)
             }
@@ -131,7 +140,7 @@ export function Sidebar() {
                 key={item.href}
                 href={isLocked ? '#' : item.href}
                 onClick={(e) => handleNavClick(item, e)}
-                className={`flex items-center gap-4 px-4 py-3.5 rounded-[20px] transition-all duration-300 relative group overflow-hidden ${isActive
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative group overflow-hidden ${isActive
                   ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
                   : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
                   }`}
@@ -144,8 +153,8 @@ export function Sidebar() {
                   />
                 )}
 
-                <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-blue-500'}`} />
-                <span className={`text-[15px] font-bold tracking-tight ${isActive ? 'text-blue-700 dark:text-blue-300' : 'group-hover:text-slate-900 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all'}`}>
+                <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-blue-500 transition-colors'}`} />
+                <span className={`text-sm font-semibold ${isActive ? 'text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors'}`}>
                   {item.label}
                 </span>
 
@@ -163,22 +172,30 @@ export function Sidebar() {
           {/* Admin/Moderator Section */}
           {(user?.role === UserRole.ADMIN || user?.role === UserRole.MODERATOR) && (
             <div className="pt-6 mt-6 border-t border-gray-100 dark:border-dark-800">
-              <span className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Management Hub</span>
+              <span className="px-4 text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3 block">Management</span>
               {adminMenuItems.filter(item => item.roles.includes(user.role)).map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.href
+                const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${isActive
-                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all relative group ${isActive
+                      ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
                       : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
                       }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-amber-500' : 'text-slate-400'}`} />
-                    <span className="text-[14px] font-bold">{item.label}</span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeAdminNav"
+                        className="absolute left-0 w-1.5 h-5 bg-indigo-500 rounded-r-full"
+                      />
+                    )}
+                    <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 group-hover:text-indigo-400 transition-colors'}`} />
+                    <span className={`text-sm font-semibold transition-colors ${isActive ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white'}`}>
+                      {item.label}
+                    </span>
                   </Link>
                 )
               })}
@@ -213,16 +230,18 @@ export function Sidebar() {
         {/* Bottom Section */}
         <div className="mt-auto space-y-4 pt-4 border-t border-white/5">
           {/* Enhanced Action Button */}
-          <motion.button
-            whileHover={{ scale: 1.02, translateY: -2 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleCreatePost}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-[22px] font-black text-[15px] shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all text-white border-b-4 border-blue-700 active:border-b-0 active:translate-y-1"
-            style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' }}
-          >
-            <PenSquare className="w-5 h-5" />
-            <span>Create Thought</span>
-          </motion.button>
+          {!(pathname.startsWith('/admin') || pathname.startsWith('/moderator')) && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleCreatePost}
+              className="w-full flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl font-semibold text-sm shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all text-white"
+              style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' }}
+            >
+              <PenSquare className="w-4 h-4" />
+              <span>Create Post</span>
+            </motion.button>
+          )}
 
           {/* User Profile Section */}
           {user ? (
@@ -230,7 +249,7 @@ export function Sidebar() {
               <div className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-3xl border border-white/5 rounded-[24px] p-4 shadow-2xl relative group overflow-hidden">
                 <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                <Link href="/profile" className="flex items-center gap-4 mb-4 relative z-10 group/profile">
+                <Link href="/profile" className="flex items-center gap-3 mb-4 relative z-10 group/profile">
                   <div className="relative">
                     <div className="w-11 h-11 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[14px] flex items-center justify-center border border-white/10 shadow-lg overflow-hidden">
                       {user.profilePictureUrl ? (
@@ -246,44 +265,52 @@ export function Sidebar() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-black text-white truncate group-hover/profile:text-blue-400 transition-colors">
+                    <h3 className="text-sm font-semibold text-white truncate group-hover/profile:text-blue-400 transition-colors">
                       {user.displayName || user.username}
                     </h3>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <div className={`w-1.5 h-1.5 rounded-full ${user.role === 'ADMIN' ? 'bg-rose-500' : user.role === 'MODERATOR' ? 'bg-purple-500' : user.role === 'COLLEGE_USER' ? (isEliteInstitute(user.college?.name) ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-emerald-500') : 'bg-blue-500'} shadow-[0_0_8px_rgba(0,0,0,0.5)]`} />
-                      <p className={`text-[9px] font-black uppercase tracking-widest ${isEliteInstitute(user.college?.name) ? 'text-amber-500' : 'text-slate-400'}`}>
-                        {user.role === 'COLLEGE_USER' ? getEliteLabel(user.college?.name || '') :
-                          user.role === 'GENERAL_USER' ? 'Global Thinker' :
-                            user.role.toLowerCase()}
+                      <div className={`w-1.5 h-1.5 rounded-full ${user.role === 'ADMIN' ? 'bg-rose-500' : user.role === 'MODERATOR' ? 'bg-purple-500' : user.role === 'COLLEGE_USER' ? (isEliteInstitute(user.college?.name || '') ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-blue-500'}`} />
+                      <p className={`text-[10px] font-medium ${isEliteInstitute(user.college?.name || '') ? 'text-amber-400' : 'text-slate-400'}`}>
+                        {user.role === 'COLLEGE_USER'
+                          ? getEliteLabel(user.college?.name || '')
+                          : user.role === 'GENERAL_USER'
+                          ? 'Member'
+                          : user.role === 'ADMIN'
+                          ? 'Admin'
+                          : user.role === 'MODERATOR'
+                          ? 'Moderator'
+                          : user.role}
                       </p>
-                      {isEliteInstitute(user.college?.name) && <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-500/20 ml-0.5" />}
+                      {isEliteInstitute(user.college?.name || '') && <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400/30 ml-0.5" />}
                     </div>
                   </div>
                 </Link>
 
                 {user.college && (
-                  <div className="relative z-10 flex items-center gap-2 px-3 py-2 bg-white/5 rounded-[12px] border border-white/10 mb-4 group/college">
-                    <Globe className="w-3 h-3 text-blue-400" />
-                    <span className="text-[10px] text-slate-300 font-bold truncate">
+                  <div className="relative z-10 flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/10 mb-4">
+                    <Globe className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                    <span className="text-[11px] text-slate-300 font-medium truncate">
                       {user.college.name}
                     </span>
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-2 relative z-10">
-                  <button
-                    onClick={() => router.push('/profile')}
-                    className="flex items-center justify-center gap-2 py-2.5 bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-[14px] transition-all duration-300 group/btn"
-                  >
-                    <User className="w-3.5 h-3.5 text-slate-400 group-hover/btn:text-white transition-colors" />
-                    <span className="text-[10px] font-black text-slate-400 group-hover/btn:text-white uppercase tracking-wider">Profile</span>
-                  </button>
+                <div className={`grid ${(pathname.startsWith('/admin') || pathname.startsWith('/moderator')) ? 'grid-cols-1' : 'grid-cols-2'} gap-2 relative z-10`}>
+                  {!(pathname.startsWith('/admin') || pathname.startsWith('/moderator')) && (
+                    <button
+                      onClick={() => router.push('/profile')}
+                      className="flex items-center justify-center gap-2 py-2.5 bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-xl transition-all group/btn"
+                    >
+                      <User className="w-3.5 h-3.5 text-slate-400 group-hover/btn:text-white transition-colors" />
+                      <span className="text-[10px] font-semibold text-slate-400 group-hover/btn:text-white">Profile</span>
+                    </button>
+                  )}
                   <button
                     onClick={handleLogout}
-                    className="flex items-center justify-center gap-2 py-2.5 bg-rose-500/10 hover:bg-rose-500 group/logout border border-rose-500/20 rounded-[14px] transition-all duration-500"
+                    className="flex items-center justify-center gap-2 py-2.5 bg-rose-500/10 hover:bg-rose-500 group/logout border border-rose-500/20 rounded-xl transition-all"
                   >
                     <LogOut className="w-3.5 h-3.5 text-rose-500 group-hover/logout:text-white transition-colors" />
-                    <span className="text-[10px] font-black text-rose-500 group-hover/logout:text-white uppercase tracking-wider">Exit</span>
+                    <span className="text-[10px] font-semibold text-rose-500 group-hover/logout:text-white">Sign Out</span>
                   </button>
                 </div>
               </div>
@@ -291,10 +318,10 @@ export function Sidebar() {
           ) : (
             <button
               onClick={() => router.push('/auth/login')}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-[22px] font-black text-[15px] bg-slate-900 border border-white/10 hover:border-blue-500 hover:text-blue-400 transition-all text-white"
+              className="w-full flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl font-semibold text-sm bg-slate-900 border border-white/10 hover:border-blue-500/50 hover:text-blue-400 transition-all text-white"
             >
-              <LogIn className="w-5 h-5 text-blue-400" />
-              <span>Enter Network</span>
+              <LogIn className="w-4 h-4 text-blue-400" />
+              <span>Sign In</span>
             </button>
           )}
         </div>
@@ -315,4 +342,3 @@ export function Sidebar() {
     </aside>
   )
 }
-
