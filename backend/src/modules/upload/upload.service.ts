@@ -1,22 +1,25 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { v2 as cloudinary } from 'cloudinary';
 import * as streamifier from 'streamifier';
 
 @Injectable()
 export class UploadService {
+  private cloudinary: any;
+
   constructor(private configService: ConfigService) {
     const envUrl = process.env.CLOUDINARY_URL;
     if (envUrl && !envUrl.startsWith('cloudinary://')) {
       delete process.env.CLOUDINARY_URL;
     }
 
+    this.cloudinary = require('cloudinary').v2;
+
     const cloudName = this.configService.get('CLOUDINARY_CLOUD_NAME');
     const apiKey = this.configService.get('CLOUDINARY_API_KEY');
     const apiSecret = this.configService.get('CLOUDINARY_API_SECRET');
 
     if (cloudName && apiKey && apiSecret) {
-      cloudinary.config({
+      this.cloudinary.config({
         cloud_name: cloudName,
         api_key: apiKey,
         api_secret: apiSecret,
@@ -165,7 +168,7 @@ export class UploadService {
     folder: string,
   ): Promise<string> {
     return new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
+      const uploadStream = this.cloudinary.uploader.upload_stream(
         {
           resource_type: resourceType,
           folder: folder,
@@ -185,7 +188,7 @@ export class UploadService {
 
   async deleteMedia(publicId: string): Promise<void> {
     try {
-      await cloudinary.uploader.destroy(publicId);
+      await this.cloudinary.uploader.destroy(publicId);
     } catch (error) {
       throw new BadRequestException('Failed to delete media: ' + error.message);
     }
