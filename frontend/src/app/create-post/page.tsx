@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Image as ImageIcon, Upload, Trash2, Send, Sparkles } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
@@ -23,11 +23,13 @@ export default function CreatePostPage() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Redirect if not logged in
-  if (!user) {
-    router.push('/auth/login')
-    return null
-  }
+  // Redirect if not logged in (client-side only)
+  useEffect(() => {
+    if (!user) {
+      router.push('/auth/login')
+    }
+  }, [user, router])
+  if (!user) return null
 
   // Check if user can post to college panel
   const canPostToCollege = user && (
