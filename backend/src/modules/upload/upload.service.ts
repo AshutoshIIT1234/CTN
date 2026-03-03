@@ -6,11 +6,22 @@ import * as streamifier from 'streamifier';
 @Injectable()
 export class UploadService {
   constructor(private configService: ConfigService) {
-    cloudinary.config({
-      cloud_name: this.configService.get('CLOUDINARY_CLOUD_NAME'),
-      api_key: this.configService.get('CLOUDINARY_API_KEY'),
-      api_secret: this.configService.get('CLOUDINARY_API_SECRET'),
-    });
+    const envUrl = process.env.CLOUDINARY_URL;
+    if (envUrl && !envUrl.startsWith('cloudinary://')) {
+      delete process.env.CLOUDINARY_URL;
+    }
+
+    const cloudName = this.configService.get('CLOUDINARY_CLOUD_NAME');
+    const apiKey = this.configService.get('CLOUDINARY_API_KEY');
+    const apiSecret = this.configService.get('CLOUDINARY_API_SECRET');
+
+    if (cloudName && apiKey && apiSecret) {
+      cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+      });
+    }
   }
 
   private readonly ALLOWED_IMAGE_TYPES = [
