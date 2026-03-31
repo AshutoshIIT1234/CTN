@@ -63,6 +63,7 @@ export class PostService {
       likes: 0,
       commentCount: 0,
       reportCount: 0,
+      impressions: 0,
     });
 
     const savedPost = await post.save();
@@ -111,6 +112,7 @@ export class PostService {
       likes: 0,
       commentCount: 0,
       reportCount: 0,
+      impressions: 0,
     });
 
     const savedPost = await post.save();
@@ -1022,6 +1024,7 @@ export class PostService {
       likes: 0,
       commentCount: 0,
       reportCount: 0,
+      impressions: 0,
     });
 
     const savedPost = await post.save();
@@ -1253,6 +1256,7 @@ export class PostService {
       likes: post.likes,
       commentCount: post.commentCount,
       reportCount: post.reportCount,
+      impressions: post.impressions || 0,
       isLiked: !!isLiked,
       isSaved: !!isSaved,
       isFlagged: post.isFlagged || false,

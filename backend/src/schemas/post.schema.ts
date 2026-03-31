@@ -44,6 +44,9 @@ export class Post {
   @Prop({ default: 0 })
   reportCount: number;
 
+  @Prop({ default: 0 })
+  impressions: number;
+
   @Prop({ type: [String], default: [] })
   likedBy: string[];
 

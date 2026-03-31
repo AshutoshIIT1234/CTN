@@ -9,6 +9,7 @@ import {
   MoreHorizontal,
   Crown,
   ShieldCheck,
+  Eye,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useAuthStore } from '@/store/authStore'
@@ -311,6 +312,16 @@ export function InstagramPostCard({
               </span>
             )}
           </motion.button>
+
+          {/* Impressions */}
+          {(post.impressions > 0 || post.impressions !== undefined) && (
+            <div className="flex items-center gap-1.5 px-3 py-2 text-slate-400">
+              <Eye className="w-5 h-5" strokeWidth={2} />
+              <span className="text-[13px] font-black">
+                {post.impressions?.toLocaleString() || 0}
+              </span>
+            </div>
+          )}
 
           {/* Share */}
           <motion.button
