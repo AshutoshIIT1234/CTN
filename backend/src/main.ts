@@ -15,7 +15,9 @@ async function bootstrap() {
         allowed.includes(o) ||
         o.endsWith('.vercel.app') ||
         o === 'http://localhost:3000' ||
-        o === 'https://localhost:3000';
+        o === 'https://localhost:3000' ||
+        o === 'https://www.critspace.in' ||
+        o === 'https://critspace.in';
       if (ok) callback(null, true);
       else callback(new Error('CORS'), false);
     },
