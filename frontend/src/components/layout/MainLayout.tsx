@@ -266,14 +266,8 @@ export function MainLayout({ children, showMobileHeader = true }: MainLayoutProp
 
             <Link
               href="/"
-              className="flex items-center gap-2 absolute left-1/2 -translate-x-1/2"
+              className="absolute left-1/2 -translate-x-1/2"
             >
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20"
-                style={{ background: 'linear-gradient(135deg,#3B82F6,#6366F1)' }}
-              >
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
               <span className="text-base font-black tracking-tighter text-slate-900 dark:text-white">
                 CTN
               </span>
