@@ -195,14 +195,8 @@ export function MainLayout({ children, showMobileHeader = true }: MainLayoutProp
       <div className="hidden md:flex lg:hidden" style={{ minHeight: '100vh' }}>
         {/* Icon-only sidebar */}
         <aside
-          className="fixed top-0 left-0 h-full z-50 flex flex-col items-center gap-5 py-6 px-3"
-          style={{
-            width: 72,
-            background: 'rgba(255,255,255,0.92)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderRight: '1px solid rgba(226,232,240,0.6)',
-          }}
+          className="fixed top-0 left-0 h-full z-50 flex flex-col items-center gap-5 py-6 px-3 glass-nav border-r border-slate-200/60 dark:border-dark-800/60"
+          style={{ width: 72 }}
         >
           {/* Logo */}
           <Link
@@ -255,15 +249,10 @@ export function MainLayout({ children, showMobileHeader = true }: MainLayoutProp
 
         {showMobileHeader && (
           <header
-            className="sticky top-0 z-40 flex items-center justify-between px-4"
+            className="sticky top-0 z-40 flex items-center justify-between px-4 glass-nav border-b border-slate-200/50 dark:border-dark-800/60 shadow-sm"
             style={{
               height: 56,
               paddingTop: 'env(safe-area-inset-top, 0px)',
-              background: 'rgba(255,255,255,0.92)',
-              backdropFilter: 'blur(20px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-              borderBottom: '1px solid rgba(226,232,240,0.5)',
-              boxShadow: '0 1px 12px rgba(15,23,42,0.06)',
             }}
           >
             <motion.button
