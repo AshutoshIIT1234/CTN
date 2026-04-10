@@ -18,14 +18,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('posts')
 export class PostController {
-  constructor(private postService: PostService) {}
+  constructor(private postService: PostService) { }
 
   // Unified Post Creation Endpoint
   @Post()
   @UseGuards(JwtAuthGuard)
   async createPost(@Request() req, @Body() createPostDto: CreatePostDto) {
     const panelType = createPostDto.panelType || 'NATIONAL';
-    
+
     if (panelType === 'COLLEGE') {
       return await this.postService.createCollegePost(req.user.sub, createPostDto);
     } else {
@@ -44,6 +44,7 @@ export class PostController {
   async getNationalFeed(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '20',
+    @Query('filter') filter: string = 'latest',
     @Request() req,
   ) {
     // Allow unauthenticated access - userId will be undefined for guests
@@ -52,6 +53,7 @@ export class PostController {
       parseInt(page),
       parseInt(limit),
       userId,
+      filter,
     );
   }
 
@@ -90,6 +92,26 @@ export class PostController {
       parseInt(limit),
       req.user.sub,
     );
+  }
+
+  @Get('trending/topics')
+  async getTrendingTopics() {
+    return await this.postService.getTrendingTopics();
+  }
+
+  @Get('trending/discussions')
+  async getRecentDiscussions() {
+    return await this.postService.getRecentDiscussions();
+  }
+
+  @Get('trending/domains')
+  async getDomains() {
+    return await this.postService.getDomains();
+  }
+
+  @Get('stats')
+  async getNetworkStats() {
+    return await this.postService.getNetworkStats();
   }
 
   @Get(':id')

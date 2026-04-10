@@ -79,7 +79,7 @@ export class ResourceService {
     @InjectRepository(PaymentSession)
     private paymentSessionRepository: Repository<PaymentSession>,
     private redisService: RedisService,
-  ) {}
+  ) { }
 
   /**
    * Browse resource hierarchy by college
@@ -242,7 +242,7 @@ export class ResourceService {
     const colleges = await this.collegeRepository.find({
       order: { name: 'ASC' }
     });
-    
+
     return { colleges };
   }
 
@@ -289,8 +289,8 @@ export class ResourceService {
     }
 
     // Determine access type
-    const accessType = user.collegeId === resource.collegeId 
-      ? AccessType.OWN_COLLEGE 
+    const accessType = user.collegeId === resource.collegeId
+      ? AccessType.OWN_COLLEGE
       : AccessType.PAID;
 
     // Check if access record already exists
@@ -317,7 +317,7 @@ export class ResourceService {
    */
   async getResourceFilePath(resourceId: string): Promise<string> {
     const resource = await this.resourceRepository.findOne({ where: { id: resourceId } });
-    
+
     if (!resource) {
       throw new NotFoundException('Resource not found');
     }
@@ -355,7 +355,7 @@ export class ResourceService {
    */
   async getUserOwnCollegeAccess(userId: string): Promise<ResourceAccess[]> {
     return this.resourceAccessRepository.find({
-      where: { 
+      where: {
         userId,
         accessType: AccessType.OWN_COLLEGE
       },
@@ -369,7 +369,7 @@ export class ResourceService {
    */
   async getUserPaidAccess(userId: string): Promise<ResourceAccess[]> {
     return this.resourceAccessRepository.find({
-      where: { 
+      where: {
         userId,
         accessType: AccessType.PAID
       },
@@ -383,7 +383,7 @@ export class ResourceService {
    */
   async initiatePayment(userId: string, resourceId: string): Promise<PaymentSessionResponse> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
-    const resource = await this.resourceRepository.findOne({ 
+    const resource = await this.resourceRepository.findOne({
       where: { id: resourceId },
       relations: ['college']
     });
@@ -408,10 +408,10 @@ export class ResourceService {
 
     // Check for existing pending payment session
     const existingSession = await this.paymentSessionRepository.findOne({
-      where: { 
-        userId, 
-        resourceId, 
-        status: PaymentStatus.PENDING 
+      where: {
+        userId,
+        resourceId,
+        status: PaymentStatus.PENDING
       }
     });
 
@@ -522,11 +522,11 @@ export class ResourceService {
 
     // In a real implementation, this would verify with the payment provider (Stripe, PayPal, etc.)
     // For demo purposes, we'll simulate successful payment verification
-    
+
     try {
       // Simulate payment provider verification
       const paymentVerified = await this.simulatePaymentProviderVerification(sessionId);
-      
+
       if (!paymentVerified) {
         paymentSession.status = PaymentStatus.FAILED;
         await this.paymentSessionRepository.save(paymentSession);
@@ -542,8 +542,8 @@ export class ResourceService {
 
       // Payment verified successfully - unlock the resource
       await this.unlockResourceAfterPayment(
-        paymentSession.userId, 
-        paymentSession.resourceId, 
+        paymentSession.userId,
+        paymentSession.resourceId,
         paymentSession.amount
       );
 
@@ -583,10 +583,10 @@ export class ResourceService {
   private async simulatePaymentProviderVerification(sessionId: string): Promise<boolean> {
     // For demo purposes, we'll simulate a successful payment verification
     // In reality, this would make an API call to the payment provider
-    
+
     // Simulate some processing time
     await new Promise(resolve => setTimeout(resolve, 100));
-    
+
     // For demo, we'll return true (successful verification)
     // In a real implementation, this would check with the actual payment provider
     return true;
@@ -626,7 +626,7 @@ export class ResourceService {
 
     // Invalidate user's unlock records cache
     await this.redisService.invalidateUserUnlockRecords(userId);
-    
+
     // Invalidate resource hierarchy cache for the resource's college
     await this.redisService.invalidateResourceHierarchy(resource.collegeId);
   }
@@ -669,7 +669,7 @@ export class ResourceService {
 
     // Invalidate user's unlock records cache
     await this.redisService.invalidateUserUnlockRecords(userId);
-    
+
     // Invalidate resource hierarchy cache for the resource's college
     await this.redisService.invalidateResourceHierarchy(resource.collegeId);
   }
@@ -678,8 +678,8 @@ export class ResourceService {
    * Build the resource type hierarchy from flat resource list
    */
   private buildResourceTypeHierarchy(
-    resources: Resource[], 
-    user: User, 
+    resources: Resource[],
+    user: User,
     unlockedResourceIds: string[]
   ): ResourceTypeNode[] {
     const hierarchy: Map<ResourceType, Map<string, Map<string, Resource[]>>> = new Map();
@@ -689,36 +689,36 @@ export class ResourceService {
       if (!hierarchy.has(resource.resourceType)) {
         hierarchy.set(resource.resourceType, new Map());
       }
-      
+
       const typeMap = hierarchy.get(resource.resourceType)!;
       if (!typeMap.has(resource.department)) {
         typeMap.set(resource.department, new Map());
       }
-      
+
       const deptMap = typeMap.get(resource.department)!;
       if (!deptMap.has(resource.batch)) {
         deptMap.set(resource.batch, []);
       }
-      
+
       deptMap.get(resource.batch)!.push(resource);
     }
 
     // Convert to hierarchy structure
     const resourceTypes: ResourceTypeNode[] = [];
-    
+
     for (const [resourceType, deptMap] of hierarchy) {
       const departments: DepartmentNode[] = [];
-      
+
       for (const [deptName, batchMap] of deptMap) {
         const batches: BatchNode[] = [];
-        
+
         for (const [batchName, batchResources] of batchMap) {
           const files: ResourceFile[] = batchResources.map(resource => {
             const isOwnCollege = user.collegeId === resource.collegeId;
             const isAdmin = user.role === UserRole.ADMIN;
             const isUnlocked = isOwnCollege || isAdmin || unlockedResourceIds.includes(resource.id);
             const requiresPayment = !isOwnCollege && !isAdmin;
-            
+
             return {
               id: resource.id,
               name: resource.fileName,
@@ -730,19 +730,19 @@ export class ResourceService {
               isUnlocked: isUnlocked
             };
           });
-          
+
           batches.push({
             name: batchName,
             files
           });
         }
-        
+
         departments.push({
           name: deptName,
           batches
         });
       }
-      
+
       resourceTypes.push({
         type: resourceType,
         departments
@@ -769,11 +769,11 @@ export class ResourceService {
     }
   ): Promise<Resource> {
     // Verify uploader exists and has appropriate permissions
-    const uploader = await this.userRepository.findOne({ 
+    const uploader = await this.userRepository.findOne({
       where: { id: uploaderId },
       relations: ['college']
     });
-    
+
     if (!uploader) {
       throw new NotFoundException('Uploader not found');
     }
@@ -857,7 +857,7 @@ export class ResourceService {
       where: { id: resourceId },
       relations: ['uploader']
     });
-    
+
     if (!resource) {
       throw new NotFoundException('Resource not found');
     }
@@ -865,10 +865,12 @@ export class ResourceService {
     // Check permissions
     if (user.role === UserRole.ADMIN) {
       // Admins can delete any resource
-    } else if (user.role === UserRole.MODERATOR && resource.uploadedBy === userId) {
-      // Moderators can delete their own uploads
+    } else if (user.role === UserRole.MODERATOR && resource.collegeId === user.collegeId) {
+      // Moderators can delete any resource in their own college
+    } else if (resource.uploadedBy === userId) {
+      // Regular users can only delete their own uploads
     } else {
-      throw new ForbiddenException('You can only delete your own uploads');
+      throw new ForbiddenException('You do not have permission to delete this resource');
     }
 
     await this.resourceRepository.remove(resource);
@@ -944,7 +946,7 @@ export class ResourceService {
     const resource = await this.resourceRepository.findOne({
       where: { id: resourceId }
     });
-    
+
     if (!resource) {
       throw new NotFoundException('Resource not found');
     }

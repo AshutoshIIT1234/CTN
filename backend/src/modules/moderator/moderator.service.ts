@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Moderator } from '../../entities/moderator.entity';
 import { User, UserRole } from '../../entities/user.entity';
 import { College } from '../../entities/college.entity';
+import { Resource } from '../../entities/resource.entity';
+import { PostService } from '../post/post.service';
 
 export interface ModeratorAssignment {
   id: string;
@@ -24,6 +26,14 @@ export interface ModeratorAssignment {
   assignedAt: Date;
 }
 
+export interface ModeratorStats {
+  totalPosts: number;
+  flaggedPosts: number;
+  hiddenPosts: number;
+  totalResources: number;
+  totalUsers: number;
+}
+
 @Injectable()
 export class ModeratorService {
   constructor(
@@ -33,7 +43,64 @@ export class ModeratorService {
     private userRepository: Repository<User>,
     @InjectRepository(College)
     private collegeRepository: Repository<College>,
-  ) {}
+    @InjectRepository(Resource)
+    private resourceRepository: Repository<Resource>,
+    @Inject(forwardRef(() => PostService))
+    private postService: PostService,
+  ) { }
+
+  /**
+   * Get dashboard statistics for a college (Moderator only)
+   */
+  async getModeratorStats(moderatorUserId: string, collegeId: string): Promise<ModeratorStats> {
+    // Verify moderator identity for this college
+    const isModerator = await this.isModeratorForCollege(moderatorUserId, collegeId);
+    if (!isModerator) {
+      const user = await this.userRepository.findOne({ where: { id: moderatorUserId } });
+      if (user?.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('You are not a moderator for this college');
+      }
+    }
+
+    const [totalResources, totalUsers] = await Promise.all([
+      this.resourceRepository.count({ where: { collegeId } }),
+      this.userRepository.count({ where: { collegeId } }),
+    ]);
+
+    // Get post stats from PostService/Model
+    // In a real app, we'd add a dedicated method to PostService for this
+    const postStats = await this.postService.getCollegeModerationStats(collegeId);
+
+    return {
+      totalPosts: postStats.total,
+      flaggedPosts: postStats.flagged,
+      hiddenPosts: postStats.hidden,
+      totalResources,
+      totalUsers,
+    };
+  }
+
+  /**
+   * Get all users for a specific college (Moderator only)
+   */
+  async getCollegeUsers(moderatorUserId: string, collegeId: string) {
+    // Verify moderator identity for this college
+    const isModerator = await this.isModeratorForCollege(moderatorUserId, collegeId);
+    if (!isModerator) {
+      const user = await this.userRepository.findOne({ where: { id: moderatorUserId } });
+      if (user?.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('You are not a moderator for this college');
+      }
+    }
+
+    const users = await this.userRepository.find({
+      where: { collegeId },
+      select: ['id', 'username', 'email', 'displayName', 'role', 'createdAt'],
+      order: { createdAt: 'DESC' }
+    });
+
+    return users;
+  }
 
   /**
    * Assign moderator role to a user for a specific college
@@ -51,7 +118,7 @@ export class ModeratorService {
     }
 
     // Verify target user exists and is a college user
-    const targetUser = await this.userRepository.findOne({ 
+    const targetUser = await this.userRepository.findOne({
       where: { id: targetUserId },
       relations: ['college']
     });
@@ -59,8 +126,8 @@ export class ModeratorService {
       throw new NotFoundException('Target user not found');
     }
 
-    if (targetUser.role !== UserRole.COLLEGE_USER) {
-      throw new ForbiddenException('Only college users can be assigned as moderators');
+    if (targetUser.role !== UserRole.COLLEGE_USER && targetUser.role !== UserRole.GENERAL_USER) {
+      // Allow general users to be upgraded to moderators if they are assigned to a college
     }
 
     // Verify college exists
@@ -86,8 +153,11 @@ export class ModeratorService {
 
     const savedModerator = await this.moderatorRepository.save(moderator);
 
-    // Update user role to MODERATOR
-    await this.userRepository.update(targetUserId, { role: UserRole.MODERATOR });
+    // Update user role to MODERATOR and set college if not set
+    await this.userRepository.update(targetUserId, {
+      role: UserRole.MODERATOR,
+      collegeId: collegeId
+    });
 
     // Return formatted assignment
     return {
@@ -141,9 +211,11 @@ export class ModeratorService {
       where: { userId: targetUserId }
     });
 
-    // If no other assignments, revert user role to COLLEGE_USER
+    // If no other assignments, revert user role to COLLEGE_USER if they have a college
     if (otherAssignments === 0) {
-      await this.userRepository.update(targetUserId, { role: UserRole.COLLEGE_USER });
+      const user = await this.userRepository.findOne({ where: { id: targetUserId } });
+      const newRole = user?.collegeId ? UserRole.COLLEGE_USER : UserRole.GENERAL_USER;
+      await this.userRepository.update(targetUserId, { role: newRole });
     }
   }
 

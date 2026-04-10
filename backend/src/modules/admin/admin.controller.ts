@@ -33,7 +33,7 @@ export class AdminController {
    */
   @Get('stats')
   async getPlatformStats(@Request() req: any): Promise<AdminStats> {
-    return this.adminService.getPlatformStats(req.user.id);
+    return this.adminService.getPlatformStats(req.user.sub);
   }
 
   /**
@@ -42,7 +42,7 @@ export class AdminController {
    */
   @Get('colleges')
   async getAllColleges(@Request() req: any): Promise<CollegeManagement[]> {
-    return this.adminService.getAllCollegesWithStats(req.user.id);
+    return this.adminService.getAllCollegesWithStats(req.user.sub);
   }
 
   /**
@@ -54,7 +54,7 @@ export class AdminController {
     @Body() createCollegeDto: CreateCollegeDto,
     @Request() req: any,
   ) {
-    const college = await this.adminService.createCollege(req.user.id, createCollegeDto);
+    const college = await this.adminService.createCollege(req.user.sub, createCollegeDto);
     return { college };
   }
 
@@ -68,7 +68,7 @@ export class AdminController {
     @Body() updateCollegeDto: UpdateCollegeDto,
     @Request() req: any,
   ) {
-    const college = await this.adminService.updateCollege(req.user.id, collegeId, updateCollegeDto);
+    const college = await this.adminService.updateCollege(req.user.sub, collegeId, updateCollegeDto);
     return { college };
   }
 
@@ -81,7 +81,7 @@ export class AdminController {
     @Param('id') collegeId: string,
     @Request() req: any,
   ) {
-    await this.adminService.deleteCollege(req.user.id, collegeId);
+    await this.adminService.deleteCollege(req.user.sub, collegeId);
     return { message: 'College deleted successfully' };
   }
 
@@ -91,7 +91,7 @@ export class AdminController {
    */
   @Get('payments')
   async getAllPaymentRecords(@Request() req: any): Promise<{ payments: PaymentRecord[] }> {
-    const payments = await this.adminService.getAllPaymentRecords(req.user.id);
+    const payments = await this.adminService.getAllPaymentRecords(req.user.sub);
     return { payments };
   }
 
@@ -101,7 +101,7 @@ export class AdminController {
    */
   @Get('unlocks')
   async getAllUnlockRecords(@Request() req: any) {
-    const unlocks = await this.adminService.getAllUnlockRecords(req.user.id);
+    const unlocks = await this.adminService.getAllUnlockRecords(req.user.sub);
     return { unlocks };
   }
 
@@ -114,7 +114,7 @@ export class AdminController {
     @Query() query: GetUsersQueryDto,
     @Request() req: any,
   ) {
-    return this.adminService.getAllUsers(req.user.id, query);
+    return this.adminService.getAllUsers(req.user.sub, query);
   }
 
   /**
@@ -127,7 +127,7 @@ export class AdminController {
     @Body() assignRoleDto: AssignRoleDto,
     @Request() req: any,
   ) {
-    const user = await this.adminService.assignUserRole(req.user.id, userId, assignRoleDto.role);
+    const user = await this.adminService.assignUserRole(req.user.sub, userId, assignRoleDto.role);
     return { user };
   }
 
@@ -137,7 +137,7 @@ export class AdminController {
    */
   @Get('check-access')
   async checkAdminAccess(@Request() req: any) {
-    const hasAccess = await this.adminService.hasAdminAccess(req.user.id);
+    const hasAccess = await this.adminService.hasAdminAccess(req.user.sub);
     return { hasAccess };
   }
 
@@ -150,7 +150,7 @@ export class AdminController {
     @Request() req: any,
     @Body() domainData: { domain: string; collegeId: string }
   ) {
-    return this.adminService.approveDomain(req.user.id, domainData);
+    return this.adminService.approveDomain(req.user.sub, domainData);
   }
 
   /**
@@ -162,7 +162,7 @@ export class AdminController {
     @Request() req: any,
     @Param('collegeId') collegeId: string
   ) {
-    return this.adminService.revokeDomainApproval(req.user.id, collegeId);
+    return this.adminService.revokeDomainApproval(req.user.sub, collegeId);
   }
 
   /**
@@ -171,7 +171,7 @@ export class AdminController {
    */
   @Get('domains')
   async getApprovedDomains(@Request() req: any) {
-    return this.adminService.getApprovedDomains(req.user.id);
+    return this.adminService.getApprovedDomains(req.user.sub);
   }
 
   /**
@@ -179,7 +179,7 @@ export class AdminController {
    * GET /admin/domains/check/:domain
    */
   @Get('domains/check/:domain')
-  @UseGuards() // Remove auth guards for public access
+  @UseGuards()
   async checkDomainApproval(@Param('domain') domain: string) {
     return this.adminService.isDomainApproved(domain);
   }
@@ -194,14 +194,14 @@ export class AdminController {
     @Body() assignData: { userId: string; collegeId: string }
   ) {
     const result = await this.adminService.assignModeratorRole(
-      req.user.id,
+      req.user.sub,
       assignData.userId,
       assignData.collegeId
     );
-    return { 
+    return {
       message: 'Moderator role assigned successfully',
       user: result.user,
-      moderator: result.moderator
+      moderator: result.moderator,
     };
   }
 
@@ -214,10 +214,10 @@ export class AdminController {
     @Request() req: any,
     @Param('userId') userId: string
   ) {
-    const user = await this.adminService.revokeModeratorRole(req.user.id, userId);
-    return { 
+    const user = await this.adminService.revokeModeratorRole(req.user.sub, userId);
+    return {
       message: 'Moderator role revoked successfully',
-      user
+      user,
     };
   }
 
@@ -227,11 +227,9 @@ export class AdminController {
    */
   @Get('moderators')
   async getAllModerators(@Request() req: any) {
-    const moderators = await this.adminService.getAllModerators(req.user.id);
+    const moderators = await this.adminService.getAllModerators(req.user.sub);
     return { moderators };
   }
-
-  // Platform-wide Content Moderation Endpoints
 
   /**
    * Get all posts for moderation
@@ -250,8 +248,8 @@ export class AdminController {
   ) {
     const includeDeletedBool = includeDeleted === 'true';
     const includeHiddenBool = includeHidden === 'true';
-    
-    return this.adminService.getAllPostsForModeration(req.user.id, {
+
+    return this.adminService.getAllPostsForModeration(req.user.sub, {
       page: page ? parseInt(page) : undefined,
       limit: limit ? parseInt(limit) : undefined,
       panelType,
@@ -268,7 +266,7 @@ export class AdminController {
    */
   @Delete('moderation/posts/:postId')
   async deletePost(@Request() req: any, @Param('postId') postId: string) {
-    return this.adminService.deletePost(req.user.id, postId);
+    return this.adminService.deletePost(req.user.sub, postId);
   }
 
   /**
@@ -281,7 +279,7 @@ export class AdminController {
     @Param('postId') postId: string,
     @Body('reason') reason?: string,
   ) {
-    return this.adminService.flagPost(req.user.id, postId, reason);
+    return this.adminService.flagPost(req.user.sub, postId, reason);
   }
 
   /**
@@ -290,7 +288,7 @@ export class AdminController {
    */
   @Put('moderation/posts/:postId/hide')
   async hidePost(@Request() req: any, @Param('postId') postId: string) {
-    return this.adminService.hidePost(req.user.id, postId);
+    return this.adminService.hidePost(req.user.sub, postId);
   }
 
   /**
@@ -308,13 +306,12 @@ export class AdminController {
     @Query('batch') batch?: string,
     @Query('search') search?: string,
   ) {
-    // Validate and convert resourceType to enum
     let resourceTypeEnum: ResourceType | undefined;
     if (resourceType && Object.values(ResourceType).includes(resourceType as ResourceType)) {
       resourceTypeEnum = resourceType as ResourceType;
     }
-    
-    return this.adminService.getAllResourcesForModeration(req.user.id, {
+
+    return this.adminService.getAllResourcesForModeration(req.user.sub, {
       page: page ? parseInt(page) : undefined,
       limit: limit ? parseInt(limit) : undefined,
       collegeId,
@@ -331,6 +328,6 @@ export class AdminController {
    */
   @Delete('moderation/resources/:resourceId')
   async deleteResource(@Request() req: any, @Param('resourceId') resourceId: string) {
-    return this.adminService.deleteResource(req.user.id, resourceId);
+    return this.adminService.deleteResource(req.user.sub, resourceId);
   }
 }

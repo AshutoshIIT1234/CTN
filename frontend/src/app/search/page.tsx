@@ -2,11 +2,12 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { Search, User, MapPin, ArrowLeft, Hash, TrendingUp } from 'lucide-react'
-import { MainLayout } from '@/components/layout/MainLayout'
+import { InstagramLayout } from '@/components/layout/InstagramLayout'
 import { useAuthStore, UserRole } from '@/store/authStore'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
 
 export const dynamic = 'force-dynamic'
@@ -23,321 +24,323 @@ interface UserSearchResult {
   }
 }
 
+interface TrendingTopic {
+  id: string
+  name: string
+  postCount: number
+}
+
+function getRoleLabel(role: UserRole): string {
+  switch (role) {
+    case UserRole.ADMIN:      return 'Admin'
+    case UserRole.MODERATOR:  return 'Moderator'
+    case UserRole.COLLEGE_USER: return 'College'
+    case UserRole.GENERAL_USER: return 'Member'
+    default:                  return role
+  }
+}
+
+function getRoleColor(role: UserRole): string {
+  switch (role) {
+    case UserRole.ADMIN:       return 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+    case UserRole.MODERATOR:   return 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400'
+    case UserRole.COLLEGE_USER: return 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'
+    default:                   return 'bg-slate-100 text-slate-600 dark:bg-dark-700 dark:text-slate-400'
+  }
+}
+
+const TABS = [
+  { id: 'users',  label: 'People' },
+  { id: 'topics', label: 'Topics' },
+]
+
 function SearchContent() {
-  const { user, isAuthenticated } = useAuthStore()
-  const router = useRouter()
+  const router      = useRouter()
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [hasSearched, setHasSearched] = useState(false)
-  const [activeTab, setActiveTab] = useState('users')
-  
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const [isSearching, setIsSearching] = useState(false)
+  const [hasSearched, setHasSearched]   = useState(false)
+  const [activeTab, setActiveTab]       = useState('users')
 
-  // Perform search when debounced query changes
+  const debouncedQuery = useDebounce(searchQuery, 300)
+
+  // Fetch trending topics from backend (real data)
+  const { data: trendingTopics, isLoading: topicsLoading } = useQuery<TrendingTopic[]>({
+    queryKey: ['trending-topics'],
+    queryFn: async () => {
+      const res = await api.get('/posts/trending/topics')
+      return res.data
+    },
+    staleTime: 5 * 60_000,
+  })
+
   useEffect(() => {
-    if (debouncedSearchQuery.trim().length >= 2) {
-      performSearch(debouncedSearchQuery)
+    if (debouncedQuery.trim().length >= 2) {
+      performSearch(debouncedQuery)
     } else {
       setSearchResults([])
       setHasSearched(false)
     }
-  }, [debouncedSearchQuery])
+  }, [debouncedQuery])
 
   const performSearch = async (query: string) => {
-    setIsLoading(true)
+    setIsSearching(true)
     setHasSearched(true)
-    
     try {
-      const response = await api.get(`/users/search?q=${encodeURIComponent(query)}`)
-      setSearchResults(response.data.users || [])
-    } catch (error) {
-      console.error('Search failed:', error)
+      const res = await api.get(`/users/search?q=${encodeURIComponent(query)}`)
+      setSearchResults(res.data.users || [])
+    } catch {
       setSearchResults([])
     } finally {
-      setIsLoading(false)
+      setIsSearching(false)
     }
   }
-
-  const handleUserClick = (userId: string) => {
-    router.push(`/profile/${userId}`)
-  }
-
-  const getRoleColor = (role: UserRole) => {
-    switch (role) {
-      case UserRole.ADMIN:
-        return 'bg-red-100 text-red-700'
-      case UserRole.MODERATOR:
-        return 'bg-purple-100 text-purple-700'
-      case UserRole.COLLEGE_USER:
-        return 'bg-blue-100 text-blue-700'
-      case UserRole.GENERAL_USER:
-        return 'bg-green-100 text-green-700'
-      default:
-        return 'bg-gray-100 text-gray-700'
-    }
-  }
-
-  const formatRole = (role: UserRole) => {
-    return role.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())
-  }
-
-  const trendingTopics = [
-    { name: 'Critical Thinking', posts: '12.5K', category: 'Education' },
-    { name: 'Academic Resources', posts: '8,234', category: 'Education' },
-    { name: 'College Discussion', posts: '5,678', category: 'Education' },
-    { name: 'Philosophy', posts: '4,321', category: 'Philosophy' },
-    { name: 'AI in Education', posts: '2,987', category: 'Technology' },
-    { name: 'Ethics & Morality', posts: '2,456', category: 'Philosophy' }
-  ]
 
   return (
-    <MainLayout>
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white backdrop-blur-xl" style={{ borderBottom: '1px solid #E5E7EB' }}>
-        <div className="px-4 py-0">
-          <div className="flex items-center gap-8 h-14">
-            <button
-              onClick={() => router.back()}
-              className="p-2 rounded-full hover:bg-gray-50 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" style={{ color: '#111827' }} />
-            </button>
-            <h1 className="text-xl font-bold" style={{ color: '#111827' }}>Explore</h1>
-          </div>
+    <InstagramLayout>
+      {/* ── Sticky header ─────────────────────────────────────────── */}
+      <div className="sticky top-0 z-10 bg-white/90 dark:bg-dark-900/90 backdrop-blur-xl border-b border-slate-100 dark:border-dark-800">
+        <div className="flex items-center gap-3 px-4 sm:px-6 h-14">
+          <button
+            onClick={() => router.back()}
+            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors flex-shrink-0"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-5 h-5 text-slate-700 dark:text-white" />
+          </button>
+          <h1 className="text-base font-bold text-slate-900 dark:text-white">Search</h1>
         </div>
       </div>
 
-      {/* Search Input */}
-      <div className="p-4" style={{ borderBottom: '1px solid #E5E7EB' }}>
+      {/* ── Search input ──────────────────────────────────────────── */}
+      <div className="px-4 sm:px-6 py-4 border-b border-slate-100 dark:border-dark-800">
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5" style={{ color: '#6B7280' }} />
-          </div>
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search Critical Thinking Network"
+            placeholder="Search people…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 rounded-full focus:ring-2 focus:outline-none"
-            style={{ 
-              backgroundColor: '#F9FAFB',
-              border: '1px solid #E5E7EB',
-              color: '#111827'
-            }}
             autoFocus
+            className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-slate-100 dark:bg-dark-800 border border-transparent focus:border-blue-500/40 focus:bg-white dark:focus:bg-dark-700 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition-all text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ borderBottom: '1px solid #E5E7EB' }}>
-        <div className="flex">
+      {/* ── Tabs ──────────────────────────────────────────────────── */}
+      <div className="flex border-b border-slate-100 dark:border-dark-800 bg-white dark:bg-dark-900">
+        {TABS.map((tab) => (
           <button
-            onClick={() => setActiveTab('users')}
-            className="flex-1 py-4 text-center font-medium transition-colors relative"
-            style={{ color: activeTab === 'users' ? '#111827' : '#6B7280' }}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="flex-1 py-3 relative"
           >
-            People
-            {activeTab === 'users' && (
-              <div 
-                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 rounded-full"
-                style={{ backgroundColor: '#3B82F6' }}
+            <span
+              className={`text-xs font-semibold transition-colors ${
+                activeTab === tab.id
+                  ? 'text-slate-900 dark:text-white'
+                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+              }`}
+            >
+              {tab.label}
+            </span>
+            {activeTab === tab.id && (
+              <motion.div
+                layoutId="searchTabBar"
+                className="absolute bottom-0 left-4 right-4 h-0.5 bg-blue-600 rounded-full"
               />
             )}
           </button>
-          <button
-            onClick={() => setActiveTab('posts')}
-            className="flex-1 py-4 text-center font-medium transition-colors relative"
-            style={{ color: activeTab === 'posts' ? '#111827' : '#6B7280' }}
-          >
-            Posts
-            {activeTab === 'posts' && (
-              <div 
-                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 rounded-full"
-                style={{ backgroundColor: '#3B82F6' }}
-              />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('topics')}
-            className="flex-1 py-4 text-center font-medium transition-colors relative"
-            style={{ color: activeTab === 'topics' ? '#111827' : '#6B7280' }}
-          >
-            Topics
-            {activeTab === 'topics' && (
-              <div 
-                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 rounded-full"
-                style={{ backgroundColor: '#3B82F6' }}
-              />
-            )}
-          </button>
-        </div>
+        ))}
       </div>
 
-      {/* Content */}
-      <div className="min-h-screen">
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#3B82F6' }}></div>
+      {/* ── Content ───────────────────────────────────────────────── */}
+      <div className="min-h-[60vh]">
+
+        {/* Loading spinner (user search) */}
+        {isSearching && (
+          <div className="flex justify-center py-10">
+            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
-        {/* Users Tab */}
-        {activeTab === 'users' && !isLoading && (
+        {/* ─── People tab ──────────────────────────────────────────── */}
+        {activeTab === 'users' && !isSearching && (
           <>
-            {hasSearched && searchResults.length === 0 && (
-              <div className="text-center py-16">
-                <User className="h-16 w-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
-                <h3 className="text-xl font-bold mb-2" style={{ color: '#111827' }}>
-                  No people found for "{searchQuery}"
-                </h3>
-                <p style={{ color: '#6B7280' }}>
-                  Try searching for something else.
-                </p>
-              </div>
-            )}
-
+            {/* Results list */}
             {searchResults.length > 0 && (
-              <div>
+              <ul>
                 {searchResults.map((result, index) => (
-                  <motion.div
+                  <motion.li
                     key={result.id}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => handleUserClick(result.id)}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer p-4"
-                    style={{ borderBottom: '1px solid #E5E7EB' }}
+                    transition={{ delay: index * 0.04 }}
                   >
-                    <div className="flex items-center gap-3">
-                      {/* Profile Picture */}
-                      <div className="flex-shrink-0">
-                        {result.profilePictureUrl ? (
-                          <img
-                            src={result.profilePictureUrl}
-                            alt={result.username}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div 
-                            className="w-12 h-12 rounded-full flex items-center justify-center"
-                            style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}
-                          >
-                            <span className="text-white text-lg font-semibold">
-                              {result.username[0].toUpperCase()}
+                    <button
+                      onClick={() => router.push(`/profile/${result.id}`)}
+                      className="w-full flex items-center gap-3 px-4 sm:px-6 py-3.5 border-b border-slate-50 dark:border-dark-800 hover:bg-slate-50 dark:hover:bg-dark-800/50 transition-colors text-left"
+                    >
+                      {/* Avatar */}
+                      {result.profilePictureUrl ? (
+                        <img
+                          src={result.profilePictureUrl}
+                          alt={result.username}
+                          className="w-11 h-11 rounded-xl object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                          <span className="text-white font-bold text-base">
+                            {result.username[0].toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                            {result.displayName || result.username}
+                          </span>
+                          <span className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-md flex-shrink-0 ${getRoleColor(result.role)}`}>
+                            {getRoleLabel(result.role)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 truncate">@{result.username}</p>
+                        {result.college && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <MapPin className="w-2.5 h-2.5 text-blue-500 flex-shrink-0" />
+                            <span className="text-[11px] text-blue-600 dark:text-blue-400 truncate font-medium">
+                              {result.college.name}
                             </span>
                           </div>
                         )}
                       </div>
-
-                      {/* User Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold truncate" style={{ color: '#111827' }}>
-                            {result.displayName || result.username}
-                          </h3>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-lg ${getRoleColor(result.role)}`}>
-                            {formatRole(result.role)}
-                          </span>
-                        </div>
-                        
-                        <p className="text-sm mb-1" style={{ color: '#6B7280' }}>@{result.username}</p>
-
-                        {result.college && (
-                          <div className="flex items-center gap-1 text-sm" style={{ color: '#6B7280' }}>
-                            <MapPin className="h-4 w-4" />
-                            <span>{result.college.name}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
+                    </button>
+                  </motion.li>
                 ))}
+              </ul>
+            )}
+
+            {/* No results */}
+            {hasSearched && !isSearching && searchResults.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                <div className="w-12 h-12 bg-slate-100 dark:bg-dark-800 rounded-2xl flex items-center justify-center mb-4">
+                  <User className="w-6 h-6 text-slate-300 dark:text-slate-600" />
+                </div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
+                  No users found
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+                  No one matches &ldquo;{searchQuery}&rdquo;. Try a different name or username.
+                </p>
               </div>
             )}
 
-            {!hasSearched && (
-              <div className="text-center py-16">
-                <Search className="h-16 w-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
-                <h3 className="text-xl font-bold mb-2" style={{ color: '#111827' }}>
-                  Search for people
-                </h3>
-                <p style={{ color: '#6B7280' }}>
-                  Find other users by their username, display name, or college.
+            {/* Initial prompt */}
+            {!hasSearched && !isSearching && (
+              <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                <div className="w-12 h-12 bg-slate-100 dark:bg-dark-800 rounded-2xl flex items-center justify-center mb-4">
+                  <Search className="w-6 h-6 text-slate-300 dark:text-slate-600" />
+                </div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
+                  Find people
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+                  Search by name or username to find people on CTN.
                 </p>
               </div>
             )}
           </>
         )}
 
-        {/* Posts Tab */}
-        {activeTab === 'posts' && !isLoading && (
-          <div className="text-center py-16">
-            <Search className="h-16 w-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
-            <h3 className="text-xl font-bold mb-2" style={{ color: '#111827' }}>
-              Post search coming soon
-            </h3>
-            <p style={{ color: '#6B7280' }}>
-              We're working on adding the ability to search through posts.
-            </p>
-          </div>
-        )}
-
-        {/* Topics Tab */}
-        {activeTab === 'topics' && !isLoading && (
-          <div>
-            {searchQuery.trim() ? (
-              <div className="text-center py-16">
-                <Hash className="h-16 w-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
-                <h3 className="text-xl font-bold mb-2" style={{ color: '#111827' }}>
-                  No topics found for "{searchQuery}"
-                </h3>
-                <p style={{ color: '#6B7280' }}>
-                  Try searching for something else or browse trending topics below.
-                </p>
+        {/* ─── Topics tab ──────────────────────────────────────────── */}
+        {activeTab === 'topics' && (
+          <div className="px-4 sm:px-6 py-4">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-7 h-7 bg-orange-50 dark:bg-orange-500/10 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
               </div>
-            ) : (
-              <div className="p-4">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: '#111827' }}>
-                  <TrendingUp className="w-5 h-5" style={{ color: '#3B82F6' }} />
-                  Trending topics
-                </h2>
-                <div className="space-y-1">
-                  {trendingTopics.map((topic, index) => (
-                    <motion.div
-                      key={topic.name}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      onClick={() => setSearchQuery(topic.name.toLowerCase())}
-                      className="hover:bg-gray-50 p-3 rounded-lg cursor-pointer transition-colors"
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                Trending right now
+              </h2>
+            </div>
+
+            {topicsLoading ? (
+              <ul className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <li key={i} className="h-14 bg-slate-100 dark:bg-dark-800 rounded-xl animate-pulse" />
+                ))}
+              </ul>
+            ) : trendingTopics && trendingTopics.length > 0 ? (
+              <ul className="space-y-1.5">
+                {trendingTopics.map((topic, index) => (
+                  <motion.li
+                    key={topic.id}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.06 }}
+                  >
+                    <button
+                      onClick={() => {
+                        setSearchQuery(topic.name)
+                        setActiveTab('users')
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white dark:bg-dark-900 border border-slate-100 dark:border-dark-800 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-slate-50 dark:hover:bg-dark-800 transition-all text-left group shadow-sm"
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm" style={{ color: '#6B7280' }}>{topic.category} · Trending</p>
-                          <p className="font-bold" style={{ color: '#111827' }}>{topic.name}</p>
-                          <p className="text-sm" style={{ color: '#6B7280' }}>{topic.posts} posts</p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-7 h-7 bg-slate-100 dark:bg-dark-800 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors">
+                          <Hash className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-500 transition-colors" />
                         </div>
-                        <Hash className="w-5 h-5" style={{ color: '#9CA3AF' }} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate leading-tight">
+                            {topic.name}
+                          </p>
+                          {topic.postCount > 0 && (
+                            <p className="text-[11px] text-slate-400 mt-0.5">
+                              {topic.postCount} {topic.postCount === 1 ? 'interaction' : 'interactions'}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </motion.div>
-                  ))}
+                      <span className="text-[10px] font-semibold text-slate-300 dark:text-slate-600 ml-2 flex-shrink-0">
+                        #{index + 1}
+                      </span>
+                    </button>
+                  </motion.li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-12 h-12 bg-slate-100 dark:bg-dark-800 rounded-2xl flex items-center justify-center mb-4">
+                  <TrendingUp className="w-6 h-6 text-slate-300 dark:text-slate-600" />
                 </div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">
+                  No trending topics yet
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+                  Topics will appear here once posts start getting engagement.
+                </p>
               </div>
             )}
           </div>
         )}
+
       </div>
-    </MainLayout>
+    </InstagramLayout>
   )
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
       <SearchContent />
     </Suspense>
   )

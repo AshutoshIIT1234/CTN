@@ -14,6 +14,7 @@ import { UserProfile } from '@/entities/user-profile.entity';
 import { College } from '@/entities/college.entity';
 import { Moderator } from '@/entities/moderator.entity';
 import { RedisService } from '../../services/redis.service';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -25,9 +26,10 @@ import { RedisService } from '../../services/redis.service';
       { name: SavedPost.name, schema: SavedPostSchema },
     ]),
     TypeOrmModule.forFeature([User, UserProfile, College, Moderator]),
+    NotificationModule,
   ],
   controllers: [PostController, UserPostsController],
   providers: [PostService, RedisService],
   exports: [PostService],
 })
-export class PostModule {}
+export class PostModule { }

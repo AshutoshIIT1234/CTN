@@ -3,11 +3,11 @@ import { Document, Types } from 'mongoose'
 
 @Schema({ timestamps: true })
 export class Message extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  senderId: Types.ObjectId
+  @Prop({ type: String, required: true })
+  senderId: string
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  receiverId: Types.ObjectId
+  @Prop({ type: String, required: true })
+  receiverId: string
 
   @Prop({ required: true })
   content: string

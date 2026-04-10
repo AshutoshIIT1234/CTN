@@ -35,27 +35,6 @@ export function ProfileActions({
         }
     }
 
-    if (isOwnProfile) {
-        return (
-            <div className="flex gap-2 w-full md:w-auto">
-                <motion.button
-                    onClick={onEditClick}
-                    className="flex-1 md:flex-none px-6 py-2 bg-gray-100 hover:bg-gray-200 font-semibold text-sm rounded-lg transition-all duration-200"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    Edit profile
-                </motion.button>
-                <motion.button
-                    className="flex-1 md:flex-none px-6 py-2 bg-gray-100 hover:bg-gray-200 font-semibold text-sm rounded-lg transition-all duration-200"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    View archive
-                </motion.button>
-            </div>
-        )
-    }
 
     return (
         <div className="flex gap-2 w-full md:w-auto">
@@ -94,7 +73,7 @@ export function ProfileActions({
                     </span>
                 )}
             </motion.button>
-            
+
             <motion.button
                 onClick={onMessageClick || (() => router.push(`/messages?userId=${targetUserId}`))}
                 className="flex-1 md:flex-none px-6 py-2 bg-gray-100 hover:bg-gray-200 font-semibold text-sm rounded-lg transition-all duration-200 flex items-center justify-center gap-2 border border-gray-300"
@@ -104,8 +83,8 @@ export function ProfileActions({
                 <Mail className="w-4 h-4" />
                 <span>Message</span>
             </motion.button>
-            
-            <motion.button 
+
+            <motion.button
                 className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200 border border-gray-300"
                 aria-label="Suggest user"
                 whileHover={{ scale: 1.05 }}

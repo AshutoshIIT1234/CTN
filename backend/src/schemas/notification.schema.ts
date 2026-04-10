@@ -4,10 +4,11 @@ import { Document, Types } from 'mongoose';
 export type NotificationDocument = Notification & Document;
 
 export enum NotificationType {
-  FOLLOW = 'follow',
-  LIKE = 'like',
-  COMMENT = 'comment',
-  MESSAGE = 'message',
+  FOLLOW = 'FOLLOW',
+  LIKE = 'LIKE',
+  COMMENT = 'COMMENT',
+  MESSAGE = 'MESSAGE',
+  REPLY = 'REPLY',
 }
 
 @Schema({ timestamps: true })

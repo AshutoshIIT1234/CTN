@@ -18,7 +18,7 @@ import { AssignModeratorDto } from './dto/assign-moderator.dto';
 @Controller('moderators')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ModeratorController {
-  constructor(private readonly moderatorService: ModeratorService) {}
+  constructor(private readonly moderatorService: ModeratorService) { }
 
   /**
    * Assign moderator role to a user (Admin only)
@@ -62,6 +62,19 @@ export class ModeratorController {
   }
 
   /**
+   * Get all users for a specific college
+   */
+  @Get('college/:collegeId/users')
+  @Roles(UserRole.MODERATOR, UserRole.ADMIN)
+  async getCollegeUsers(
+    @Param('collegeId') collegeId: string,
+    @Request() req: any,
+  ) {
+    const users = await this.moderatorService.getCollegeUsers(req.user.id, collegeId);
+    return { users };
+  }
+
+  /**
    * Get all colleges a user is a moderator for
    */
   @Get('user/:userId')
@@ -95,5 +108,17 @@ export class ModeratorController {
       collegeId,
     );
     return { isModerator };
+  }
+
+  /**
+   * Get dashboard statistics for a college
+   */
+  @Get('stats/:collegeId')
+  @Roles(UserRole.MODERATOR, UserRole.ADMIN)
+  async getModeratorStats(
+    @Param('collegeId') collegeId: string,
+    @Request() req: any,
+  ) {
+    return this.moderatorService.getModeratorStats(req.user.id, collegeId);
   }
 }

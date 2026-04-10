@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
+import { LoggerMiddleware } from './middleware/logger.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { CollegeModule } from './modules/college/college.module';
 import { PostModule } from './modules/post/post.module';
@@ -31,7 +32,7 @@ import { Follower } from './entities/follower.entity';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../.env',
+      envFilePath: ['.env', '../.env', 'backend/.env'],
     }),
 
     // PostgreSQL Connection (Neon DB)
@@ -51,7 +52,7 @@ import { Follower } from './entities/follower.entity';
           Follower,
         ],
         synchronize: process.env.NODE_ENV === 'development', // Only in development
-        logging: process.env.NODE_ENV === 'development',
+        logging: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : false,
         ssl: {
           rejectUnauthorized: false, // Required for Neon DB
         },
@@ -86,4 +87,8 @@ import { Follower } from './entities/follower.entity';
   controllers: [],
   providers: [],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}

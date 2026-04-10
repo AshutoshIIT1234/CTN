@@ -31,10 +31,14 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
             return
         }
 
-        const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001', {
-            auth: {
-                token: token
-            },
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+        const isRelative = typeof window !== 'undefined' && apiUrl.startsWith('/')
+        const path = isRelative ? `${apiUrl.replace(/\/$/, '')}/socket.io` : '/socket.io'
+        const url = isRelative ? undefined : apiUrl
+
+        const socketInstance = io(url as any, {
+            path,
+            auth: { token },
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,

@@ -31,44 +31,34 @@ export function LoginModal({ isOpen, onClose, message = 'Please log in to contin
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="bg-white rounded-2xl p-6 max-w-md w-full relative"
-              style={{ 
-                border: '1px solid #E5E7EB',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-              }}
+              className="bg-white dark:bg-dark-900 rounded-3xl p-8 max-w-md w-full relative border border-slate-200 dark:border-dark-800 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close button */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-dark-800 transition-colors"
               >
-                <X className="w-5 h-5" style={{ color: '#6B7280' }} />
+                <X className="w-5 h-5 text-slate-400" />
               </button>
 
               {/* Content */}
               <div className="text-center pt-4">
                 {/* Icon */}
-                <div 
-                  className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                <div
+                  className="w-16 h-16 rounded-[22px] mx-auto mb-6 flex items-center justify-center shadow-lg shadow-blue-500/20"
                   style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)' }}
                 >
-                  <span className="text-3xl">🔒</span>
+                  <span className="text-3xl text-white">🔒</span>
                 </div>
 
                 {/* Title */}
-                <h2 
-                  className="text-2xl font-bold mb-2"
-                  style={{ color: '#111827' }}
-                >
+                <h2 className="text-2xl font-black mb-2 text-[#1E293B] dark:text-white uppercase tracking-tight">
                   Login Required
                 </h2>
 
                 {/* Message */}
-                <p 
-                  className="text-base mb-6"
-                  style={{ color: '#6B7280' }}
-                >
+                <p className="text-slate-500 dark:text-slate-400 font-medium mb-8">
                   {message}
                 </p>
 
@@ -76,19 +66,13 @@ export function LoginModal({ isOpen, onClose, message = 'Please log in to contin
                 <div className="space-y-3">
                   <Link
                     href="/auth/login"
-                    className="block w-full py-3 px-4 rounded-xl font-semibold text-white transition-all duration-200 hover:shadow-md"
-                    style={{ backgroundColor: '#3B82F6' }}
+                    className="block w-full py-4 px-4 rounded-2xl font-black text-sm uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all active:scale-95"
                   >
                     Log In
                   </Link>
                   <Link
                     href="/auth/register"
-                    className="block w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200"
-                    style={{ 
-                      backgroundColor: 'white',
-                      border: '1px solid #E5E7EB',
-                      color: '#111827'
-                    }}
+                    className="block w-full py-4 px-4 rounded-2xl font-black text-sm uppercase tracking-widest text-[#1E293B] dark:text-white bg-white dark:bg-dark-800 border-2 border-slate-100 dark:border-dark-700 hover:bg-slate-50 dark:hover:bg-dark-700 transition-all active:scale-95"
                   >
                     Sign Up
                   </Link>
@@ -97,10 +81,7 @@ export function LoginModal({ isOpen, onClose, message = 'Please log in to contin
                 {/* Footer */}
                 <button
                   onClick={onClose}
-                  className="mt-4 text-sm transition-colors"
-                  style={{ color: '#6B7280' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#111827'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
+                  className="mt-6 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors"
                 >
                   Continue as guest
                 </button>

@@ -132,9 +132,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -220,7 +222,7 @@ describe('ResourceService Property Tests', () => {
           (resourceType) => {
             const isValid = service.validateResourceType(resourceType);
             const shouldBeValid = Object.values(ResourceType).includes(resourceType as ResourceType);
-            
+
             expect(isValid).toBe(shouldBeValid);
           }
         ),
@@ -230,10 +232,10 @@ describe('ResourceService Property Tests', () => {
 
     it('should return all valid resource types', () => {
       const availableTypes = service.getAvailableResourceTypes();
-      
+
       // Should return all enum values
       expect(availableTypes).toEqual(Object.values(ResourceType));
-      
+
       // Should contain exactly the expected types
       expect(availableTypes).toContain(ResourceType.TOPPER_NOTES);
       expect(availableTypes).toContain(ResourceType.PYQS);
@@ -316,7 +318,7 @@ describe('ResourceService Property Tests', () => {
             // Verify departments are unique (SQL DISTINCT should handle this)
             expect(departments).toBeDefined();
             expect(Array.isArray(departments)).toBe(true);
-            
+
             // The service relies on SQL DISTINCT, so we expect the duplicates to be returned as-is
             // This tests that the service properly delegates to the database for uniqueness
             expect(departments).toEqual(testData.duplicateDepartments);
@@ -483,9 +485,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -504,9 +508,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -609,9 +615,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -630,9 +638,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -724,9 +734,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -771,28 +783,28 @@ describe('ResourceService Property Tests', () => {
 
             // Verify all resource types are accessible
             expect(hierarchy.resourceTypes).toHaveLength(testData.resourceTypes.length);
-            
+
             for (let i = 0; i < testData.resourceTypes.length; i++) {
               const resourceTypeNode = hierarchy.resourceTypes[i];
               expect(resourceTypeNode.type).toBe(testData.resourceTypes[i]);
-              
+
               // Verify all departments are accessible
               expect(resourceTypeNode.departments).toHaveLength(testData.departments.length);
-              
+
               for (let j = 0; j < testData.departments.length; j++) {
                 const departmentNode = resourceTypeNode.departments[j];
                 expect(departmentNode.name).toBe(testData.departments[j]);
-                
+
                 // Verify all batches are accessible
                 expect(departmentNode.batches).toHaveLength(testData.batches.length);
-                
+
                 for (let k = 0; k < testData.batches.length; k++) {
                   const batchNode = departmentNode.batches[k];
                   expect(batchNode.name).toBe(testData.batches[k]);
-                  
+
                   // Verify all files are accessible and unlocked (own college)
                   expect(batchNode.files).toHaveLength(testData.fileCount);
-                  
+
                   for (const file of batchNode.files) {
                     expect(file.isLocked).toBe(false); // Own college files should not be locked
                     expect(file.isUnlocked).toBe(true); // Own college files should be unlocked
@@ -807,7 +819,7 @@ describe('ResourceService Property Tests', () => {
               jest.spyOn(resourceAccessRepository, 'findOne').mockResolvedValue(null);
 
               const accessResult = await service.canAccessResource(testData.userId, resource.id);
-              
+
               // Verify own college access is granted without payment
               expect(accessResult.canAccess).toBe(true);
               expect(accessResult.requiresPayment).toBe(false);
@@ -857,9 +869,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -909,9 +923,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -972,9 +988,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -993,9 +1011,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1104,9 +1124,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1125,9 +1147,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1214,9 +1238,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1235,9 +1261,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1315,9 +1343,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1418,9 +1448,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1504,9 +1536,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1595,9 +1629,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1616,9 +1652,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1675,10 +1713,10 @@ describe('ResourceService Property Tests', () => {
 
             // Verify findOne was called to check for existing access
             expect(resourceAccessRepository.findOne).toHaveBeenCalledWith({
-              where: { 
-                userId: testData.userId, 
-                resourceId: testData.fileId, 
-                accessType: AccessType.OWN_COLLEGE 
+              where: {
+                userId: testData.userId,
+                resourceId: testData.fileId,
+                accessType: AccessType.OWN_COLLEGE
               }
             });
           }
@@ -1738,9 +1776,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1759,9 +1799,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1859,9 +1901,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -1910,10 +1954,10 @@ describe('ResourceService Property Tests', () => {
 
             // Verify findOne was called to check for existing access
             expect(resourceAccessRepository.findOne).toHaveBeenCalledWith({
-              where: { 
-                userId: testData.userId, 
-                resourceId: testData.fileId, 
-                accessType: AccessType.OWN_COLLEGE 
+              where: {
+                userId: testData.userId,
+                resourceId: testData.fileId,
+                accessType: AccessType.OWN_COLLEGE
               }
             });
           }
@@ -1999,9 +2043,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2020,9 +2066,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2068,28 +2116,28 @@ describe('ResourceService Property Tests', () => {
 
             // Verify all resource types are accessible
             expect(hierarchy.resourceTypes).toHaveLength(testData.resourceTypes.length);
-            
+
             for (let i = 0; i < testData.resourceTypes.length; i++) {
               const resourceTypeNode = hierarchy.resourceTypes[i];
               expect(resourceTypeNode.type).toBe(testData.resourceTypes[i]);
-              
+
               // Verify all departments are accessible (folders visible)
               expect(resourceTypeNode.departments).toHaveLength(testData.departments.length);
-              
+
               for (let j = 0; j < testData.departments.length; j++) {
                 const departmentNode = resourceTypeNode.departments[j];
                 expect(departmentNode.name).toBe(testData.departments[j]);
-                
+
                 // Verify all batches are accessible (folders visible)
                 expect(departmentNode.batches).toHaveLength(testData.batches.length);
-                
+
                 for (let k = 0; k < testData.batches.length; k++) {
                   const batchNode = departmentNode.batches[k];
                   expect(batchNode.name).toBe(testData.batches[k]);
-                  
+
                   // Verify files are visible with metadata but locked for cross-college
                   expect(batchNode.files).toHaveLength(testData.fileCount);
-                  
+
                   for (const file of batchNode.files) {
                     // File metadata should be visible (preview)
                     expect(file.id).toBeDefined();
@@ -2098,7 +2146,7 @@ describe('ResourceService Property Tests', () => {
                     expect(file.batch).toBeDefined();
                     expect(file.description).toBeDefined();
                     expect(file.uploadDate).toBeDefined();
-                    
+
                     // Files should be locked for cross-college access
                     expect(file.isLocked).toBe(true); // Should be locked for cross-college
                     expect(file.isUnlocked).toBe(false); // Should not be unlocked without payment
@@ -2157,9 +2205,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2178,9 +2228,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2285,9 +2337,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2363,9 +2417,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2384,9 +2440,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2431,36 +2489,36 @@ describe('ResourceService Property Tests', () => {
 
             // Verify Resource_Type folders are visible without payment requirements
             expect(hierarchy.resourceTypes).toHaveLength(testData.resourceTypes.length);
-            
+
             for (let i = 0; i < testData.resourceTypes.length; i++) {
               const resourceTypeNode = hierarchy.resourceTypes[i];
-              
+
               // Resource_Type folder should be visible
               expect(resourceTypeNode.type).toBe(testData.resourceTypes[i]);
               expect(resourceTypeNode.type).toBeDefined();
-              
+
               // Department folders should be visible without payment requirements
               expect(resourceTypeNode.departments).toHaveLength(testData.departments.length);
               expect(resourceTypeNode.departments).toBeDefined();
-              
+
               for (let j = 0; j < testData.departments.length; j++) {
                 const departmentNode = resourceTypeNode.departments[j];
-                
+
                 // Department folder should be visible
                 expect(departmentNode.name).toBe(testData.departments[j]);
                 expect(departmentNode.name).toBeDefined();
-                
+
                 // Batch folders should be visible without payment requirements
                 expect(departmentNode.batches).toHaveLength(testData.batches.length);
                 expect(departmentNode.batches).toBeDefined();
-                
+
                 for (let k = 0; k < testData.batches.length; k++) {
                   const batchNode = departmentNode.batches[k];
-                  
+
                   // Batch folder should be visible
                   expect(batchNode.name).toBe(testData.batches[k]);
                   expect(batchNode.name).toBeDefined();
-                  
+
                   // Files should be visible but locked (this is tested in Property 28)
                   expect(batchNode.files).toHaveLength(testData.fileCount);
                   expect(batchNode.files).toBeDefined();
@@ -2471,14 +2529,14 @@ describe('ResourceService Property Tests', () => {
             // Verify no payment was required to access folder structure
             // The fact that we can access the hierarchy without payment confirms folder visibility
             expect(hierarchy.resourceTypes.length).toBeGreaterThan(0);
-            
+
             // Verify all three folder levels (Resource_Type, Department, Batch) are accessible
             const firstResourceType = hierarchy.resourceTypes[0];
             expect(firstResourceType.departments.length).toBeGreaterThan(0);
-            
+
             const firstDepartment = firstResourceType.departments[0];
             expect(firstDepartment.batches.length).toBeGreaterThan(0);
-            
+
             // This confirms that Resource_Type, Department, and Batch folders are all visible
             // without payment requirements for cross-college browsing
           }
@@ -2535,9 +2593,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2556,9 +2616,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2606,11 +2668,11 @@ describe('ResourceService Property Tests', () => {
             for (const resourceTypeNode of hierarchy.resourceTypes) {
               expect(resourceTypeNode.type).toBeDefined();
               expect(resourceTypeNode.departments.length).toBeGreaterThan(0);
-              
+
               for (const departmentNode of resourceTypeNode.departments) {
                 expect(departmentNode.name).toBeDefined();
                 expect(departmentNode.batches.length).toBeGreaterThan(0);
-                
+
                 for (const batchNode of departmentNode.batches) {
                   expect(batchNode.name).toBeDefined();
                   expect(batchNode.files.length).toBeGreaterThan(0);
@@ -2654,9 +2716,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2706,9 +2770,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2782,9 +2848,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2803,9 +2871,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2911,9 +2981,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -2936,6 +3008,8 @@ describe('ResourceService Property Tests', () => {
                 isEmailVerified: true,
                 emailVerificationToken: null,
                 emailVerificationExpires: null,
+                isPremium: false,
+                premiumExpiresAt: null,
                 profile: null,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -2978,7 +3052,7 @@ describe('ResourceService Property Tests', () => {
             // Verify each file shows complete metadata as preview
             for (let i = 0; i < testData.fileCount; i++) {
               const file = batchNode.files[i];
-              
+
               // All metadata should be visible as preview
               expect(file.id).toBeDefined();
               expect(file.name).toBe(fileNames[i]); // File name visible
@@ -3046,9 +3120,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3067,9 +3143,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3174,9 +3252,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3195,9 +3275,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3316,9 +3398,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3337,9 +3421,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3394,7 +3480,7 @@ describe('ResourceService Property Tests', () => {
 
             // Test 2: File metadata should be visible but file should be marked as locked
             const resourceFile = await service.getResourceFile(testData.fileId, testData.userId);
-            
+
             // Metadata should be visible (preview functionality)
             expect(resourceFile.id).toBe(testData.fileId);
             expect(resourceFile.name).toBe(testData.fileName);
@@ -3402,7 +3488,7 @@ describe('ResourceService Property Tests', () => {
             expect(resourceFile.batch).toBe(testData.batch);
             expect(resourceFile.description).toBe(testData.description);
             expect(resourceFile.uploadDate).toBe(testData.uploadDate);
-            
+
             // File should be locked for cross-college access without payment
             expect(resourceFile.isLocked).toBe(true); // Should be locked
             expect(resourceFile.isUnlocked).toBe(false); // Should not be unlocked
@@ -3465,9 +3551,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3486,9 +3574,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3522,7 +3612,7 @@ describe('ResourceService Property Tests', () => {
 
             // Test 2: File should be accessible and unlocked
             const resourceFile = await service.getResourceFile(testData.fileId, testData.userId);
-            
+
             // All metadata should be visible
             expect(resourceFile.id).toBe(testData.fileId);
             expect(resourceFile.name).toBe(testData.fileName);
@@ -3530,7 +3620,7 @@ describe('ResourceService Property Tests', () => {
             expect(resourceFile.batch).toBe(testData.batch);
             expect(resourceFile.description).toBe(testData.description);
             expect(resourceFile.uploadDate).toBe(testData.uploadDate);
-            
+
             // File should not be locked for own college
             expect(resourceFile.isLocked).toBe(false); // Should not be locked
             expect(resourceFile.isUnlocked).toBe(true); // Should be unlocked
@@ -3599,9 +3689,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3620,9 +3712,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3656,7 +3750,7 @@ describe('ResourceService Property Tests', () => {
 
             // Test 2: Admin should be able to access file without restrictions
             const resourceFile = await service.getResourceFile(testData.fileId, testData.userId);
-            
+
             // All metadata should be visible
             expect(resourceFile.id).toBe(testData.fileId);
             expect(resourceFile.name).toBe(testData.fileName);
@@ -3664,7 +3758,7 @@ describe('ResourceService Property Tests', () => {
             expect(resourceFile.batch).toBe(testData.batch);
             expect(resourceFile.description).toBe(testData.description);
             expect(resourceFile.uploadDate).toBe(testData.uploadDate);
-            
+
             // File should not be locked for admin
             expect(resourceFile.isLocked).toBe(false); // Should not be locked for admin
             expect(resourceFile.isUnlocked).toBe(true); // Should be unlocked for admin
@@ -3718,9 +3812,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3822,9 +3918,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3843,9 +3941,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -3912,7 +4012,7 @@ describe('ResourceService Property Tests', () => {
             jest.spyOn(paymentSessionRepository, 'save').mockResolvedValue(completedPaymentSession);
             jest.spyOn(resourceRepository, 'findOne').mockResolvedValue(mockResource);
             jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser);
-            
+
             // Mock for unlockResourceAfterPayment - no existing access initially
             jest.spyOn(resourceAccessRepository, 'findOne').mockResolvedValue(null);
             jest.spyOn(resourceAccessRepository, 'create').mockReturnValue(mockResourceAccess);
@@ -4013,7 +4113,7 @@ describe('ResourceService Property Tests', () => {
 
             // Test payment verification for expired session
             const paymentResult = await service.verifyPayment(sessionId);
-            
+
             expect(paymentResult.success).toBe(false);
             expect(paymentResult.resourceId).toBe(testData.fileId);
             expect(paymentResult.userId).toBe(testData.userId);
@@ -4043,7 +4143,7 @@ describe('ResourceService Property Tests', () => {
 
             // Test payment verification for non-existent session
             const paymentResult = await service.verifyPayment(testData.sessionId);
-            
+
             expect(paymentResult.success).toBe(false);
             expect(paymentResult.sessionId).toBe(testData.sessionId);
             expect(paymentResult.resourceId).toBe('');
@@ -4088,7 +4188,7 @@ describe('ResourceService Property Tests', () => {
 
             // Test payment verification for already completed session
             const paymentResult = await service.verifyPayment(sessionId);
-            
+
             expect(paymentResult.success).toBe(true);
             expect(paymentResult.resourceId).toBe(testData.fileId);
             expect(paymentResult.userId).toBe(testData.userId);
@@ -4128,9 +4228,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4218,9 +4320,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4291,7 +4395,7 @@ describe('ResourceService Property Tests', () => {
 
             // Test payment verification which should create unlock record
             const paymentResult = await service.verifyPayment(testData.sessionId);
-            
+
             expect(paymentResult.success).toBe(true);
             expect(paymentResult.amount).toBe(testData.paymentAmount);
 
@@ -4349,9 +4453,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4394,7 +4500,7 @@ describe('ResourceService Property Tests', () => {
             // Test multiple access attempts
             for (let i = 0; i < testData.accessAttempts; i++) {
               const accessResult = await service.canAccessResource(testData.userId, testData.fileId);
-              
+
               // Should consistently return unlocked status
               expect(accessResult.isUnlocked).toBe(true);
               expect(accessResult.requiresPayment).toBe(true);
@@ -4403,7 +4509,7 @@ describe('ResourceService Property Tests', () => {
 
             // Verify findOne was called for each access attempt
             expect(resourceAccessRepository.findOne).toHaveBeenCalledTimes(testData.accessAttempts);
-            
+
             // Verify no additional records were created
             expect(resourceAccessRepository.create).not.toHaveBeenCalled();
             expect(resourceAccessRepository.save).not.toHaveBeenCalled();
@@ -4451,7 +4557,7 @@ describe('ResourceService Property Tests', () => {
 
             // Verify correct query parameters
             expect(resourceAccessRepository.find).toHaveBeenCalledWith({
-              where: { 
+              where: {
                 userId: testData.userId,
                 accessType: AccessType.PAID
               },
@@ -4515,9 +4621,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4536,9 +4644,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4592,7 +4702,7 @@ describe('ResourceService Property Tests', () => {
 
             // Test 3: Payment for resource should NOT grant college panel access
             // User should still be denied access to the resource college's panel
-            
+
             // Mock PostService behavior (simulating the actual access control)
             const mockPostService = {
               createCollegePost: jest.fn().mockRejectedValue(
@@ -4652,9 +4762,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4731,9 +4843,11 @@ describe('ResourceService Property Tests', () => {
               profilePictureUrl: null,
               coverPhotoUrl: null,
               profile: null,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null,
+              isEmailVerified: true,
+              emailVerificationToken: null,
+              emailVerificationExpires: null,
+              isPremium: false,
+              premiumExpiresAt: null,
               createdAt: new Date(),
               updatedAt: new Date(),
             };
@@ -4769,9 +4883,9 @@ describe('ResourceService Property Tests', () => {
 
             // Test: Admin should have access to any college panel without payment
             const collegeFeed = await mockPostService.getCollegeFeed(
-              testData.targetCollegeId, 
-              1, 
-              20, 
+              testData.targetCollegeId,
+              1,
+              20,
               testData.adminUserId
             );
 
@@ -4814,6 +4928,8 @@ describe('ResourceService Property Tests', () => {
               role: fc.constantFrom(UserRole.GENERAL_USER, UserRole.COLLEGE_USER, UserRole.MODERATOR, UserRole.ADMIN),
               username: fc.string({ minLength: 3, maxLength: 30 }),
               email: fc.emailAddress(),
+              isPremium: fc.boolean(),
+              premiumExpiresAt: fc.option(fc.date(), { nil: null }),
             }),
             college: fc.record({
               id: fc.uuid(),
@@ -4863,7 +4979,7 @@ describe('ResourceService Property Tests', () => {
             jest.spyOn(resourceRepository, 'findOne').mockResolvedValue(mockResource as Resource);
 
             // Determine if upload should succeed
-            const shouldSucceed = 
+            const shouldSucceed =
               uploaderExists &&
               (uploader.role === UserRole.MODERATOR || uploader.role === UserRole.ADMIN) &&
               collegeExists &&
@@ -4871,7 +4987,7 @@ describe('ResourceService Property Tests', () => {
 
             if (shouldSucceed) {
               const result = await service.uploadResource(uploader.id, college.id, uploadData);
-              
+
               expect(result).toBeDefined();
               expect(result.id).toBe('resource-id');
               expect(result.collegeId).toBe(college.id);
@@ -4911,6 +5027,8 @@ describe('ResourceService Property Tests', () => {
               role: fc.constantFrom(UserRole.MODERATOR),
               collegeId: fc.uuid(),
               username: fc.string({ minLength: 3, maxLength: 30 }),
+              isPremium: fc.boolean(),
+              premiumExpiresAt: fc.option(fc.date(), { nil: null }),
             }),
             college: fc.record({
               id: fc.uuid(),
@@ -5001,6 +5119,8 @@ describe('ResourceService Property Tests', () => {
               role: fc.constantFrom(UserRole.MODERATOR, UserRole.ADMIN),
               collegeId: fc.uuid(),
               username: fc.string({ minLength: 3, maxLength: 30 }),
+              isPremium: fc.boolean(),
+              premiumExpiresAt: fc.option(fc.date(), { nil: null }),
             }),
             targetCollege: fc.record({
               id: fc.uuid(),
@@ -5045,8 +5165,8 @@ describe('ResourceService Property Tests', () => {
             jest.spyOn(resourceRepository, 'findOne').mockResolvedValue(mockResource as Resource);
 
             // Determine if upload should succeed
-            const shouldSucceed = 
-              user.role === UserRole.ADMIN || 
+            const shouldSucceed =
+              user.role === UserRole.ADMIN ||
               (user.role === UserRole.MODERATOR && isAssignedCollege);
 
             if (shouldSucceed) {
@@ -5088,6 +5208,8 @@ describe('ResourceService Property Tests', () => {
               username: testData.adminUsername,
               displayName: testData.adminUsername,
               role: UserRole.ADMIN,
+              isPremium: false,
+              premiumExpiresAt: null,
             };
             jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockAdmin as any);
 
@@ -5174,6 +5296,8 @@ describe('ResourceService Property Tests', () => {
               username: testData.adminUsername,
               displayName: testData.adminUsername,
               role: UserRole.ADMIN,
+              isPremium: false,
+              premiumExpiresAt: null,
             };
             jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockAdmin as any);
 
@@ -5224,6 +5348,8 @@ describe('ResourceService Property Tests', () => {
               username: testData.adminUsername,
               displayName: testData.adminUsername,
               role: UserRole.ADMIN,
+              isPremium: false,
+              premiumExpiresAt: null,
             };
             jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockAdmin as any);
 
@@ -5329,6 +5455,8 @@ describe('ResourceService Property Tests', () => {
               username: testData.adminUsername,
               displayName: testData.adminUsername,
               role: UserRole.ADMIN,
+              isPremium: false,
+              premiumExpiresAt: null,
             };
             jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockAdmin as any);
 
@@ -5427,9 +5555,11 @@ describe('ResourceService Property Tests', () => {
               username: testData.username,
               displayName: testData.username,
               role: testData.role,
-              college: testData.role === UserRole.COLLEGE_USER || testData.role === UserRole.MODERATOR 
-                ? { id: 'user-college-id', name: 'User College' } 
+              college: testData.role === UserRole.COLLEGE_USER || testData.role === UserRole.MODERATOR
+                ? { id: 'user-college-id', name: 'User College' }
                 : null,
+              isPremium: false,
+              premiumExpiresAt: null,
             };
             jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser as any);
 

@@ -26,7 +26,7 @@ export function PostGrid({ posts, loading }: PostGridProps) {
         return (
             <div className="grid grid-cols-3 gap-1 sm:gap-4">
                 {[...Array(9)].map((_, i) => (
-                    <div key={i} className="aspect-square bg-gray-100 animate-pulse" />
+                    <div key={i} className="aspect-square bg-slate-100 dark:bg-dark-800 animate-pulse rounded-2xl" />
                 ))}
             </div>
         )
@@ -34,11 +34,11 @@ export function PostGrid({ posts, loading }: PostGridProps) {
 
     if (posts.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-16 h-16 border-2 border-black rounded-full flex items-center justify-center mb-4">
-                    <Copy className="w-8 h-8 text-black" />
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-20 h-20 border-2 border-slate-900 dark:border-white rounded-full flex items-center justify-center mb-6">
+                    <Copy className="w-10 h-10 text-slate-900 dark:text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">No Posts Yet</h3>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">No Intellectual Output Yet</h3>
             </div>
         )
     }
@@ -50,7 +50,7 @@ export function PostGrid({ posts, loading }: PostGridProps) {
                     <div
                         key={post.id}
                         onClick={() => setSelectedPostId(post.id)}
-                        className="relative group aspect-square cursor-pointer overflow-hidden bg-gray-100"
+                        className="relative group aspect-square cursor-pointer overflow-hidden bg-slate-100 dark:bg-dark-800 rounded-2xl border border-slate-50 dark:border-dark-800 shadow-sm"
                     >
                         {post.imageUrls[0] ? (
                             <img
@@ -59,8 +59,8 @@ export function PostGrid({ posts, loading }: PostGridProps) {
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                                No Image
+                            <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-dark-800 text-slate-400">
+                                No Visualization
                             </div>
                         )}
 

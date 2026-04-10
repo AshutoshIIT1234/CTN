@@ -41,6 +41,7 @@ export interface UserSearchResult {
     id: string;
     name: string;
   };
+  followerCount?: number;
 }
 
 export interface ProfileUpdateData {
@@ -62,7 +63,7 @@ export class UserService {
     @InjectRepository(UserSettings)
     private userSettingsRepository: Repository<UserSettings>,
     private redisService: RedisService
-  ) {}
+  ) { }
 
   async getUserProfile(userId: string, requestingUserId: string): Promise<UserProfileData> {
     // Try to get from cache first
@@ -164,7 +165,7 @@ export class UserService {
     // In a real implementation, you would upload to a cloud storage service
     // For now, we'll simulate a URL
     const profilePictureUrl = `/uploads/profiles/${userId}/${filename}`;
-    
+
     await this.userRepository.update(userId, {
       profilePictureUrl
     });
@@ -261,6 +262,29 @@ export class UserService {
     return results;
   }
 
+  async getSuggestedUsers(limit: number = 4): Promise<UserSearchResult[]> {
+    const users = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.college', 'college')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .orderBy('profile.followersCount', 'DESC', 'NULLS LAST')
+      .limit(limit)
+      .getMany();
+
+    return users.map(user => ({
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      profilePictureUrl: user.profilePictureUrl,
+      role: user.role,
+      followerCount: user.profile?.followersCount || 0,
+      college: user.college ? {
+        id: user.college.id,
+        name: user.college.name
+      } : undefined
+    }));
+  }
+
   async getUserStats(userId: string): Promise<{ postCount: number; commentCount: number; likesReceived: number }> {
     let userProfile = await this.userProfileRepository.findOne({
       where: { userId }
@@ -343,7 +367,7 @@ export class UserService {
 
   async getNotificationSettings(userId: string) {
     let settings = await this.userSettingsRepository.findOne({ where: { userId } });
-    
+
     if (!settings) {
       settings = await this.createUserSettings(userId);
     }
@@ -360,7 +384,7 @@ export class UserService {
 
   async updateNotificationSettings(userId: string, data: any) {
     let settings = await this.userSettingsRepository.findOne({ where: { userId } });
-    
+
     if (!settings) {
       settings = await this.createUserSettings(userId);
     }
@@ -378,7 +402,7 @@ export class UserService {
 
   async getPrivacySettings(userId: string) {
     let settings = await this.userSettingsRepository.findOne({ where: { userId } });
-    
+
     if (!settings) {
       settings = await this.createUserSettings(userId);
     }
@@ -393,7 +417,7 @@ export class UserService {
 
   async updatePrivacySettings(userId: string, data: any) {
     let settings = await this.userSettingsRepository.findOne({ where: { userId } });
-    
+
     if (!settings) {
       settings = await this.createUserSettings(userId);
     }
@@ -409,7 +433,7 @@ export class UserService {
 
   async getAppearanceSettings(userId: string) {
     let settings = await this.userSettingsRepository.findOne({ where: { userId } });
-    
+
     if (!settings) {
       settings = await this.createUserSettings(userId);
     }
@@ -421,7 +445,7 @@ export class UserService {
 
   async updateAppearanceSettings(userId: string, data: any) {
     let settings = await this.userSettingsRepository.findOne({ where: { userId } });
-    
+
     if (!settings) {
       settings = await this.createUserSettings(userId);
     }

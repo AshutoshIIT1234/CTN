@@ -13,7 +13,7 @@ interface EditProfileModalProps {
     profilePictureUrl?: string
     coverPhotoUrl?: string
   }
-  onSave: (data: { 
+  onSave: (data: {
     displayName: string
     bio: string
     profilePictureUrl?: string
@@ -92,33 +92,33 @@ export function EditProfileModal({ isOpen, onClose, initialData, onSave }: EditP
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+      <div className="bg-white dark:bg-dark-900 rounded-[32px] shadow-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-white dark:border-white/10">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Edit Profile</h2>
+        <div className="flex items-center justify-between p-6 sm:p-8 border-b border-slate-100 dark:border-dark-800 sticky top-0 bg-white dark:bg-dark-900 z-10">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Edit Profile</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-dark-800 rounded-xl transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-white"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-bold">
               {error}
             </div>
           )}
 
           {/* Cover Photo */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Cover Photo
+            <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 ml-1">
+              Cover Infrastructure
             </label>
-            <div className="relative h-32 bg-gradient-to-r from-royal-400 to-primary-400 rounded-xl overflow-hidden group">
+            <div className="relative h-32 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl overflow-hidden group">
               {formData.coverPhotoUrl && (
                 <img
                   src={formData.coverPhotoUrl}
@@ -150,11 +150,11 @@ export function EditProfileModal({ isOpen, onClose, initialData, onSave }: EditP
 
           {/* Profile Photo */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Profile Photo
+            <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 ml-1">
+              Identity Visual
             </label>
-            <div className="flex items-center gap-4">
-              <div className="relative w-24 h-24 rounded-full overflow-hidden group">
+            <div className="flex items-center gap-6">
+              <div className="relative w-24 h-24 rounded-3xl overflow-hidden group border-2 border-slate-100 dark:border-dark-800">
                 {formData.profilePictureUrl ? (
                   <img
                     src={formData.profilePictureUrl}
@@ -162,8 +162,8 @@ export function EditProfileModal({ isOpen, onClose, initialData, onSave }: EditP
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-royal-400 to-primary-400 flex items-center justify-center">
-                    <span className="text-white text-2xl font-bold">
+                  <div className="w-full h-full bg-slate-50 dark:bg-dark-800 flex items-center justify-center">
+                    <span className="text-blue-600 dark:text-blue-400 text-2xl font-black">
                       {formData.displayName?.[0]?.toUpperCase() || '?'}
                     </span>
                   </div>
@@ -197,14 +197,14 @@ export function EditProfileModal({ isOpen, onClose, initialData, onSave }: EditP
 
           {/* Display Name */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Display Name
+            <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 ml-1">
+              Public Identity
             </label>
             <input
               type="text"
               value={formData.displayName}
               onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-royal-500 focus:border-transparent transition-all"
+              className="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder-slate-400"
               placeholder="Your display name"
               required
             />
@@ -212,37 +212,37 @@ export function EditProfileModal({ isOpen, onClose, initialData, onSave }: EditP
 
           {/* Bio */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Bio
+            <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 ml-1">
+              Ideological Biography
             </label>
             <textarea
               value={formData.bio}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
               rows={4}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-royal-500 focus:border-transparent transition-all resize-none"
+              className="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl text-slate-900 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none placeholder-slate-400"
               placeholder="Tell us about yourself..."
             />
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
               {formData.bio.length} / 500 characters
             </p>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-4 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-semibold"
+              className="flex-1 px-6 py-4 bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-400 rounded-2xl hover:bg-slate-200 dark:hover:bg-dark-700 transition-all font-black uppercase tracking-widest text-xs"
               disabled={isLoading || uploadingProfile || uploadingCover}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-royal-600 to-primary-600 text-white rounded-xl hover:from-royal-700 hover:to-primary-700 transition-all font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl hover:translate-y-[-2px] transition-all font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isLoading || uploadingProfile || uploadingCover}
             >
-              {isLoading ? 'Saving...' : uploadingProfile || uploadingCover ? 'Uploading...' : 'Save Changes'}
+              {isLoading ? 'Saving...' : uploadingProfile || uploadingCover ? 'Uploading...' : 'Confirm Changes'}
             </button>
           </div>
         </form>
