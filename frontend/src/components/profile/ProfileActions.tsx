@@ -30,6 +30,38 @@ export function ProfileActions({
         setIsLoading(true)
         try {
             await onFollowClick()
+'use client'
+
+import { useState } from 'react'
+import { Mail, ChevronDown } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+
+interface ProfileActionsProps {
+    isOwnProfile: boolean
+    isFollowing?: boolean
+    onEditClick: () => void
+    onFollowClick?: () => void
+    onMessageClick?: () => void
+    targetUserId?: string
+}
+
+export function ProfileActions({
+    isOwnProfile,
+    isFollowing,
+    onEditClick,
+    onFollowClick,
+    onMessageClick,
+    targetUserId
+}: ProfileActionsProps) {
+    const router = useRouter()
+    const [isLoading, setIsLoading] = useState(false)
+
+    const handleFollowClick = async () => {
+        if (!onFollowClick) return
+        setIsLoading(true)
+        try {
+            await onFollowClick()
         } finally {
             setIsLoading(false)
         }
@@ -37,17 +69,17 @@ export function ProfileActions({
 
 
     return (
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex items-center gap-2">
             <motion.button
                 onClick={handleFollowClick}
                 disabled={isLoading}
                 className={`
-                    flex-1 md:flex-none px-8 py-2 font-bold text-sm rounded-lg 
+                    px-5 py-2 font-bold text-sm rounded-xl 
                     transition-all duration-200 shadow-sm
                     disabled:opacity-50 disabled:cursor-not-allowed
                     ${isFollowing
                         ? 'bg-gray-100 dark:bg-dark-800 text-gray-900 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-dark-700 border border-gray-300 dark:border-dark-700'
-                        : 'bg-[#0095F6] hover:bg-[#1877F2] text-white shadow-blue-200'
+                        : 'bg-[#0095F6] hover:bg-[#1877F2] text-white shadow-blue-200/50'
                     }
                 `}
                 whileHover={{ scale: 1.02 }}
@@ -76,21 +108,12 @@ export function ProfileActions({
 
             <motion.button
                 onClick={onMessageClick || (() => router.push(`/messages?userId=${targetUserId}`))}
-                className="flex-1 md:flex-none px-6 py-2 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-900 dark:text-slate-200 font-semibold text-sm rounded-lg transition-all duration-200 flex items-center justify-center gap-2 border border-gray-300 dark:border-dark-700"
+                className="w-10 h-10 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-700 dark:text-slate-300 rounded-xl transition-all duration-200 flex items-center justify-center border border-gray-300 dark:border-dark-700"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                aria-label="Message"
             >
                 <Mail className="w-4 h-4" />
-                <span>Message</span>
-            </motion.button>
-
-            <motion.button
-                className="p-2 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700 rounded-lg transition-all duration-200 border border-gray-300 dark:border-dark-700"
-                aria-label="Suggest user"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-            >
-                <UserPlus className="w-5 h-5 text-gray-700 dark:text-slate-300" />
             </motion.button>
         </div>
     )
