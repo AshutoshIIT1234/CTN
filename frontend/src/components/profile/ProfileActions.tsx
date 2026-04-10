@@ -46,7 +46,7 @@ export function ProfileActions({
                     transition-all duration-200 shadow-sm
                     disabled:opacity-50 disabled:cursor-not-allowed
                     ${isFollowing
-                        ? 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300'
+                        ? 'bg-gray-100 dark:bg-dark-800 text-gray-900 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-dark-700 border border-gray-300 dark:border-dark-700'
                         : 'bg-[#0095F6] hover:bg-[#1877F2] text-white shadow-blue-200'
                     }
                 `}
@@ -76,7 +76,7 @@ export function ProfileActions({
 
             <motion.button
                 onClick={onMessageClick || (() => router.push(`/messages?userId=${targetUserId}`))}
-                className="flex-1 md:flex-none px-6 py-2 bg-gray-100 hover:bg-gray-200 font-semibold text-sm rounded-lg transition-all duration-200 flex items-center justify-center gap-2 border border-gray-300"
+                className="flex-1 md:flex-none px-6 py-2 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700 text-gray-900 dark:text-slate-200 font-semibold text-sm rounded-lg transition-all duration-200 flex items-center justify-center gap-2 border border-gray-300 dark:border-dark-700"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
             >
@@ -85,12 +85,12 @@ export function ProfileActions({
             </motion.button>
 
             <motion.button
-                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200 border border-gray-300"
+                className="p-2 bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700 rounded-lg transition-all duration-200 border border-gray-300 dark:border-dark-700"
                 aria-label="Suggest user"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
             >
-                <UserPlus className="w-5 h-5 text-gray-700" />
+                <UserPlus className="w-5 h-5 text-gray-700 dark:text-slate-300" />
             </motion.button>
         </div>
     )
