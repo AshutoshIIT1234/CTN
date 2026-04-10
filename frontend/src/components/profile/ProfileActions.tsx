@@ -1,39 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { UserPlus, Mail, ChevronDown } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-
-interface ProfileActionsProps {
-    isOwnProfile: boolean
-    isFollowing?: boolean
-    onEditClick: () => void
-    onFollowClick?: () => void
-    onMessageClick?: () => void
-    targetUserId?: string
-}
-
-export function ProfileActions({
-    isOwnProfile,
-    isFollowing,
-    onEditClick,
-    onFollowClick,
-    onMessageClick,
-    targetUserId
-}: ProfileActionsProps) {
-    const router = useRouter()
-    const [isLoading, setIsLoading] = useState(false)
-
-    const handleFollowClick = async () => {
-        if (!onFollowClick) return
-        setIsLoading(true)
-        try {
-            await onFollowClick()
-'use client'
-
-import { useState } from 'react'
-import { Mail, ChevronDown } from 'lucide-react'
+import { Mail, ChevronDown, Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 
@@ -67,6 +35,19 @@ export function ProfileActions({
         }
     }
 
+    if (isOwnProfile) {
+        return (
+            <motion.button
+                onClick={onEditClick}
+                className="flex items-center gap-2 px-5 py-2 font-bold text-sm rounded-xl bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-dark-700 border border-slate-200 dark:border-dark-700 transition-all duration-200 shadow-sm"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+            >
+                <Pencil className="w-3.5 h-3.5" />
+                Edit Profile
+            </motion.button>
+        )
+    }
 
     return (
         <div className="flex items-center gap-2">
@@ -74,7 +55,7 @@ export function ProfileActions({
                 onClick={handleFollowClick}
                 disabled={isLoading}
                 className={`
-                    px-5 py-2 font-bold text-sm rounded-xl 
+                    px-5 py-2 font-bold text-sm rounded-xl
                     transition-all duration-200 shadow-sm
                     disabled:opacity-50 disabled:cursor-not-allowed
                     ${isFollowing
