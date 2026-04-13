@@ -92,7 +92,7 @@ export function ProfileHeader({
         )}
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 md:px-12 -mt-20 md:-mt-24 relative z-10 pb-12">
+      <div className="max-w-5xl mx-auto px-4 md:px-12 -mt-20 md:-mt-24 relative z-10 pb-12">
         <div className="flex flex-col md:flex-row items-end md:items-start gap-8 md:gap-12">
 
           {/* Avatar Area */}
@@ -147,7 +147,7 @@ export function ProfileHeader({
                 </div>
               </div>
 
-              <div className="flex items-center justify-center md:justify-start gap-3 mt-4 md:mt-0 md:ml-auto">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4 md:mt-0 md:ml-auto w-full md:w-auto">
                 <ProfileActions
                   isOwnProfile={isOwnProfile}
                   isFollowing={profile.isFollowing}
@@ -155,15 +155,15 @@ export function ProfileHeader({
                   onFollowClick={onFollowClick}
                   targetUserId={profile.id}
                 />
-                <button className="w-11 h-11 rounded-2xl bg-slate-50 dark:bg-dark-800 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all border border-transparent hover:border-slate-100">
-                  <MoreHorizontal className="w-6 h-6" />
+                <button className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-dark-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all border border-slate-100 dark:border-dark-700">
+                  <MoreHorizontal className="w-5 h-5" />
                 </button>
                 {isOwnProfile && (
                   <button
                     onClick={() => router.push('/settings')}
-                    className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all border border-blue-100 dark:border-blue-500/20"
+                    className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all border border-blue-100 dark:border-blue-500/20"
                   >
-                    <Settings className="w-6 h-6" />
+                    <Settings className="w-5 h-5" />
                   </button>
                 )}
               </div>
@@ -200,7 +200,7 @@ export function ProfileHeader({
             </div>
 
             {/* Stats Bar */}
-            <div className="flex items-center justify-center md:justify-start gap-12 border-t border-slate-50 dark:border-slate-900 pt-8">
+            <div className="flex items-center justify-center md:justify-start gap-6 md:gap-12 border-t border-slate-50 dark:border-slate-900 pt-8 w-full overflow-x-auto">
               <div className="text-center md:text-left">
                 <div className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">{profile.stats.postCount.toLocaleString()}</div>
                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Theses Published</div>
